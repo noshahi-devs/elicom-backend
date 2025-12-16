@@ -1,0 +1,58 @@
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Abp.Application.Services.Dto;
+using Abp.Authorization;
+using Abp.Domain.Repositories;
+using Elicom.Authorization;
+using Elicom.Entities;
+using Elicom.StoreProducts.Dto;
+using Microsoft.EntityFrameworkCore;
+
+namespace Elicom.StoreProducts
+{    
+
+    [AbpAuthorize(PermissionNames.Pages_StoreProducts)]
+    public class StoreProductAppService : ElicomAppServiceBase, IStoreProductAppService
+    {
+        private readonly IRepository<StoreProduct, Guid> _storeProductRepo;
+
+        public StoreProductAppService(IRepository<StoreProduct, Guid> storeProductRepo)
+        {
+            _storeProductRepo = storeProductRepo;
+        }
+
+        [AbpAuthorize(PermissionNames.Pages_StoreProducts_Create)]
+        public async Task Create(CreateStoreProductDto input)
+        {
+            var entity = ObjectMapper.Map<StoreProduct>(input);
+            await _storeProductRepo.InsertAsync(entity);
+        }
+
+        public async Task<ListResultDto<StoreProductDto>> GetByStore(Guid storeId)
+        {
+            var list = await _storeProductRepo
+                .GetAllIncluding(sp => sp.Product)
+                .Where(sp => sp.StoreId == storeId && sp.Status)
+                .ToListAsync();
+
+            return new ListResultDto<StoreProductDto>(
+                ObjectMapper.Map<System.Collections.Generic.List<StoreProductDto>>(list)
+            );
+        }
+
+        [AbpAuthorize(PermissionNames.Pages_StoreProducts_Edit)]
+        public async Task Update(UpdateStoreProductDto input)
+        {
+            var entity = await _storeProductRepo.GetAsync(input.Id);
+            ObjectMapper.Map(input, entity);
+        }
+
+        [AbpAuthorize(PermissionNames.Pages_StoreProducts_Delete)]
+        public async Task Delete(Guid id)
+        {
+            await _storeProductRepo.DeleteAsync(id);
+        }
+    }
+
+}
