@@ -1,6 +1,7 @@
 ﻿using Abp.Domain.Entities;
 using Elicom.Authorization.Users;
 using System;
+using System.Collections.Generic;
 
 namespace Elicom.Entities
 {
@@ -14,5 +15,8 @@ namespace Elicom.Entities
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public virtual User Owner { get; set; }
+
+        public virtual ICollection<StoreProduct> StoreProducts { get; set; }
+
     }
 }

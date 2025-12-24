@@ -28,11 +28,18 @@ namespace Elicom.Entities
 
         public int StockQuantity { get; set; }
         public string SKU { get; set; }
+
+        public string BrandName { get; set; }
+
         public string Slug { get; set; }
 
         public bool Status { get; set; }
 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
+        public virtual ICollection<StoreProduct> StoreProducts { get; set; }
+
+
     }
 }

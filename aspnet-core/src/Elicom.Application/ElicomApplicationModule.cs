@@ -3,6 +3,7 @@ using Abp.Modules;
 using Abp.Reflection.Extensions;
 using Elicom.Authorization;
 using Elicom.Categories.Dto;
+using Elicom.CustomerProfiles;
 using Elicom.Products.Dto;
 
 namespace Elicom;
@@ -21,6 +22,9 @@ public class ElicomApplicationModule : AbpModule
             config.AddProfile<CategoryMapProfile>();
             config.AddProfile<ProductMapProfile>();
             config.AddProfile<StoreMapProfile>();
+            config.AddProfile<CustomerProfileMapProfile>();
+
+
         });
     }
 

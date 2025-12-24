@@ -41,7 +41,6 @@ namespace Elicom.Entities
         /// Gets or sets the last updated date and time of the category.
         /// </summary>
         public DateTime UpdatedAt { get; set; }
-        public ICollection<Product> Products { get; set; }
-
+        public virtual ICollection<Product> Products { get; set; }
     }
 }

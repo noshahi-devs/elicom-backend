@@ -24,6 +24,8 @@ namespace Elicom.Products.Dto
 
         public int StockQuantity { get; set; }
         public string SKU { get; set; }
+        public string BrandName { get; set; }
+
         public string Slug { get; set; }
 
         public bool Status { get; set; }
