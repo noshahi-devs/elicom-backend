@@ -117,13 +117,7 @@ namespace Elicom.EntityFrameworkCore
             });
 
 
-            builder.Entity<SupplierOrder>(b =>
-            {
-                b.HasOne(so => so.Order)
-                 .WithOne(o => o.SupplierOrder)
-                 .HasForeignKey<SupplierOrder>(so => so.OrderId)
-                 .OnDelete(DeleteBehavior.Cascade);
-            });
+           
         
 
 

@@ -1,7 +1,7 @@
 ﻿using Abp.Application.Services.Dto;
-using Elicom.OrderItems.Dto;
 using System;
 using System.Collections.Generic;
+using Elicom.OrderItems.Dto;
 
 namespace Elicom.Orders.Dto
 {
@@ -11,8 +11,6 @@ namespace Elicom.Orders.Dto
         public string Status { get; set; }
         public string PaymentStatus { get; set; }
         public string PaymentMethod { get; set; }
-
-        public Guid? TrackingId { get; set; }
 
         public decimal SubTotal { get; set; }
         public decimal ShippingCost { get; set; }
@@ -24,6 +22,9 @@ namespace Elicom.Orders.Dto
         public string State { get; set; }
         public string City { get; set; }
         public string PostalCode { get; set; }
+
+        public string SupplierReference { get; set; }
+        public string DeliveryTrackingNumber { get; set; }
 
         public List<OrderItemDto> OrderItems { get; set; }
     }

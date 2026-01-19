@@ -24,9 +24,9 @@ namespace Elicom.Orders
             _cartItemRepository = cartItemRepository;
         }
 
+        // Create order from cart
         public async Task<OrderDto> Create(CreateOrderDto input)
         {
-            // 1️⃣ Load cart items
             var cartItems = await _cartItemRepository.GetAll()
                 .Include(ci => ci.StoreProduct)
                     .ThenInclude(sp => sp.Product)
@@ -34,17 +34,14 @@ namespace Elicom.Orders
                     .ThenInclude(sp => sp.Store)
                 .Where(ci =>
                     ci.CustomerProfileId == input.CustomerProfileId &&
-                    ci.Status == "Active"
-                )
+                    ci.Status == "Active")
                 .ToListAsync();
 
             if (!cartItems.Any())
                 throw new UserFriendlyException("Cart is empty");
 
-            // 2️⃣ Calculate totals
             var subTotal = cartItems.Sum(i => i.Price * i.Quantity);
 
-            // 3️⃣ Create Order
             var order = new Order
             {
                 CustomerProfileId = input.CustomerProfileId,
@@ -67,36 +64,31 @@ namespace Elicom.Orders
                 OrderItems = new List<OrderItem>()
             };
 
-            // 4️⃣ Copy Cart → OrderItems
-            foreach (var cartItem in cartItems)
+            foreach (var ci in cartItems)
             {
                 order.OrderItems.Add(new OrderItem
                 {
-                    StoreProductId = cartItem.StoreProductId,
-                    ProductId = cartItem.StoreProduct.ProductId,
-
-                    Quantity = cartItem.Quantity,
-                    PriceAtPurchase = cartItem.Price,
-                    OriginalPrice = cartItem.OriginalPrice,
-                    DiscountPercentage = cartItem.ResellerDiscountPercentage,
-
-                    ProductName = cartItem.StoreProduct.Product.Name,
-                    StoreName = cartItem.StoreProduct.Store.Name
+                    StoreProductId = ci.StoreProductId,
+                    ProductId = ci.StoreProduct.ProductId,
+                    Quantity = ci.Quantity,
+                    PriceAtPurchase = ci.Price,
+                    ProductName = ci.StoreProduct.Product.Name,
+                    StoreName = ci.StoreProduct.Store.Name
                 });
             }
 
             await _orderRepository.InsertAsync(order);
             await CurrentUnitOfWork.SaveChangesAsync();
 
-            // 5️⃣ Clear cart
-            foreach (var item in cartItems)
+            foreach (var ci in cartItems)
             {
-                await _cartItemRepository.DeleteAsync(item.Id);
+                await _cartItemRepository.DeleteAsync(ci.Id);
             }
 
             return ObjectMapper.Map<OrderDto>(order);
         }
 
+        // Get single order
         public async Task<OrderDto> Get(Guid id)
         {
             var order = await _orderRepository.GetAll()
@@ -106,6 +98,7 @@ namespace Elicom.Orders
             return ObjectMapper.Map<OrderDto>(order);
         }
 
+        // Get all orders for customer
         public async Task<List<OrderDto>> GetAllForCustomer(Guid customerProfileId)
         {
             var orders = await _orderRepository.GetAll()
@@ -116,20 +109,18 @@ namespace Elicom.Orders
             return ObjectMapper.Map<List<OrderDto>>(orders);
         }
 
-        // Mark As Shipped
-
-        public async Task<OrderDto> MarkAsShipped(UpdateOrderShippingDto input)
+        // Seller marks order as processing
+        public async Task<OrderDto> MarkAsProcessing(MarkOrderProcessingDto input)
         {
             var order = await _orderRepository.GetAsync(input.Id);
-
             if (order == null)
                 throw new UserFriendlyException("Order not found");
 
             if (order.Status != "Pending")
-                throw new UserFriendlyException("Only pending orders can be shipped");
+                throw new UserFriendlyException("Only pending orders can be processed");
 
-            order.Status = "Shipped";
-            order.TrackingId = input.TrackingId;
+            order.SupplierReference = input.SupplierReference;
+            order.Status = "Processing";
 
             await _orderRepository.UpdateAsync(order);
             await CurrentUnitOfWork.SaveChangesAsync();
@@ -137,5 +128,24 @@ namespace Elicom.Orders
             return ObjectMapper.Map<OrderDto>(order);
         }
 
+        // Store/Admin marks order as delivered
+        public async Task<OrderDto> MarkAsDelivered(MarkOrderDeliveredDto input)
+        {
+            var order = await _orderRepository.GetAsync(input.Id);
+            if (order == null)
+                throw new UserFriendlyException("Order not found");
+
+            if (order.Status != "Processing")
+                throw new UserFriendlyException("Only processed orders can be delivered");
+
+            order.DeliveryTrackingNumber = input.DeliveryTrackingNumber;
+            order.Status = "Delivered";
+            order.PaymentStatus = "Completed";
+
+            await _orderRepository.UpdateAsync(order);
+            await CurrentUnitOfWork.SaveChangesAsync();
+
+            return ObjectMapper.Map<OrderDto>(order);
+        }
     }
 }
