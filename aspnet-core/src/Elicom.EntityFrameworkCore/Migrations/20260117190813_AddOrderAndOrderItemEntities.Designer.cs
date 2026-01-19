@@ -4,6 +4,7 @@ using Elicom.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Elicom.Migrations
 {
     [DbContext(typeof(ElicomDbContext))]
-    partial class ElicomDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260117190813_AddOrderAndOrderItemEntities")]
+    partial class AddOrderAndOrderItemEntities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1803,18 +1806,10 @@ namespace Elicom.Migrations
                     b.Property<decimal>("SubTotal")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<Guid?>("SupplierOrderId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("SupplierTrackingNumber")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CustomerProfileId");
 
                     b.ToTable("Orders");
                 });
@@ -1986,59 +1981,6 @@ namespace Elicom.Migrations
                         .IsUnique();
 
                     b.ToTable("StoreProducts");
-                });
-
-            modelBuilder.Entity("Elicom.Entities.SupplierOrder", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long?>("CreatorUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("DeleterUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime?>("DeletionTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("LastModificationTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long?>("LastModifierUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<Guid>("OrderId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("PurchasePrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Status")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("SupplierId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("SupplierTrackingNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("WarehouseAddress")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrderId")
-                        .IsUnique();
-
-                    b.ToTable("SupplierOrders");
                 });
 
             modelBuilder.Entity("Elicom.MultiTenancy.Tenant", b =>
@@ -2353,17 +2295,6 @@ namespace Elicom.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Elicom.Entities.Order", b =>
-                {
-                    b.HasOne("Elicom.Entities.CustomerProfile", "CustomerProfile")
-                        .WithMany()
-                        .HasForeignKey("CustomerProfileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CustomerProfile");
-                });
-
             modelBuilder.Entity("Elicom.Entities.OrderItem", b =>
                 {
                     b.HasOne("Elicom.Entities.Order", "Order")
@@ -2414,17 +2345,6 @@ namespace Elicom.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("Store");
-                });
-
-            modelBuilder.Entity("Elicom.Entities.SupplierOrder", b =>
-                {
-                    b.HasOne("Elicom.Entities.Order", "Order")
-                        .WithOne("SupplierOrder")
-                        .HasForeignKey("Elicom.Entities.SupplierOrder", "OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Order");
                 });
 
             modelBuilder.Entity("Elicom.MultiTenancy.Tenant", b =>
@@ -2533,8 +2453,6 @@ namespace Elicom.Migrations
             modelBuilder.Entity("Elicom.Entities.Order", b =>
                 {
                     b.Navigation("OrderItems");
-
-                    b.Navigation("SupplierOrder");
                 });
 
             modelBuilder.Entity("Elicom.Entities.Product", b =>

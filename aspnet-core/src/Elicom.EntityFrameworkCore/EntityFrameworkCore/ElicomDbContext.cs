@@ -16,6 +16,13 @@ namespace Elicom.EntityFrameworkCore
         public DbSet<Store> Stores { get; set; }
         public DbSet<StoreProduct> StoreProducts { get; set; }
         public DbSet<CustomerProfile> CustomerProfiles { get; set; }
+        public DbSet<CartItem> CartItems { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderItem> OrderItems { get; set; }
+
+        public DbSet<SupplierOrder> SupplierOrders { get; set; }
+
+
 
 
         public ElicomDbContext(DbContextOptions<ElicomDbContext> options)
@@ -72,6 +79,51 @@ namespace Elicom.EntityFrameworkCore
                  .HasForeignKey(x => x.UserId)
                  .OnDelete(DeleteBehavior.Cascade);
             });
+
+            /* ---------------- CartItem Configuration ---------------- */
+            builder.Entity<CartItem>(b =>
+            {
+                b.ToTable("CartItems");
+
+                // Relationship with CustomerProfile
+                b.HasOne(c => c.CustomerProfile)
+                 .WithMany() // Or .WithMany(cp => cp.CartItems) if you add a collection to CustomerProfile
+                 .HasForeignKey(c => c.CustomerProfileId)
+                 .OnDelete(DeleteBehavior.Cascade); // If profile is deleted, delete cart
+
+                // Relationship with StoreProduct
+                b.HasOne(c => c.StoreProduct)
+                 .WithMany()
+                 .HasForeignKey(c => c.StoreProductId)
+                 .OnDelete(DeleteBehavior.Restrict); // Prevent deleting a product if it's in someone's cart
+
+                // Optional: Ensure precise decimals for currency
+                b.Property(c => c.Price).HasColumnType("decimal(18,2)");
+                b.Property(c => c.OriginalPrice).HasColumnType("decimal(18,2)");
+                b.Property(c => c.ResellerDiscountPercentage).HasColumnType("decimal(18,2)");
+            });
+
+            // Re-pasting your existing CustomerProfile to ensure it stays intact
+            builder.Entity<CustomerProfile>(b =>
+            {
+                b.ToTable("CustomerProfiles");
+                b.HasIndex(x => x.UserId).IsUnique();
+
+                b.HasOne(x => x.User)
+                 .WithMany()
+                 .HasForeignKey(x => x.UserId)
+                 .OnDelete(DeleteBehavior.Cascade);
+            });
+
+
+            builder.Entity<SupplierOrder>(b =>
+            {
+                b.HasOne(so => so.Order)
+                 .WithOne(o => o.SupplierOrder)
+                 .HasForeignKey<SupplierOrder>(so => so.OrderId)
+                 .OnDelete(DeleteBehavior.Cascade);
+            });
+        
 
 
         }

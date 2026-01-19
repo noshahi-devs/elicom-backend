@@ -1,0 +1,28 @@
+﻿using Abp.Domain.Entities;
+using Abp.Domain.Entities.Auditing;
+using Elicom.Entities;
+using System;
+
+namespace Elicom.Entities
+{
+    public class CartItem : FullAuditedEntity<Guid>
+    {
+        // Link to customer profile
+        public Guid CustomerProfileId { get; set; }
+        public virtual CustomerProfile CustomerProfile { get; set; }
+
+        // Link to product-store
+        public Guid StoreProductId { get; set; }
+        public virtual StoreProduct StoreProduct { get; set; }
+
+        public int Quantity { get; set; }
+
+        // Snapshot of price and discount at time of adding to cart
+        public decimal Price { get; set; }
+        public decimal OriginalPrice { get; set; }
+        public decimal ResellerDiscountPercentage { get; set; }
+
+        // Optional: you may track status (active, ordered, removed)
+        public string Status { get; set; } = "Active";
+    }
+}
