@@ -22,6 +22,7 @@ namespace Elicom.EntityFrameworkCore
 
         public DbSet<SupplierOrder> SupplierOrders { get; set; }
 
+        public DbSet<SupplierOrderItem> SupplierOrderItems { get; set; }
 
 
 

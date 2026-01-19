@@ -13,6 +13,10 @@ namespace Elicom.Entities
         public string PaymentStatus { get; set; } = "Pending";
         public string PaymentMethod { get; set; }
 
+        public Guid? TrackingId { get; set; } // SupplierOrder.Id
+
+
+
         public decimal SubTotal { get; set; }
         public decimal ShippingCost { get; set; }
         public decimal Discount { get; set; }

@@ -1,80 +1,83 @@
 ﻿using Abp.Application.Services;
 using Abp.Domain.Repositories;
 using Abp.UI;
-using AutoMapper;
 using Elicom.Entities;
 using Elicom.SupplierOrders.Dto;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Elicom.SupplierOrders
 {
     public class SupplierOrderAppService : ApplicationService, ISupplierOrderAppService
     {
-        private readonly IRepository<SupplierOrder, Guid> _supplierOrderRepository;
-        private readonly IRepository<Order, Guid> _orderRepository;
+        private readonly IRepository<SupplierOrder, Guid> _supplierOrderRepo;
+        private readonly IRepository<SupplierOrderItem, Guid> _supplierOrderItemRepo;
 
         public SupplierOrderAppService(
-            IRepository<SupplierOrder, Guid> supplierOrderRepository,
-            IRepository<Order, Guid> orderRepository)
+            IRepository<SupplierOrder, Guid> supplierOrderRepo,
+            IRepository<SupplierOrderItem, Guid> supplierOrderItemRepo)
         {
-            _supplierOrderRepository = supplierOrderRepository;
-            _orderRepository = orderRepository;
+            _supplierOrderRepo = supplierOrderRepo;
+            _supplierOrderItemRepo = supplierOrderItemRepo;
         }
 
-        // ✅ Create Supplier Order & deduct reseller payment
+        // ✅ CREATE SUPPLIER ORDER (NO ORDER LINK)
         public async Task<SupplierOrderDto> Create(CreateSupplierOrderDto input)
         {
-            var order = await _orderRepository.GetAsync(input.OrderId);
-            if (order == null)
-                throw new UserFriendlyException("Order not found");
+            if (input.Items == null || !input.Items.Any())
+                throw new UserFriendlyException("Supplier order must contain items");
 
-            // Map DTO to Entity
-            var supplierOrder = ObjectMapper.Map<SupplierOrder>(input);
-            supplierOrder.Status = "Purchased";
+            var supplierOrder = new SupplierOrder
+            {
+                ResellerId = input.ResellerId,
+                WarehouseAddress = input.WarehouseAddress,
+                Status = "Purchased",
+                ReferenceCode = GenerateReferenceCode(),
+                TotalPurchaseAmount = input.Items.Sum(
+                    i => i.Quantity * i.PurchasePrice
+                )
+            };
 
-            // TODO: Deduct reseller balance here (implement wallet logic)
+            await _supplierOrderRepo.InsertAsync(supplierOrder);
+            await CurrentUnitOfWork.SaveChangesAsync(); // Get SupplierOrderId
 
-            await _supplierOrderRepository.InsertAsync(supplierOrder);
+            foreach (var item in input.Items)
+            {
+                var supplierOrderItem = new SupplierOrderItem
+                {
+                    SupplierOrderId = supplierOrder.Id,
+                    ProductId = item.ProductId,
+                    Quantity = item.Quantity,
+                    PurchasePrice = item.PurchasePrice
+                };
+
+                await _supplierOrderItemRepo.InsertAsync(supplierOrderItem);
+            }
+
             await CurrentUnitOfWork.SaveChangesAsync();
-
-            // Update order status and link SupplierOrder
-            order.Status = "Shipped"; // shipped to Smartstore eventually
-            order.SupplierOrderId = supplierOrder.Id;
-            await _orderRepository.UpdateAsync(order);
 
             return ObjectMapper.Map<SupplierOrderDto>(supplierOrder);
         }
 
-        // ✅ Get Supplier Order
+        // ✅ GET SUPPLIER ORDER
         public async Task<SupplierOrderDto> Get(Guid id)
         {
-            var supplierOrder = await _supplierOrderRepository.GetAll()
-                .Include(so => so.Order)
-                .FirstOrDefaultAsync(so => so.Id == id);
+            var supplierOrder = await _supplierOrderRepo.GetAll()
+                .Include(x => x.Items)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (supplierOrder == null)
+                throw new UserFriendlyException("Supplier order not found");
 
             return ObjectMapper.Map<SupplierOrderDto>(supplierOrder);
         }
 
-        // ✅ Update Supplier Order (Delivered / Refunded)
-        public async Task<SupplierOrderDto> Update(UpdateSupplierOrderDto input)
+        // 🔐 INTERNAL: Reference Code Generator
+        private string GenerateReferenceCode()
         {
-            var supplierOrder = await _supplierOrderRepository.GetAsync(input.Id);
-
-            if (!string.IsNullOrEmpty(input.Status))
-                supplierOrder.Status = input.Status;
-
-            if (!string.IsNullOrEmpty(input.PurchaseId))
-                supplierOrder.PurchaseId = input.PurchaseId;
-
-            await _supplierOrderRepository.UpdateAsync(supplierOrder);
-            await CurrentUnitOfWork.SaveChangesAsync();
-
-            // TODO: Refund reseller if status == Delivered or Refunded
-
-            return ObjectMapper.Map<SupplierOrderDto>(supplierOrder);
+            return $"SUP-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
         }
     }
 }

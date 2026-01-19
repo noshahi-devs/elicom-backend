@@ -12,6 +12,8 @@ namespace Elicom.Orders.Dto
         public string PaymentStatus { get; set; }
         public string PaymentMethod { get; set; }
 
+        public Guid? TrackingId { get; set; }
+
         public decimal SubTotal { get; set; }
         public decimal ShippingCost { get; set; }
         public decimal Discount { get; set; }

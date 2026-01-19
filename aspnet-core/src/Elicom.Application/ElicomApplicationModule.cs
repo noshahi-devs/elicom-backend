@@ -7,6 +7,7 @@ using Elicom.Categories.Dto;
 using Elicom.CustomerProfiles;
 using Elicom.Orders;
 using Elicom.Products.Dto;
+using Elicom.SupplierOrders;
 using Elicom.SupplierOrders.Dto;
 
 namespace Elicom;

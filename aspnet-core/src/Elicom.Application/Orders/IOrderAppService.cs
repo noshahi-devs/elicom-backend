@@ -12,5 +12,7 @@ namespace Elicom.Orders
         Task<OrderDto> Create(CreateOrderDto input);
         Task<OrderDto> Get(Guid id);
         Task<List<OrderDto>> GetAllForCustomer(Guid customerProfileId);
+        Task<OrderDto> MarkAsShipped(UpdateOrderShippingDto input);
+
     }
 }

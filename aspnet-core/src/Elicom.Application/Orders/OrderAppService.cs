@@ -115,5 +115,27 @@ namespace Elicom.Orders
 
             return ObjectMapper.Map<List<OrderDto>>(orders);
         }
+
+        // Mark As Shipped
+
+        public async Task<OrderDto> MarkAsShipped(UpdateOrderShippingDto input)
+        {
+            var order = await _orderRepository.GetAsync(input.Id);
+
+            if (order == null)
+                throw new UserFriendlyException("Order not found");
+
+            if (order.Status != "Pending")
+                throw new UserFriendlyException("Only pending orders can be shipped");
+
+            order.Status = "Shipped";
+            order.TrackingId = input.TrackingId;
+
+            await _orderRepository.UpdateAsync(order);
+            await CurrentUnitOfWork.SaveChangesAsync();
+
+            return ObjectMapper.Map<OrderDto>(order);
+        }
+
     }
 }

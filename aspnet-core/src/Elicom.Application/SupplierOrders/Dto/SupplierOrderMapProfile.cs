@@ -9,8 +9,10 @@ namespace Elicom.SupplierOrders
         public SupplierOrderMapProfile()
         {
             CreateMap<SupplierOrder, SupplierOrderDto>();
+            CreateMap<SupplierOrderItem, SupplierOrderItemDto>();
+
             CreateMap<CreateSupplierOrderDto, SupplierOrder>();
-            CreateMap<UpdateSupplierOrderDto, SupplierOrder>();
+            CreateMap<CreateSupplierOrderItemDto, SupplierOrderItem>();
         }
     }
 }
