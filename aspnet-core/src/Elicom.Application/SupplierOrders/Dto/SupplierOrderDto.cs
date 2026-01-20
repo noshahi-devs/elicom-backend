@@ -8,7 +8,9 @@ namespace Elicom.SupplierOrders.Dto
     {
         public string ReferenceCode { get; set; }
         public long ResellerId { get; set; }
+        public long SupplierId { get; set; }
         public decimal TotalPurchaseAmount { get; set; }
+        public DateTime CreationTime { get; set; }
         public string WarehouseAddress { get; set; }
         public string Status { get; set; }
 

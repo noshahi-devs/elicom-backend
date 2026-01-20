@@ -16,6 +16,9 @@ namespace Elicom.Entities
         public string PaymentStatus { get; set; } = "Pending";
         public string PaymentMethod { get; set; }
 
+        // SmartStore, PrimeShip, GlobalPay
+        public string SourcePlatform { get; set; }
+
         // Amounts
         public decimal SubTotal { get; set; }
         public decimal ShippingCost { get; set; }

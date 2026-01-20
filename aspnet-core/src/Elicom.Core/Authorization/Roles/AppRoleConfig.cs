@@ -24,5 +24,26 @@ public static class AppRoleConfig
                 MultiTenancySides.Tenant
             )
         );
+
+        roleManagementConfig.StaticRoles.Add(
+            new StaticRoleDefinition(
+                StaticRoleNames.Tenants.Supplier,
+                MultiTenancySides.Tenant
+            )
+        );
+
+        roleManagementConfig.StaticRoles.Add(
+            new StaticRoleDefinition(
+                StaticRoleNames.Tenants.Reseller,
+                MultiTenancySides.Tenant
+            )
+        );
+
+        roleManagementConfig.StaticRoles.Add(
+            new StaticRoleDefinition(
+                StaticRoleNames.Tenants.Buyer,
+                MultiTenancySides.Tenant
+            )
+        );
     }
 }

@@ -9,6 +9,10 @@ using Elicom.Orders;
 using Elicom.Products.Dto;
 using Elicom.SupplierOrders;
 using Elicom.SupplierOrders.Dto;
+using Elicom.Wallets.Dto;
+using Elicom.GlobalPay;
+using Elicom.Wholesale;
+using Elicom.SmartStore;
 
 namespace Elicom;
 
@@ -30,8 +34,8 @@ public class ElicomApplicationModule : AbpModule
             config.AddProfile<CartMapProfile>();
             config.AddProfile<OrderMapProfile>();
             config.AddProfile<SupplierOrderMapProfile>();
-
-
+            config.AddProfile<WalletMapProfile>();
+            config.AddProfile<DepositRequestMapProfile>();
 
         });
     }

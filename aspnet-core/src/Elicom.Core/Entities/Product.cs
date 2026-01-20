@@ -9,6 +9,8 @@ namespace Elicom.Entities
     {
         public string Name { get; set; }
 
+        public long? SupplierId { get; set; } // Link to AbpUsers
+
         // FK
         public Guid CategoryId { get; set; }
 

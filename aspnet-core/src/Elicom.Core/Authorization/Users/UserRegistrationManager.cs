@@ -4,6 +4,8 @@ using Abp.IdentityFramework;
 using Abp.Runtime.Session;
 using Abp.UI;
 using Elicom.Authorization.Roles;
+using Elicom.Entities;
+using Abp.Domain.Repositories;
 using Elicom.MultiTenancy;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -22,17 +24,20 @@ public class UserRegistrationManager : DomainService
     private readonly UserManager _userManager;
     private readonly RoleManager _roleManager;
     private readonly IPasswordHasher<User> _passwordHasher;
+    private readonly IRepository<Wallet, Guid> _walletRepository;
 
     public UserRegistrationManager(
         TenantManager tenantManager,
         UserManager userManager,
         RoleManager roleManager,
-        IPasswordHasher<User> passwordHasher)
+        IPasswordHasher<User> passwordHasher,
+        IRepository<Wallet, Guid> walletRepository)
     {
         _tenantManager = tenantManager;
         _userManager = userManager;
         _roleManager = roleManager;
         _passwordHasher = passwordHasher;
+        _walletRepository = walletRepository;
 
         AbpSession = NullAbpSession.Instance;
     }
@@ -66,6 +71,14 @@ public class UserRegistrationManager : DomainService
 
         CheckErrors(await _userManager.CreateAsync(user, plainPassword));
         await CurrentUnitOfWork.SaveChangesAsync();
+
+        // Create Wallet for the user
+        await _walletRepository.InsertAsync(new Wallet
+        {
+            UserId = user.Id,
+            Balance = 0,
+            Currency = "PKR"
+        });
 
         return user;
     }

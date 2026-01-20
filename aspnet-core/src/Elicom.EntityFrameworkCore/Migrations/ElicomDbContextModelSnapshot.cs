@@ -1737,6 +1737,69 @@ namespace Elicom.Migrations
                     b.ToTable("CustomerProfiles", (string)null);
                 });
 
+            modelBuilder.Entity("Elicom.Entities.DepositRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AdminRemarks")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Country")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DestinationAccount")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ProofImage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SourcePlatform")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("DepositRequests");
+                });
+
             modelBuilder.Entity("Elicom.Entities.Order", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1763,6 +1826,9 @@ namespace Elicom.Migrations
 
                     b.Property<DateTime?>("DeletionTime")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("DeliveryTrackingNumber")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Discount")
                         .HasColumnType("decimal(18,2)");
@@ -1794,6 +1860,9 @@ namespace Elicom.Migrations
                     b.Property<decimal>("ShippingCost")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("SourcePlatform")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("State")
                         .HasColumnType("nvarchar(max)");
 
@@ -1803,17 +1872,11 @@ namespace Elicom.Migrations
                     b.Property<decimal>("SubTotal")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<Guid?>("SupplierOrderId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("SupplierTrackingNumber")
+                    b.Property<string>("SupplierReference")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<Guid?>("TrackingId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -1910,6 +1973,9 @@ namespace Elicom.Migrations
                     b.Property<int>("StockQuantity")
                         .HasColumnType("int");
 
+                    b.Property<long?>("SupplierId")
+                        .HasColumnType("bigint");
+
                     b.Property<decimal>("SupplierPrice")
                         .HasColumnType("decimal(18,2)");
 
@@ -2003,6 +2069,9 @@ namespace Elicom.Migrations
                     b.Property<long?>("CreatorUserId")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("CustomerName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<long?>("DeleterUserId")
                         .HasColumnType("bigint");
 
@@ -2027,8 +2096,17 @@ namespace Elicom.Migrations
                     b.Property<long>("ResellerId")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("ShippingAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SourcePlatform")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Status")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("SupplierId")
+                        .HasColumnType("bigint");
 
                     b.Property<decimal>("TotalPurchaseAmount")
                         .HasColumnType("decimal(18,2)");
@@ -2038,9 +2116,7 @@ namespace Elicom.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrderId")
-                        .IsUnique()
-                        .HasFilter("[OrderId] IS NOT NULL");
+                    b.HasIndex("OrderId");
 
                     b.ToTable("SupplierOrders");
                 });
@@ -2068,6 +2144,89 @@ namespace Elicom.Migrations
                     b.HasIndex("SupplierOrderId");
 
                     b.ToTable("SupplierOrderItems");
+                });
+
+            modelBuilder.Entity("Elicom.Entities.Wallet", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Balance")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Currency")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("Wallets");
+                });
+
+            modelBuilder.Entity("Elicom.Entities.WalletTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ReferenceId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TransactionType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("WalletId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WalletId");
+
+                    b.ToTable("WalletTransactions");
                 });
 
             modelBuilder.Entity("Elicom.MultiTenancy.Tenant", b =>
@@ -2382,6 +2541,17 @@ namespace Elicom.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Elicom.Entities.DepositRequest", b =>
+                {
+                    b.HasOne("Elicom.Authorization.Users.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Elicom.Entities.Order", b =>
                 {
                     b.HasOne("Elicom.Entities.CustomerProfile", "CustomerProfile")
@@ -2448,9 +2618,8 @@ namespace Elicom.Migrations
             modelBuilder.Entity("Elicom.Entities.SupplierOrder", b =>
                 {
                     b.HasOne("Elicom.Entities.Order", "Order")
-                        .WithOne("SupplierOrder")
-                        .HasForeignKey("Elicom.Entities.SupplierOrder", "OrderId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .WithMany()
+                        .HasForeignKey("OrderId");
 
                     b.Navigation("Order");
                 });
@@ -2464,6 +2633,28 @@ namespace Elicom.Migrations
                         .IsRequired();
 
                     b.Navigation("SupplierOrder");
+                });
+
+            modelBuilder.Entity("Elicom.Entities.Wallet", b =>
+                {
+                    b.HasOne("Elicom.Authorization.Users.User", "User")
+                        .WithOne()
+                        .HasForeignKey("Elicom.Entities.Wallet", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Elicom.Entities.WalletTransaction", b =>
+                {
+                    b.HasOne("Elicom.Entities.Wallet", "Wallet")
+                        .WithMany()
+                        .HasForeignKey("WalletId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Wallet");
                 });
 
             modelBuilder.Entity("Elicom.MultiTenancy.Tenant", b =>
@@ -2572,8 +2763,6 @@ namespace Elicom.Migrations
             modelBuilder.Entity("Elicom.Entities.Order", b =>
                 {
                     b.Navigation("OrderItems");
-
-                    b.Navigation("SupplierOrder");
                 });
 
             modelBuilder.Entity("Elicom.Entities.Product", b =>

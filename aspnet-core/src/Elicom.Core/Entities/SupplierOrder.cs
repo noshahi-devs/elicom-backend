@@ -12,9 +12,16 @@ namespace Elicom.Entities
         // Seller / Reseller
         public long ResellerId { get; set; }
 
+        // The Supplier
+        public long SupplierId { get; set; }
+
         public decimal TotalPurchaseAmount { get; set; }
 
         public string WarehouseAddress { get; set; }
+        public string ShippingAddress { get; set; }
+        public string CustomerName { get; set; }
+
+        public string SourcePlatform { get; set; }
 
         // Purchased, LinkedToOrder, Received, Settled
         public string Status { get; set; }

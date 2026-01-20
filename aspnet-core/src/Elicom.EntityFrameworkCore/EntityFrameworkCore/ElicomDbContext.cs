@@ -20,11 +20,11 @@ namespace Elicom.EntityFrameworkCore
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
 
+        public DbSet<Wallet> Wallets { get; set; }
+        public DbSet<WalletTransaction> WalletTransactions { get; set; }
         public DbSet<SupplierOrder> SupplierOrders { get; set; }
-
         public DbSet<SupplierOrderItem> SupplierOrderItems { get; set; }
-
-
+        public DbSet<DepositRequest> DepositRequests { get; set; }
 
         public ElicomDbContext(DbContextOptions<ElicomDbContext> options)
             : base(options)
@@ -117,10 +117,27 @@ namespace Elicom.EntityFrameworkCore
             });
 
 
-           
-        
+            /* ---------------- Wallet Configuration ---------------- */
+            builder.Entity<Wallet>(b =>
+            {
+                b.HasOne(w => w.User)
+                 .WithOne()
+                 .HasForeignKey<Wallet>(w => w.UserId)
+                 .OnDelete(DeleteBehavior.Cascade);
 
+                b.Property(w => w.Balance).HasColumnType("decimal(18,2)");
+                b.Property(w => w.RowVersion).IsRowVersion();
+            });
 
+            builder.Entity<WalletTransaction>(b =>
+            {
+                b.HasOne(wt => wt.Wallet)
+                 .WithMany()
+                 .HasForeignKey(wt => wt.WalletId)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                b.Property(wt => wt.Amount).HasColumnType("decimal(18,2)");
+            });
         }
     }
 }

@@ -13,6 +13,7 @@ namespace Elicom.Orders
         Task<List<OrderDto>> GetAllForCustomer(Guid customerProfileId);
 
         Task<OrderDto> MarkAsProcessing(MarkOrderProcessingDto input);
+        Task<OrderDto> LinkWholesaleOrder(LinkWholesaleOrderDto input);
         Task<OrderDto> MarkAsDelivered(MarkOrderDeliveredDto input);
     }
 }

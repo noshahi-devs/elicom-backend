@@ -29,6 +29,19 @@ public static class PermissionNames
     public const string Pages_StoreProducts_Edit = "Pages.StoreProducts.Edit";
     public const string Pages_StoreProducts_Delete = "Pages.StoreProducts.Delete";
 
+    public const string Pages_Supplier_Products = "Pages.Supplier.Products";
+    public const string Pages_Reseller_Marketplace = "Pages.Reseller.Marketplace";
+    public const string Pages_Reseller_Store = "Pages.Reseller.Store";
 
+    // GlobalPayUK Permissions
+    public const string Pages_GlobalPay = "Pages.GlobalPay";
+    public const string Pages_GlobalPay_Admin = "Pages.GlobalPay.Admin";
 
+    // PrimeShipUK Permissions
+    public const string Pages_PrimeShip = "Pages.PrimeShip";
+    public const string Pages_PrimeShip_Admin = "Pages.PrimeShip.Admin";
+
+    // SmartStore Permissions
+    public const string Pages_SmartStore = "Pages.SmartStore";
+    public const string Pages_SmartStore_Seller = "Pages.SmartStore.Seller";
 }

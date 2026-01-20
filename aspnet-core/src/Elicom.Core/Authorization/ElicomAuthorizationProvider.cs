@@ -53,7 +53,17 @@ public class ElicomAuthorizationProvider : AuthorizationProvider
             storeProducts.CreateChildPermission(
             PermissionNames.Pages_StoreProducts_Delete, L("DeleteStoreProduct"));
 
+        context.CreatePermission(PermissionNames.Pages_Supplier_Products, L("SupplierProducts"));
+        context.CreatePermission(PermissionNames.Pages_Reseller_Marketplace, L("ResellerMarketplace"));
+        context.CreatePermission(PermissionNames.Pages_Reseller_Store, L("ResellerStore"));
 
+        // Platform specific
+        context.CreatePermission(PermissionNames.Pages_GlobalPay, L("GlobalPay"));
+        context.CreatePermission(PermissionNames.Pages_GlobalPay_Admin, L("GlobalPayAdmin"));
+        context.CreatePermission(PermissionNames.Pages_PrimeShip, L("PrimeShip"));
+        context.CreatePermission(PermissionNames.Pages_PrimeShip_Admin, L("PrimeShipAdmin"));
+        context.CreatePermission(PermissionNames.Pages_SmartStore, L("SmartStore"));
+        context.CreatePermission(PermissionNames.Pages_SmartStore_Seller, L("SmartStoreSeller"));
     }
 
 
