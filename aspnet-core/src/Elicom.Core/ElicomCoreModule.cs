@@ -12,9 +12,11 @@ using Elicom.Localization;
 using Elicom.MultiTenancy;
 using Elicom.Timing;
 
+using Abp.MailKit;
+
 namespace Elicom;
 
-[DependsOn(typeof(AbpZeroCoreModule))]
+[DependsOn(typeof(AbpZeroCoreModule), typeof(AbpMailKitModule))]
 public class ElicomCoreModule : AbpModule
 {
     public override void PreInitialize()

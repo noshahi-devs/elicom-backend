@@ -26,8 +26,15 @@ public class DefaultSettingsCreator
         }
 
         // Emailing
-        AddSettingIfNotExists(EmailSettingNames.DefaultFromAddress, "admin@mydomain.com", tenantId);
-        AddSettingIfNotExists(EmailSettingNames.DefaultFromDisplayName, "mydomain.com mailer", tenantId);
+        // Emailing
+        AddSettingIfNotExists(EmailSettingNames.DefaultFromAddress, "no-reply@primeshipuk.com", tenantId);
+        AddSettingIfNotExists(EmailSettingNames.DefaultFromDisplayName, "Prime Ship UK", tenantId);
+        AddSettingIfNotExists("Abp.Net.Mail.Smtp.Host", "primeshipuk.com", tenantId);
+        AddSettingIfNotExists("Abp.Net.Mail.Smtp.Port", "465", tenantId);
+        AddSettingIfNotExists("Abp.Net.Mail.Smtp.UserName", "no-reply@primeshipuk.com", tenantId);
+        AddSettingIfNotExists("Abp.Net.Mail.Smtp.Password", "xB}Q]@saOI^K", tenantId);
+        AddSettingIfNotExists("Abp.Net.Mail.Smtp.EnableSsl", "true", tenantId);
+        AddSettingIfNotExists("Abp.Net.Mail.Smtp.UseDefaultCredentials", "false", tenantId);
 
         // Languages
         AddSettingIfNotExists(LocalizationSettingNames.DefaultLanguage, "en", tenantId);

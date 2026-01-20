@@ -85,7 +85,42 @@ This is the final stage that moves money from Escrow to the Profit participants.
 
 ---
 
-## 6. Access Control Summary
+## 6. Notification Layer (SMTP Workflows)
+A unified communication engine is integrated to provide real-time updates and secure account management across the Prime Ship ecosystem.
+
+### A. Core SMTP Configuration
+- **Engine**: ABP `IEmailSender` wrapper using **MailKit**.
+- **Security**: Port 465 (Explicit SSL) for secure transport.
+- **Provider**: `primeshipuk.com` dedicated SMTP relay.
+- **Reliability**: All email operations are wrapped in `try-catch` blocks with logging to ensure SMTP downtime does not block business logic (e.g., an order will still be placed even if the email fails).
+
+### B. Order Notification Matrix (Prime Ship)
+The system triggers professional HTML notifications for critical lifecycle events:
+1.  **Order Placement**: Instantly sent to the Seller and Admin upon wholesale purchase, including the `ReferenceCode` and customer shipping data.
+2.  **Shipping Update**: Sent when the Warehouse Admin adds tracking information, notifying the Seller that the product is in transit.
+3.  **Delivery Confirmation**: Triggered when the order reaches the final destination, signaling the start of the settlement window.
+4.  **Profit Settlement**: A unique notification sent to the Seller when funds are released from escrow and their profit is deposited into their GlobalPay wallet.
+5.  **Order Cancellation/Issue**: Sent if an order is rejected or cancelled, providing the reason and details of any refunds initiated.
+
+### C. Seller Registration Workflow
+To maintain a premium and secure marketplace, seller onboarding is strictly managed via email verification:
+1.  **Initial Registration**: Seller accounts are created as **Inactive** with the default password `Noshahi.000`.
+2.  **Verification Email**: A rich-HTML email is sent with a **High-CTA Verification Button**.
+3.  **The Redirect**: Clicking the link activates the account instantly and provides a smooth 3-second automated redirect to the login page.
+
+### D. Password Security & Recovery
+A secure, token-based self-service recovery system is implemented:
+1.  **Forget Password**: Users enter their email to request a reset.
+2.  **Reset Link**: A secure, one-time-use token link is sent via email with an expiry of 24 hours.
+3.  **Reset Page**: A minimal, dedicated UI allows the user to set a new password, which is then encrypted and updated in the identity database.
+4.  **Security Notification**: Upon successful reset, a confirmation is sent to Ensure the user is aware of the account change.
+
+### E. Strategic Isolation
+Out-of-box platform notifications (like Smart Store automatic order creation) are purposefully **omitted** from the global notification handler. This ensures that customers and resellers perceive the platforms as independent entities, maintaining the "Marketplace Illusion."
+
+---
+
+## 7. Access Control Summary
 | Role | Recommended Platform Access | Permission Level |
 | :--- | :--- | :--- |
 | **Buyer** | Smart Store | `None` / `Buyer` |
@@ -94,7 +129,7 @@ This is the final stage that moves money from Escrow to the Profit participants.
 
 ---
 
-## 7. Database Status (Ready for Launch)
-- **5 Categories** and **20 Products** have been pre-seeded.
-- **3 Stores** ("Premium Hub", "Smart Deals", "Fashion Express") are active and stocked.
-- All transactional tables are prepared with `SourcePlatform` tracking.
+## 8. Database & Environment Status
+- **Pre-seeded**: 5 Categories, 20 Products, 3 Active Stores.
+- **SMTP Credentials**: Persisted in `AbpSettings` table for dynamic updates.
+- **Email Logs**: All failures logged via `Logger.Error` in a `try-catch` wrapper to prevent order failure on SMTP downtime.

@@ -1,6 +1,7 @@
 using Abp.Authorization;
 using Abp.Domain.Repositories;
 using Abp.UI;
+using Abp.Net.Mail;
 using Elicom.Entities;
 using Elicom.SupplierOrders.Dto;
 using Elicom.Wallets;
@@ -20,15 +21,18 @@ namespace Elicom.Wholesale
         private readonly IRepository<Product, Guid> _productRepository;
         private readonly IRepository<SupplierOrder, Guid> _supplierOrderRepository;
         private readonly IWalletManager _walletManager;
+        private readonly IEmailSender _emailSender;
 
         public WholesaleAppService(
             IRepository<Product, Guid> productRepository,
             IRepository<SupplierOrder, Guid> supplierOrderRepository,
-            IWalletManager walletManager)
+            IWalletManager walletManager,
+            IEmailSender emailSender)
         {
             _productRepository = productRepository;
             _supplierOrderRepository = supplierOrderRepository;
             _walletManager = walletManager;
+            _emailSender = emailSender;
         }
 
         public async Task<SupplierOrderDto> PlaceWholesaleOrder(CreateWholesaleOrderInput input)
@@ -87,6 +91,26 @@ namespace Elicom.Wholesale
 
             await _supplierOrderRepository.InsertAsync(supplierOrder);
             await CurrentUnitOfWork.SaveChangesAsync();
+
+            // Automate Email
+            try
+            {
+                var mail = new System.Net.Mail.MailMessage(
+                    "no-reply@primeshipuk.com",
+                    "noshahidevelopersinc@gmail.com"
+                )
+                {
+                    Subject = $"New Wholesale Order: {supplierOrder.ReferenceCode}",
+                    Body = $"A new wholesale order has been placed.\n\nTotal Amount: {totalAmount}\nCustomer: {input.CustomerName}\nRef: {supplierOrder.ReferenceCode}",
+                    IsBodyHtml = false
+                };
+
+                await _emailSender.SendAsync(mail);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Failed to send email notification", ex);
+            }
 
             return ObjectMapper.Map<SupplierOrderDto>(supplierOrder);
         }

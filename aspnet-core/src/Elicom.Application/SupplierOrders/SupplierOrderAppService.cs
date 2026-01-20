@@ -3,6 +3,7 @@ using Abp.Application.Services.Dto;
 using Abp.Authorization;
 using Abp.Domain.Repositories;
 using Abp.UI;
+using Abp.Net.Mail;
 using Elicom.Authorization;
 using Elicom.Entities;
 using Elicom.SupplierOrders.Dto;
@@ -19,13 +20,16 @@ namespace Elicom.SupplierOrders
     {
         private readonly IRepository<SupplierOrder, Guid> _supplierOrderRepository;
         private readonly IRepository<SupplierOrderItem, Guid> _supplierOrderItemRepository;
+        private readonly IEmailSender _emailSender;
 
         public SupplierOrderAppService(
             IRepository<SupplierOrder, Guid> supplierOrderRepository,
-            IRepository<SupplierOrderItem, Guid> supplierOrderItemRepository)
+            IRepository<SupplierOrderItem, Guid> supplierOrderItemRepository,
+            IEmailSender emailSender)
         {
             _supplierOrderRepository = supplierOrderRepository;
             _supplierOrderItemRepository = supplierOrderItemRepository;
+            _emailSender = emailSender;
         }
 
         // ✅ GET MY ORDERS (For Supplier)
@@ -110,6 +114,25 @@ namespace Elicom.SupplierOrders
             
             order.Status = "Shipped";
             await _supplierOrderRepository.UpdateAsync(order);
+
+            // Notify Admin/Seller
+            try
+            {
+                var mail = new System.Net.Mail.MailMessage(
+                    "no-reply@primeshipuk.com",
+                    "noshahidevelopersinc@gmail.com"
+                )
+                {
+                    Subject = $"[PrimeShip] Order Shipped: {order.ReferenceCode}",
+                    Body = $"Wholesale order {order.ReferenceCode} has been marked as SHIPPED.\n\nCustomer: {order.CustomerName}\nTracking: {order.ReferenceCode}",
+                    IsBodyHtml = false
+                };
+                await _emailSender.SendAsync(mail);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Email failed: " + ex.Message);
+            }
         }
 
         public async Task MarkAsDelivered(Guid id)
@@ -121,6 +144,25 @@ namespace Elicom.SupplierOrders
             
             order.Status = "Delivered";
             await _supplierOrderRepository.UpdateAsync(order);
+
+            // Notify Admin/Seller
+            try
+            {
+                var mail = new System.Net.Mail.MailMessage(
+                    "no-reply@primeshipuk.com",
+                    "noshahidevelopersinc@gmail.com"
+                )
+                {
+                    Subject = $"[PrimeShip] Order Delivered: {order.ReferenceCode}",
+                    Body = $"Wholesale order {order.ReferenceCode} has been marked as DELIVERED.\n\nCustomer: {order.CustomerName}",
+                    IsBodyHtml = false
+                };
+                await _emailSender.SendAsync(mail);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Email failed: " + ex.Message);
+            }
 
             // AUTO-UPDATE Smart Store Order if linked
             if (order.OrderId.HasValue)

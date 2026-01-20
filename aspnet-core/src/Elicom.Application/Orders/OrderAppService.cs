@@ -4,6 +4,7 @@ using Abp.UI;
 using Elicom.Entities;
 using Elicom.Wallets;
 using Elicom.Orders.Dto;
+using Abp.Net.Mail;
 using Abp.Authorization;
 using Elicom.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -20,17 +21,20 @@ namespace Elicom.Orders
         private readonly IRepository<CartItem, Guid> _cartItemRepository;
         private readonly IRepository<SupplierOrder, Guid> _supplierOrderRepository;
         private readonly IWalletManager _walletManager;
+        private readonly IEmailSender _emailSender;
 
         public OrderAppService(
             IRepository<Order, Guid> orderRepository,
             IRepository<CartItem, Guid> cartItemRepository,
             IRepository<SupplierOrder, Guid> supplierOrderRepository,
-            IWalletManager walletManager)
+            IWalletManager walletManager,
+            IEmailSender emailSender)
         {
             _orderRepository = orderRepository;
             _cartItemRepository = cartItemRepository;
             _supplierOrderRepository = supplierOrderRepository;
             _walletManager = walletManager;
+            _emailSender = emailSender;
         }
 
         // Create order from cart
@@ -282,6 +286,25 @@ namespace Elicom.Orders
 
                 so.Status = "Settled";
                 await _supplierOrderRepository.UpdateAsync(so);
+
+                // Notify PrimeShip Admin/Supplier
+                try
+                {
+                    var mail = new System.Net.Mail.MailMessage(
+                        "no-reply@primeshipuk.com",
+                        "noshahidevelopersinc@gmail.com"
+                    )
+                    {
+                        Subject = $"[PrimeShip] Order Settled: {so.ReferenceCode}",
+                        Body = $"Wholesale order {so.ReferenceCode} has been SETTLED and payments distributed.\n\nTotal Paid to Supplier: {so.TotalPurchaseAmount}",
+                        IsBodyHtml = false
+                    };
+                    await _emailSender.SendAsync(mail);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error("Email failed: " + ex.Message);
+                }
             }
 
             await _orderRepository.UpdateAsync(order);

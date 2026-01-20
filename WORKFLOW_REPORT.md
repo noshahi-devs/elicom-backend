@@ -33,6 +33,17 @@ The system has been populated with real testing data:
 4.  **Final Settlement**: When Admin marks the Prime Ship order as "Delivered", the Smart Store order closes, and profit is released to the reseller.
     *   *Test Result: PASSED (Public API & Linking Logic verified)*
 
+## 5. SMTP & Automated Notifications (NEW)
+**Goal**: Real-time alerts for critical Prime Ship operations.
+1.  **Direct Integration**: The backend uses **MailKit** (SMTP Port 465 SSL) for high reliability.
+2.  **Notification Triggers**:
+    *   **New Wholesale Order**: Email sent when a Reseller places an order.
+    *   **Shipping**: Email sent when Admin marks order as "Shipped".
+    *   **Delivery**: Email sent when Admin marks order as "Delivered".
+    *   **Settlement**: Email sent when profit is released and funds settled.
+3.  **Platform Privacy**: Smart Store notifications are decoupled to maintain the illusion of independent platforms.
+    *   *Test Result: PASSED (Verified via `TestAppService` and individual service logs)*
+
 ---
 
 ## Technical Verification Summary
@@ -43,6 +54,7 @@ The system has been populated with real testing data:
 | **Financial Security**| Manual approval triggers wallet updates securely. | ✅ Verified |
 | **Wholesale Bridge**| Upfront debit from wallet for wholesale purchases. | ✅ Verified |
 | **Platform Isolation**| Each platform tracks its own `SourcePlatform` tag.| ✅ Verified |
+| **SMTP Alerts** | PrimeShip notifications sent to Admin/Seller Gmail. | ✅ Verified |
 
 **Execution Date**: 2026-01-20
 **Test Suite**: `Workflow_End_To_End_Tests`
