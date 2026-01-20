@@ -1,5 +1,6 @@
 using Abp.Authorization.Users;
 using Abp.Net.Mail;
+using Abp.Domain.Uow;
 using Elicom.Authorization.Users;
 using System.Linq;
 using System.Threading.Tasks;
@@ -78,17 +79,23 @@ namespace Elicom.Test
             await _emailSender.SendAsync(mail);
         }
 
-        [HttpPost]
-        public async Task SendSettlementTest()
+        [HttpDelete]
+        public async Task DeletePlatformUsers(string email)
         {
-            var orderRef = "TEST-SETTLE-" + DateTime.UtcNow.ToString("yyyyMMddHHss");
-            var mail = new System.Net.Mail.MailMessage("no-reply@primeshipuk.com", "noshahidevelopersinc@gmail.com")
+            using (CurrentUnitOfWork.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
             {
-                Subject = $"[PrimeShip] Order Settled: {orderRef}",
-                Body = $"[TEST] Wholesale order {orderRef} has been SETTLED and payments distributed.",
-                IsBodyHtml = false
-            };
-            await _emailSender.SendAsync(mail);
+                var prefixes = new[] { "SS_", "PS_", "GP_" };
+                foreach (var prefix in prefixes)
+                {
+                    var userName = $"{prefix}{email}";
+                    var user = await _userManager.FindByNameAsync(userName);
+                    if (user != null)
+                    {
+                        await _userManager.DeleteAsync(user);
+                        Logger.Info($"USER DELETED: {userName}");
+                    }
+                }
+            }
         }
     }
 }

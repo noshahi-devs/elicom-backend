@@ -85,7 +85,7 @@ public class UserRegistrationManager : DomainService
 
     private void CheckForTenant()
     {
-        if (!AbpSession.TenantId.HasValue)
+        if (!AbpSession.TenantId.HasValue && !CurrentUnitOfWork.GetTenantId().HasValue)
         {
             throw new InvalidOperationException("Can not register host users!");
         }
@@ -93,12 +93,13 @@ public class UserRegistrationManager : DomainService
 
     private async Task<Tenant> GetActiveTenantAsync()
     {
-        if (!AbpSession.TenantId.HasValue)
+        var tenantId = AbpSession.TenantId ?? CurrentUnitOfWork.GetTenantId();
+        if (!tenantId.HasValue)
         {
             return null;
         }
 
-        return await GetActiveTenantAsync(AbpSession.TenantId.Value);
+        return await GetActiveTenantAsync(tenantId.Value);
     }
 
     private async Task<Tenant> GetActiveTenantAsync(int tenantId)

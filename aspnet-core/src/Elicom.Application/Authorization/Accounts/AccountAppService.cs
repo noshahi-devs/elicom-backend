@@ -2,12 +2,18 @@ using Abp.Authorization.Users;
 using Abp.Net.Mail;
 using Abp.Runtime.Caching;
 using Abp.UI;
+using Abp.Domain.Uow;
 using Elicom.Authorization.Accounts.Dto;
 using Elicom.Authorization.Users;
+using Elicom.Authorization.Roles;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using MimeKit;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 
 namespace Elicom.Authorization.Accounts;
 
@@ -66,73 +72,175 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
     [HttpPost]
     public async Task RegisterSeller(string email)
     {
-        // For simulation/testing, if no tenant is provided, we use the Default tenant (Id: 1)
-        int tenantId = AbpSession.TenantId ?? 1;
+        await RegisterPrimeShipSeller(email);
+    }
 
+    [HttpPost]
+    public async Task RegisterSmartStoreSeller(string email)
+    {
+        await RegisterPlatformUser(email, 1, StaticRoleNames.Tenants.Reseller, "Seller", "Smart Store", "SS", "#ff9900");
+    }
+
+    [HttpPost]
+    public async Task RegisterSmartStoreCustomer(string email)
+    {
+        await RegisterPlatformUser(email, 1, StaticRoleNames.Tenants.Buyer, "Customer", "Smart Store", "SS", "#ff9900");
+    }
+
+    [HttpPost]
+    public async Task RegisterPrimeShipSeller(string email)
+    {
+        await RegisterPlatformUser(email, 2, StaticRoleNames.Tenants.Supplier, "Seller", "Prime Ship", "PS", "#007bff");
+    }
+
+    [HttpPost]
+    public async Task RegisterPrimeShipCustomer(string email)
+    {
+        await RegisterPlatformUser(email, 2, StaticRoleNames.Tenants.Reseller, "Customer", "Prime Ship", "PS", "#007bff");
+    }
+
+    [HttpPost]
+    public async Task RegisterGlobalPayUser(string email)
+    {
+        await RegisterPlatformUser(email, 3, StaticRoleNames.Tenants.Reseller, "User", "Global Pay", "GP", "#28a745");
+    }
+
+    private async Task RegisterPlatformUser(string email, int tenantId, string roleName, string userType, string platformName, string prefix, string brandColor)
+    {
         using (CurrentUnitOfWork.SetTenantId(tenantId))
+        using (CurrentUnitOfWork.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
         {
-            // 1. Register user as inactive and unconfirmed
-            var user = await _userRegistrationManager.RegisterAsync(
-                "Seller",
-                "User",
-                email,
-                email, // Username as email
-                "Noshahi.000",
-                false // Not confirmed yet
-            );
+            string userName = $"{prefix}_{email}";
 
-            user.IsActive = false; // Keep inactive until verified
+            // 1. Check if user already exists in this platform/tenant context
+            var user = await _userManager.FindByNameAsync(userName);
+            
+            if (user == null)
+            {
+                // Create new user
+                user = await _userRegistrationManager.RegisterAsync(
+                    userType,
+                    "User",
+                    email,
+                    userName,
+                    "Noshahi.000",
+                    false
+                );
+            }
+            else
+            {
+                Logger.Info($"Platform user {userName} already exists. Resending verification email.");
+            }
+
+            // Ensure user is inactive until verified
+            user.IsActive = false;
             await _userManager.UpdateAsync(user);
 
-            // 2. Generate Verification Token
+            // Set/Update roles within the tenant context
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            if (!currentRoles.Contains(roleName))
+            {
+                await _userManager.AddToRoleAsync(user, roleName);
+            }
+
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             
-            // 3. Construct Verification Link (Assuming local or configurable frontend URL)
-            var verificationLink = $"https://localhost:44311/api/services/app/Account/VerifyEmail?userId={user.Id}&token={Uri.EscapeDataString(token)}";
+            var verificationLink = $"https://localhost:44311/api/services/app/Account/VerifyEmail?userId={user.Id}&token={Uri.EscapeDataString(token)}&platform={Uri.EscapeDataString(platformName)}";
 
-            // 4. Send Rich HTML Email
             var emailBody = $@"
-                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #f9f9f9;'>
-                    <div style='text-align: center; padding-bottom: 20px;'>
-                        <h2 style='color: #007bff; font-weight: bold;'>Prime Ship UK</h2>
-                        <h3 style='color: #333;'>Verify Your Account</h3>
-                        <p style='color: #666;'>Welcome, <b>{email}</b>! Thank you for joining as a Seller.</p>
+                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #ffffff;'>
+                    <div style='text-align: center; border-bottom: 2px solid {brandColor}; padding-bottom: 15px;'>
+                        <h1 style='color: #333; margin: 0;'>{platformName.ToUpper()}</h1>
                     </div>
-                    <div style='background-color: #ffffff; padding: 40px; border-radius: 12px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 2px solid #007bff;'>
-                        <p style='font-size: 18px; color: #444; line-height: 1.6; margin-bottom: 30px;'>
-                            Your account has been created with the password <b>Noshahi.000</b>.<br>
-                            To complete your registration, please verify your email.
+                    <div style='padding: 30px; line-height: 1.6; color: #333;'>
+                        <h2>Welcome to {platformName}!</h2>
+                        <p>Hi <b>{email}</b>,</p>
+                        <p>You've successfully registered as a <b>{userType}</b> on {platformName}.</p>
+                        <p style='background-color: #f8f9fa; padding: 10px; border-radius: 4px; border-left: 4px solid {brandColor};'>
+                            <b>Username:</b> <code>{email}</code><br>
+                            <b>Password:</b> <code>Noshahi.000</code>
                         </p>
-                        <a href='{verificationLink}' 
-                           style='background-color: #007bff; color: #ffffff; padding: 18px 40px; text-decoration: none; font-weight: bold; border-radius: 8px; font-size: 20px; display: inline-block; transition: background 0.3s ease;'>
-                           CLICK HERE TO VERIFY
-                        </a>
-                        <p style='margin-top: 35px; font-size: 14px; color: #777;'>
-                            If the button above doesn't work, copy and paste this link:<br>
-                            <span style='color: #007bff; word-break: break-all;'>{verificationLink}</span>
-                        </p>
-                    </div>
-                    <div style='text-align: center; margin-top: 30px; color: #aaa; font-size: 13px;'>
-                        &copy; 2026 Prime Ship UK. A Premium Dropshipping Platform.
+                        <div style='text-align: center; margin: 35px 0;'>
+                            <a href='{verificationLink}' style='background-color: {brandColor}; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 18px;'>
+                                VERIFY MY ACCOUNT
+                            </a>
+                        </div>
                     </div>
                 </div>";
 
-            var mail = new System.Net.Mail.MailMessage(
-                "no-reply@primeshipuk.com",
-                email
-            )
+            // 5. Send Platform-Specific Email
+            if (tenantId == 1) // Smart Store
             {
-                Subject = "Action Required: Verify Your Seller Account",
-                Body = emailBody,
-                IsBodyHtml = true
-            };
+                await SendEmailWithCustomSmtp(
+                    "primeshipuk.com",
+                    465,
+                    "worldcart@primeshipuk.com",
+                    "Noshahi.000",
+                    "Smart Store",
+                    email,
+                    $"Action Required: Verify Your {platformName} Account",
+                    emailBody
+                );
+            }
+            else if (tenantId == 3) // Global Pay
+            {
+                await SendEmailWithCustomSmtp(
+                    "easyfinora.com",
+                    465,
+                    "no-reply@easyfinora.com",
+                    "qy,DI!+ZasZz",
+                    "Global Pay",
+                    email,
+                    $"Action Required: Verify Your {platformName} Account",
+                    emailBody
+                );
+            }
+            else // Prime Ship (Tenant 2) or default
+            {
+                var mail = new System.Net.Mail.MailMessage("no-reply@primeshipuk.com", email)
+                {
+                    Subject = $"Action Required: Verify Your {platformName} Account",
+                    Body = emailBody,
+                    IsBodyHtml = true
+                };
+                await _emailSender.SendAsync(mail);
+            }
+        }
+    }
 
-            await _emailSender.SendAsync(mail);
+    private async Task SendEmailWithCustomSmtp(string host, int port, string user, string pass, string fromName, string to, string subject, string body)
+    {
+        try
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(fromName, user));
+            message.To.Add(new MailboxAddress("", to));
+            message.Subject = subject;
+
+            var bodyBuilder = new BodyBuilder { HtmlBody = body };
+            message.Body = bodyBuilder.ToMessageBody();
+
+            using (var client = new MailKit.Net.Smtp.SmtpClient())
+            {
+                // For demo/test, we accept all certificates
+                client.ServerCertificateValidationCallback = (s, c, h, e) => true;
+
+                await client.ConnectAsync(host, port, SecureSocketOptions.SslOnConnect);
+                await client.AuthenticateAsync(user, pass);
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
+            }
+            Logger.Info($"Smart Store email sent successfully to {to} via {host}");
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Failed to send Smart Store email to {to} via {host}: {ex.Message}");
+            // We don't throw the exception to allow registration to complete even if email fails
         }
     }
 
     [HttpGet]
-    public async Task<ContentResult> VerifyEmail(long userId, string token)
+    public async Task<ContentResult> VerifyEmail(long userId, string token, string platform = "Prime Ship")
     {
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null) throw new UserFriendlyException("User not found");
@@ -143,19 +251,23 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             user.IsActive = true;
             await _userManager.UpdateAsync(user);
 
-            // Return HTML that redirects to login page
+            string redirectPath = "/account/login";
+            if (platform == "Smart Store") redirectPath = "/smartstore/login";
+            if (platform == "Prime Ship") redirectPath = "/primeship/login";
+            if (platform == "Global Pay") redirectPath = "/globalpay/login";
+
             return new ContentResult
             {
                 ContentType = "text/html",
-                Content = @"
+                Content = $@"
                     <html>
                         <body style='text-align: center; font-family: sans-serif; padding-top: 100px;'>
-                            <h1 style='color: green;'>Account Verified Successfully!</h1>
+                            <h1 style='color: green;'>{platform} Account Verified!</h1>
                             <p>You are being redirected to the login page...</p>
                             <script>
-                                setTimeout(function() {
-                                    window.location.href = '/account/login';
-                                }, 3000);
+                                setTimeout(function() {{
+                                    window.location.href = '{redirectPath}';
+                                }}, 3000);
                             </script>
                         </body>
                     </html>"

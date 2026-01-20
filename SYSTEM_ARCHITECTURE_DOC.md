@@ -5,9 +5,14 @@ This document provides a comprehensive technical and functional overview of the 
 ---
 
 ## 1. Core Architecture
-- **Unified Identity**: One `UserId` across all platforms (based on Email).
-- **Platform Separation**: Strictly enforced by `SourcePlatform` identifiers and scoped permissions (`Pages.GlobalPay`, `Pages.PrimeShip`, `Pages.SmartStore`).
-- **Financial Core**: A centralized **Wallet & Escrow System** that handles all currency movements.
+- **Multi-Tenant Isolation**: The ecosystem is logically separated into three distinct tenants within a shared database:
+    - **Tenant 1**: Smart Store (Retail Marketplace)
+    - **Tenant 2**: Prime Ship (Wholesale Warehouse)
+    - **Tenant 3**: Global Pay (Financial Core)
+- **User Isolation Strategy**: To allow a single email address to exist across all three platforms as separate "New User" entities:
+    - **Internal Usernames**: Automatically prefixed (e.g., `SS_email`, `PS_email`, `GP_email`).
+    - **User Perception**: The prefix is hidden in all communications; users log in with their email address, and the frontend appends the correct prefix based on the platform.
+- **Financial Core**: A centralized **Wallet & Escrow System** that handles all currency movements, isolated per tenant.
 
 ---
 

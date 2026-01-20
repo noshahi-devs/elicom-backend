@@ -12,9 +12,17 @@ public interface IAccountAppService : IApplicationService
 
     Task RegisterSeller(string email);
 
-    Task<Microsoft.AspNetCore.Mvc.ContentResult> VerifyEmail(long userId, string token);
+    Task<Microsoft.AspNetCore.Mvc.ContentResult> VerifyEmail(long userId, string token, string platform = "Prime Ship");
 
     Task ForgotPassword(string email);
 
     Task ResetPassword(ResetPasswordInput input);
+
+    Task RegisterSmartStoreSeller(string email);
+    Task RegisterSmartStoreCustomer(string email);
+
+    Task RegisterPrimeShipSeller(string email);
+    Task RegisterPrimeShipCustomer(string email);
+
+    Task RegisterGlobalPayUser(string email);
 }

@@ -26,7 +26,9 @@ public static class SeedHelper
 
         // Default tenant seed (in host database).
         new DefaultTenantBuilder(context).Create();
-        new TenantRoleAndUserBuilder(context, 1).Create();
+        new TenantRoleAndUserBuilder(context, 1).Create(); // Smart Store
+        new TenantRoleAndUserBuilder(context, 2).Create(); // Prime Ship
+        new TenantRoleAndUserBuilder(context, 3).Create(); // Global Pay
     }
 
     private static void WithDbContext<TDbContext>(IIocResolver iocResolver, Action<TDbContext> contextAction)

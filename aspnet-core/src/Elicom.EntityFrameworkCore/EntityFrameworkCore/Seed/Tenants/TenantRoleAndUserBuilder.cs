@@ -67,6 +67,30 @@ public class TenantRoleAndUserBuilder
             _context.SaveChanges();
         }
 
+        // Supplier role
+        var supplierRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Supplier);
+        if (supplierRole == null)
+        {
+            _context.Roles.Add(new Role(_tenantId, StaticRoleNames.Tenants.Supplier, StaticRoleNames.Tenants.Supplier) { IsStatic = true });
+            _context.SaveChanges();
+        }
+
+        // Reseller role
+        var resellerRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Reseller);
+        if (resellerRole == null)
+        {
+            _context.Roles.Add(new Role(_tenantId, StaticRoleNames.Tenants.Reseller, StaticRoleNames.Tenants.Reseller) { IsStatic = true });
+            _context.SaveChanges();
+        }
+
+        // Buyer role
+        var buyerRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Buyer);
+        if (buyerRole == null)
+        {
+            _context.Roles.Add(new Role(_tenantId, StaticRoleNames.Tenants.Buyer, StaticRoleNames.Tenants.Buyer) { IsStatic = true });
+            _context.SaveChanges();
+        }
+
         // Admin user
 
         var adminUser = _context.Users.IgnoreQueryFilters().FirstOrDefault(u => u.TenantId == _tenantId && u.UserName == AbpUserBase.AdminUserName);

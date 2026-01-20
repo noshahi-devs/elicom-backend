@@ -14,6 +14,12 @@ public static class IdentityRegistrar
     {
         services.AddLogging();
 
+        services.Configure<IdentityOptions>(options =>
+        {
+            options.User.RequireUniqueEmail = false;
+            options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+        });
+
         return services.AddAbpIdentity<Tenant, User, Role>()
             .AddAbpTenantManager<TenantManager>()
             .AddAbpUserManager<UserManager>()

@@ -33,16 +33,16 @@ The system has been populated with real testing data:
 4.  **Final Settlement**: When Admin marks the Prime Ship order as "Delivered", the Smart Store order closes, and profit is released to the reseller.
     *   *Test Result: PASSED (Public API & Linking Logic verified)*
 
-## 5. SMTP & Automated Notifications (NEW)
-**Goal**: Real-time alerts for critical Prime Ship operations.
-1.  **Direct Integration**: The backend uses **MailKit** (SMTP Port 465 SSL) for high reliability.
-2.  **Notification Triggers**:
-    *   **New Wholesale Order**: Email sent when a Reseller places an order.
-    *   **Shipping**: Email sent when Admin marks order as "Shipped".
-    *   **Delivery**: Email sent when Admin marks order as "Delivered".
-    *   **Settlement**: Email sent when profit is released and funds settled.
-3.  **Platform Privacy**: Smart Store notifications are decoupled to maintain the illusion of independent platforms.
-    *   *Test Result: PASSED (Verified via `TestAppService` and individual service logs)*
+## 5. SMTP & Multi-Tenant Isolation (NEW)
+**Goal**: True user isolation and branded communication across Smart Store, Prime Ship, and Global Pay.
+1.  **Tenant Strategy**:
+    - **Tenant 1 (Smart Store)**: Retail marketplace using `SS_` prefix and `primeshipuk.com` SMTP.
+    - **Tenant 2 (Prime Ship)**: Wholesale warehouse using `PS_` prefix and default SMTP.
+    - **Tenant 3 (Global Pay)**: Financial core using `GP_` prefix and `easyfinora.com` SMTP.
+2.  **User Isolation**: Same email address can register as a "New User" on all three platforms without database conflicts.
+3.  **Communication Polish**: Platform-specific prefixes are hidden from users; they perceive their email as their unified username.
+4.  **Verification Redirects**: Each platform correctly redirects verified users to their respective login page (e.g., `/smartstore/login`).
+    *   *Test Result: PASSED (Verified across all 3 platforms for engr.adeelnoshahi@gmail.com)*
 
 ---
 
@@ -50,11 +50,12 @@ The system has been populated with real testing data:
 | Step | Description | Status |
 | :--- | :--- | :--- |
 | **Data Integrity** | Categories, Products, and Stores correctly linked. | ✅ Verified |
+| **Multi-Tenancy** | Triple-tenant isolation (1, 2, 3) active. | ✅ Verified |
+| **User Isolation**| Prefixed usernames (SS, PS, GP) allow email duplication. | ✅ Verified |
 | **Marketplace API**| Global browse results returned with store mapping. | ✅ Verified |
 | **Financial Security**| Manual approval triggers wallet updates securely. | ✅ Verified |
 | **Wholesale Bridge**| Upfront debit from wallet for wholesale purchases. | ✅ Verified |
-| **Platform Isolation**| Each platform tracks its own `SourcePlatform` tag.| ✅ Verified |
-| **SMTP Alerts** | PrimeShip notifications sent to Admin/Seller Gmail. | ✅ Verified |
+| **SMTP Branded** | Dedicated SMTPs for Smart Store & Global Pay. | ✅ Verified |
 
 **Execution Date**: 2026-01-20
 **Test Suite**: `Workflow_End_To_End_Tests`

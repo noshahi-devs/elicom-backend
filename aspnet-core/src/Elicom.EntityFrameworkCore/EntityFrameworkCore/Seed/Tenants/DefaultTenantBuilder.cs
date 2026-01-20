@@ -22,21 +22,40 @@ public class DefaultTenantBuilder
 
     private void CreateDefaultTenant()
     {
-        // Default tenant
-
+        // 1. Default Tenant (Smart Store)
         var defaultTenant = _context.Tenants.IgnoreQueryFilters().FirstOrDefault(t => t.TenancyName == AbpTenantBase.DefaultTenantName);
         if (defaultTenant == null)
         {
             defaultTenant = new Tenant(AbpTenantBase.DefaultTenantName, AbpTenantBase.DefaultTenantName);
-
-            var defaultEdition = _context.Editions.IgnoreQueryFilters().FirstOrDefault(e => e.Name == EditionManager.DefaultEditionName);
-            if (defaultEdition != null)
-            {
-                defaultTenant.EditionId = defaultEdition.Id;
-            }
-
-            _context.Tenants.Add(defaultTenant);
-            _context.SaveChanges();
+            SeedTenant(defaultTenant);
         }
+
+        // 2. Prime Ship Tenant
+        var primeShipTenant = _context.Tenants.IgnoreQueryFilters().FirstOrDefault(t => t.TenancyName == "primeship");
+        if (primeShipTenant == null)
+        {
+            primeShipTenant = new Tenant("primeship", "Prime Ship");
+            SeedTenant(primeShipTenant);
+        }
+
+        // 3. Global Pay Tenant
+        var globalPayTenant = _context.Tenants.IgnoreQueryFilters().FirstOrDefault(t => t.TenancyName == "globalpay");
+        if (globalPayTenant == null)
+        {
+            globalPayTenant = new Tenant("globalpay", "Global Pay");
+            SeedTenant(globalPayTenant);
+        }
+    }
+
+    private void SeedTenant(Tenant tenant)
+    {
+        var defaultEdition = _context.Editions.IgnoreQueryFilters().FirstOrDefault(e => e.Name == EditionManager.DefaultEditionName);
+        if (defaultEdition != null)
+        {
+            tenant.EditionId = defaultEdition.Id;
+        }
+
+        _context.Tenants.Add(tenant);
+        _context.SaveChanges();
     }
 }
