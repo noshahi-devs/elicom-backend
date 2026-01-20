@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIf } from '@angular/common';
+import { NgIf, DecimalPipe } from '@angular/common';
 import { ToastService } from '../../shared/toast/toast.service';
 
 @Component({
     selector: 'app-transfer',
-    imports: [FormsModule, NgIf],
+    imports: [FormsModule, NgIf, DecimalPipe],
     templateUrl: './transfer.html',
     styleUrl: './transfer.scss',
 })
@@ -14,7 +14,8 @@ export class Transfer {
     recipient = '';
     amount: number | null = null;
     description = '';
-    isValidRecipient = false;
+    recipientValid = false;
+    recipientInfo: { name: string; walletId: string } | null = null;
 
     constructor(private toastService: ToastService) { }
 
@@ -22,7 +23,17 @@ export class Transfer {
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const walletPattern = /^[A-Z0-9]{10,}$/;
 
-        this.isValidRecipient = emailPattern.test(this.recipient) || walletPattern.test(this.recipient);
+        this.recipientValid = emailPattern.test(this.recipient) || walletPattern.test(this.recipient);
+
+        // Mock recipient info lookup
+        if (this.recipientValid) {
+            this.recipientInfo = {
+                name: 'John Doe',
+                walletId: this.recipient
+            };
+        } else {
+            this.recipientInfo = null;
+        }
     }
 
     submitTransfer() {
@@ -32,7 +43,7 @@ export class Transfer {
             return;
         }
 
-        if (!this.isValidRecipient) {
+        if (!this.recipientValid) {
             this.toastService.showError('Please enter a valid email address or wallet ID');
             return;
         }
@@ -64,6 +75,7 @@ export class Transfer {
         this.recipient = '';
         this.amount = null;
         this.description = '';
-        this.isValidRecipient = false;
+        this.recipientValid = false;
+        this.recipientInfo = null;
     }
 }
