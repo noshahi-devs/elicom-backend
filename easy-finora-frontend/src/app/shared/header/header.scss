@@ -1,0 +1,141 @@
+.header {
+    width: 100%;
+    // background:
+    //     linear-gradient(130deg,
+    //         rgba(15, 23, 42, 0.9),
+    //         rgba(37, 99, 235, 0.9),
+    //         rgba(99, 102, 241, 0.9),
+    //         rgba(139, 92, 246, 0.9),
+    //         rgba(236, 72, 153, 0.9)),
+    //     radial-gradient(circle at top left,
+    //         rgba(6, 182, 212, 0.35),
+    //         transparent 60%);
+
+    // background-size: 500% 500%;
+    // animation: gradientLive 45s ease-in-out infinite;
+
+    font-family: 'Poppins', sans-serif;
+
+    .header-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 40px;
+
+        .logo {
+            font-size: 34px;
+            font-family: "Nabla", system-ui;
+            font-optical-sizing: auto;
+            font-weight: 400;
+            font-style: normal;
+            font-variation-settings:
+                "EDPT" 128,
+                "EHLT" 4;
+            letter-spacing: 2px;
+        }
+
+        .search-bar {
+            flex: 1;
+            max-width: 500px;
+            display: flex;
+            border-radius: 5px;
+            border: 2px solid #ccc;
+            overflow: hidden;
+            margin: 0 20px;
+
+            input {
+                flex: 1;
+                padding: 8px 10px;
+                border: none;
+                outline: none;
+                font-size: 15px;
+            }
+
+            button {
+                background: #000;
+                color: #fff;
+                border: none;
+                margin-top: 3px;
+                margin-right: 3px;
+                border-radius: 5px;
+                height: 33px;
+                width: 54px;
+                cursor: pointer;
+
+                &:hover {
+                    background: #333;
+                }
+            }
+        }
+
+        .header-icons {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+
+            i {
+                font-size: 20px;
+                cursor: pointer;
+                color: #000;
+            }
+
+            .user-menu-wrapper,
+            .cart-wrapper,
+            .currency-menu-wrapper {
+                position: relative;
+
+                .user-tooltip-box,
+                .cart-tooltip-box,
+                .currency-tooltip-box {
+                    position: absolute;
+                    top: 100%;
+                    right: 0;
+                    padding: 10px 20px;
+                    z-index: 999;
+                    background: #434fff;
+                }
+
+                .currency-tooltip-box {
+                    top: 35px;
+                    left: 0;
+                    right: auto;
+                    opacity: 0;
+                    visibility: hidden;
+                    transition: 0.3s ease;
+
+                    &.active {
+                        opacity: 1;
+                        visibility: visible;
+                    }
+                }
+            }
+        }
+    }
+
+    //     @keyframes gradientLive {
+    //   0% {
+    //     background-position: 0% 50%, 0% 0%;
+    //   }
+
+    //   25% {
+    //     background-position: 50% 40%, 10% 10%;
+    //   }
+
+    //   50% {
+    //     background-position: 100% 50%, 20% 20%;
+    //   }
+
+    //   75% {
+    //     background-position: 50% 60%, 10% 10%;
+    //   }
+
+    //   100% {
+    //     background-position: 0% 50%, 0% 0%;
+    //   }
+    // }
+
+
+
+
+}
