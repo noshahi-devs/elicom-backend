@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
-import { NgFor, CurrencyPipe, DatePipe } from '@angular/common';
+import { NgFor, NgIf, CurrencyPipe, DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [NgFor, CurrencyPipe, DatePipe],
+  imports: [NgFor, NgIf, CurrencyPipe, DatePipe],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })

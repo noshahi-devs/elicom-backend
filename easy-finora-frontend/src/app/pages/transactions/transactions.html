@@ -1,0 +1,44 @@
+<div class="page-container">
+    <div class="page-header">
+        <h1>Transaction History</h1>
+        <div class="filter-buttons">
+            <button class="filter-btn" [class.active]="filterType === 'all'" (click)="setFilter('all')">All</button>
+            <button class="filter-btn" [class.active]="filterType === 'deposit'"
+                (click)="setFilter('deposit')">Deposits</button>
+            <button class="filter-btn" [class.active]="filterType === 'withdrawal'"
+                (click)="setFilter('withdrawal')">Withdrawals</button>
+            <button class="filter-btn" [class.active]="filterType === 'transfer'"
+                (click)="setFilter('transfer')">Transfers</button>
+        </div>
+    </div>
+
+    <div class="transactions-table-3d">
+        <div class="table-header">
+            <div class="col">Transaction ID</div>
+            <div class="col">Type</div>
+            <div class="col">Description</div>
+            <div class="col">Amount</div>
+            <div class="col">Status</div>
+            <div class="col">Date</div>
+        </div>
+
+        <div *ngFor="let txn of filteredTransactions" class="table-row">
+            <div class="col">{{ txn.id }}</div>
+            <div class="col">
+                <span class="type-badge" [class]="txn.type.toLowerCase()">{{ txn.type }}</span>
+            </div>
+            <div class="col">{{ txn.description }}</div>
+            <div class="col" [class.negative]="txn.amount < 0" [class.positive]="txn.amount > 0">
+                {{ txn.amount | currency: 'USD' }}
+            </div>
+            <div class="col">
+                <span class="status-badge" [class]="txn.status.toLowerCase()">{{ txn.status }}</span>
+            </div>
+            <div class="col">{{ txn.date | date: 'MMM d, y h:mm a' }}</div>
+        </div>
+
+        <div *ngIf="filteredTransactions.length === 0" class="empty-state">
+            <p>No transactions found for this filter.</p>
+        </div>
+    </div>
+</div>

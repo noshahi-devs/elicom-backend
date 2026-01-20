@@ -1,0 +1,28 @@
+<div class="page-container">
+    <div class="page-header">
+        <h1>Withdrawal History</h1>
+        <button class="btn-3d" routerLink="/withdraw">+ New Withdrawal</button>
+    </div>
+
+    <div class="history-table-3d">
+        <div class="table-header">
+            <div class="col">Withdrawal ID</div>
+            <div class="col">Amount</div>
+            <div class="col">Method</div>
+            <div class="col">Fee</div>
+            <div class="col">Status</div>
+            <div class="col">Date</div>
+        </div>
+
+        <div *ngFor="let withdrawal of withdrawals" class="table-row">
+            <div class="col">{{ withdrawal.id }}</div>
+            <div class="col amount">{{ withdrawal.amount | currency: 'USD' }}</div>
+            <div class="col">{{ withdrawal.method }}</div>
+            <div class="col fee">-{{ withdrawal.fee | currency: 'USD' }}</div>
+            <div class="col">
+                <span class="status-badge" [class]="withdrawal.status.toLowerCase()">{{ withdrawal.status }}</span>
+            </div>
+            <div class="col">{{ withdrawal.date | date: 'MMM d, y h:mm a' }}</div>
+        </div>
+    </div>
+</div>

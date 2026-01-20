@@ -1,0 +1,28 @@
+<div class="page-container">
+    <div class="page-header">
+        <h1>Deposit History</h1>
+        <button class="btn-3d" routerLink="/deposit">+ New Deposit</button>
+    </div>
+
+    <div class="history-table-3d">
+        <div class="table-header">
+            <div class="col">Deposit ID</div>
+            <div class="col">Amount</div>
+            <div class="col">Method</div>
+            <div class="col">Fee</div>
+            <div class="col">Status</div>
+            <div class="col">Date</div>
+        </div>
+
+        <div *ngFor="let deposit of deposits" class="table-row">
+            <div class="col">{{ deposit.id }}</div>
+            <div class="col amount">{{ deposit.amount | currency: 'USD' }}</div>
+            <div class="col">{{ deposit.method }}</div>
+            <div class="col">{{ deposit.fee | currency: 'USD' }}</div>
+            <div class="col">
+                <span class="status-badge" [class]="deposit.status.toLowerCase()">{{ deposit.status }}</span>
+            </div>
+            <div class="col">{{ deposit.date | date: 'MMM d, y h:mm a' }}</div>
+        </div>
+    </div>
+</div>

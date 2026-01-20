@@ -1,0 +1,196 @@
+<div class="page-container">
+    <!-- Stepper -->
+    <div class="stepper-card">
+        <div class="stepper">
+            <div class="step-item" [class.completed]="currentStep > 1" [class.active]="currentStep === 1">
+                <div class="step-circle" (click)="goToStep(1)">
+                    <span *ngIf="currentStep > 1">✓</span>
+                    <span *ngIf="currentStep <= 1">1</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-label">Select Bank</div>
+            </div>
+            <div class="step-item" [class.completed]="currentStep > 2" [class.active]="currentStep === 2">
+                <div class="step-circle" (click)="goToStep(2)">
+                    <span *ngIf="currentStep > 2">✓</span>
+                    <span *ngIf="currentStep <= 2">2</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-label">Pay & Confirm</div>
+            </div>
+            <div class="step-item" [class.active]="currentStep === 3">
+                <div class="step-circle">
+                    <span>3</span>
+                </div>
+                <div class="step-label">Upload Proof</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="info-card success-card">
+        <h4>P2P Uber Payments</h4>
+        <p>Choose bank account from your country region only</p>
+    </div>
+
+    <div class="info-card warning-card">
+        <h5>Payment Processing Information:</h5>
+        <p><strong>International Payments:</strong> Processing time: 4-5 working days</p>
+        <p><strong>Regional Payments:</strong> Processing time: 6 hours</p>
+    </div>
+
+    <!-- Step 1: Select Bank Account -->
+    <div *ngIf="currentStep === 1" class="step-content">
+        <div *ngFor="let region of regions" class="region-section">
+            <h4 class="region-title">{{ region }} Region</h4>
+            <div class="accounts-grid">
+                <div *ngFor="let account of getAccountsByRegion(region)" class="account-card"
+                    (click)="selectAccount(account)">
+                    <div class="account-header">
+                        <div class="account-info">
+                            <img [src]="account.flag" [alt]="account.country" class="flag-img">
+                            <div class="account-details">
+                                <span class="country-name">{{ account.country }}</span>
+                                <span class="account-number">{{ account.currency }} | {{ account.accountNumber }}</span>
+                            </div>
+                        </div>
+                        <span class="chevron">›</span>
+                    </div>
+                    <div class="verified-badge">
+                        <span class="check-icon">✓</span>
+                        <span>Verified By Uber Payments</span>
+                    </div>
+                    <hr>
+                    <div class="account-footer">
+                        <div class="last-payment">
+                            <span class="label">Last payment date</span>
+                            <span class="no-payment">{{ account.lastPaymentDate || 'No payments yet' }}</span>
+                        </div>
+                        <button class="btn-history">History</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2: Payment Confirmation & Amount -->
+    <div *ngIf="currentStep === 2 && selectedAccount" class="step-content">
+        <div class="bank-details-modal">
+            <div class="modal-header-section">
+                <img [src]="selectedAccount.flag" [alt]="selectedAccount.country" class="flag-large">
+                <div>
+                    <h5>{{ selectedAccount.country }}</h5>
+                    <p>{{ selectedAccount.currency }} | {{ selectedAccount.accountNumber }}</p>
+                    <span class="verified-badge-small">
+                        <span class="check-icon">✓</span> Verified By Uber Payments
+                    </span>
+                </div>
+            </div>
+
+            <div class="alert-info">
+                <span class="info-icon">ℹ</span>
+                Use for local bank transfers within {{ selectedAccount.country }} in {{ selectedAccount.currency }} via
+                electronic funds transfer (EFT), or direct deposit.
+            </div>
+
+            <div class="bank-details-grid">
+                <div class="detail-item">
+                    <h6>Account Holder Name</h6>
+                    <p>{{ selectedAccount.accountHolder }}</p>
+                </div>
+                <div class="detail-item">
+                    <h6>Bank Name</h6>
+                    <p>{{ selectedAccount.bankName }}</p>
+                </div>
+                <div class="detail-item">
+                    <h6>Branch Name</h6>
+                    <p>{{ selectedAccount.branchName }}</p>
+                </div>
+                <div class="detail-item" *ngIf="selectedAccount.routingNumber">
+                    <h6>Routing Number</h6>
+                    <p>{{ selectedAccount.routingNumber }}</p>
+                </div>
+                <div class="detail-item" *ngIf="selectedAccount.sortCode">
+                    <h6>Sort Code</h6>
+                    <p>{{ selectedAccount.sortCode }}</p>
+                </div>
+                <div class="detail-item" *ngIf="selectedAccount.ifscCode">
+                    <h6>IFSC Code</h6>
+                    <p>{{ selectedAccount.ifscCode }}</p>
+                </div>
+                <div class="detail-item">
+                    <h6>IBAN</h6>
+                    <p>{{ selectedAccount.iban }}</p>
+                </div>
+                <div class="detail-item full-width">
+                    <h6>Bank Address</h6>
+                    <p>{{ selectedAccount.bankAddress }}</p>
+                </div>
+                <div class="detail-item">
+                    <h6>Receiver Number</h6>
+                    <p>{{ selectedAccount.receiverNumber }}</p>
+                </div>
+            </div>
+
+            <div class="payment-form">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="paymentConfirmed" [(ngModel)]="paymentConfirmed" class="custom-checkbox">
+                    <label for="paymentConfirmed">
+                        I confirm that I have sent the payment to the above bank account
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label for="amount">Amount Sent ({{ selectedAccount.currency }})</label>
+                    <input type="number" id="amount" [(ngModel)]="amount" class="form-control"
+                        placeholder="Enter amount you sent" min="10" step="0.01">
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-secondary" (click)="currentStep = 1">Back</button>
+                    <button class="btn-3d" (click)="proceedToProof()">Continue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3: Upload Proof -->
+    <div *ngIf="currentStep === 3" class="step-content">
+        <div class="upload-section">
+            <h4>Upload Payment Proof</h4>
+            <p>Please upload a screenshot or receipt of your payment transaction</p>
+
+            <div class="file-upload-area">
+                <input type="file" id="proof" (change)="onFileSelected($event)" accept="image/*,.pdf"
+                    class="file-input">
+                <label for="proof" class="file-label">
+                    <span class="upload-icon">📄</span>
+                    <span *ngIf="!proofFile" class="upload-text">Click to upload proof of payment</span>
+                    <span *ngIf="proofFile" class="file-name">{{ proofFile.name }}</span>
+                    <span class="upload-hint">Supported formats: JPG, PNG, PDF (Max 5MB)</span>
+                </label>
+            </div>
+
+            <div class="summary-box">
+                <h5>Payment Summary</h5>
+                <div class="summary-row">
+                    <span>Bank:</span>
+                    <span>{{ selectedAccount?.bankName }}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Account:</span>
+                    <span>{{ selectedAccount?.accountNumber }}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Amount:</span>
+                    <span class="amount-highlight">{{ amount }} {{ selectedAccount?.currency }}</span>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-secondary" (click)="currentStep = 2">Back</button>
+                <button class="btn-3d" (click)="submitDeposit()">Submit for Review</button>
+            </div>
+        </div>
+    </div>
+</div>

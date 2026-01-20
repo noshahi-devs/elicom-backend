@@ -1,0 +1,30 @@
+<div class="page-container">
+    <div class="page-header">
+        <h1>Support Tickets</h1>
+        <button class="btn-3d">+ Create New Ticket</button>
+    </div>
+
+    <div class="tickets-table-3d">
+        <div class="table-header">
+            <div class="col">Ticket ID</div>
+            <div class="col">Title</div>
+            <div class="col">Priority</div>
+            <div class="col">Status</div>
+            <div class="col">Created</div>
+            <div class="col">Replies</div>
+        </div>
+
+        <div *ngFor="let ticket of tickets" class="table-row">
+            <div class="col">{{ ticket.id }}</div>
+            <div class="col">{{ ticket.title }}</div>
+            <div class="col">
+                <span class="priority-badge" [class]="ticket.priority.toLowerCase()">{{ ticket.priority }}</span>
+            </div>
+            <div class="col">
+                <span class="status-badge" [class]="ticket.status.toLowerCase()">{{ ticket.status }}</span>
+            </div>
+            <div class="col">{{ ticket.created | date: 'MMM d, y' }}</div>
+            <div class="col">{{ ticket.replies }}</div>
+        </div>
+    </div>
+</div>

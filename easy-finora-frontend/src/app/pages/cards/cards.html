@@ -1,0 +1,110 @@
+<div class="page-container">
+    <div class="page-header">
+        <h1>My Debit Cards</h1>
+        <button class="btn-3d" (click)="openModal()">
+            <span>➕ Apply for New Card</span>
+        </button>
+    </div>
+
+    <!-- Active Cards -->
+    <div class="section">
+        <h3>Active Cards</h3>
+        <div class="cards-grid">
+            <div *ngFor="let card of activeCards" class="card-3d-item">
+                <div class="card-visual">
+                    <div class="card-chip">💳</div>
+                    <div class="card-number">{{ card.cardNumber }}</div>
+                    <div class="card-footer">
+                        <div class="card-type">{{ card.type }}</div>
+                        <div class="card-expiry">{{ card.expiryDate }}</div>
+                    </div>
+                </div>
+                <div class="card-info">
+                    <div class="info-row">
+                        <span class="label">Balance:</span>
+                        <span class="value">{{ card.balance | currency: 'USD' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Status:</span>
+                        <span class="status-badge active">{{ card.status }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Applications -->
+    <div class="section">
+        <h3>Card Applications</h3>
+        <div class="table-3d">
+            <div class="table-header">
+                <div class="col">Application ID</div>
+                <div class="col">Type</div>
+                <div class="col">Card Number</div>
+                <div class="col">Applied Date</div>
+                <div class="col">Status</div>
+            </div>
+
+            <div *ngFor="let app of cardApplications" class="table-row">
+                <div class="col">{{ app.id }}</div>
+                <div class="col">{{ app.type }}</div>
+                <div class="col">{{ app.cardNumber }}</div>
+                <div class="col">{{ app.appliedDate | date: 'MMM d, y' }}</div>
+                <div class="col">
+                    <span class="status-badge" [class]="app.status.toLowerCase()">{{ app.status }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Apply Card Modal -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal-content-3d" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <div class="header-content">
+                <h3>Apply for Debit Card</h3>
+                <button class="close-btn" (click)="closeModal()">✕</button>
+            </div>
+        </div>
+
+        <div class="modal-body">
+            <form (ngSubmit)="submitApplication()">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" name="name" id="name" [(ngModel)]="fullName" class="form-control"
+                        placeholder="First Name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="contact">Contact Number</label>
+                    <input type="text" name="contact" id="contact" [(ngModel)]="contact" class="form-control"
+                        placeholder="Your Contact Number" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="address">Full Address</label>
+                    <input type="text" name="address" id="address" [(ngModel)]="address" class="form-control"
+                        placeholder="Your Full address" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="document">Govt Issued Document</label>
+                    <div class="file-upload">
+                        <input type="file" id="document" (change)="onFileSelected($event)" accept="image/*,.pdf"
+                            class="file-input" required>
+                        <label for="document" class="file-label">
+                            <span class="icon">📄</span>
+                            <span *ngIf="!documentFile">Attach your Govt Issued Document</span>
+                            <span *ngIf="documentFile">{{ documentFile.name }}</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn-3d btn-submit">Apply now</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

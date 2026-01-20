@@ -1,0 +1,79 @@
+<div class="auth-container">
+    <div class="auth-card-3d" [ngClass]="{'signup-mode': isSignUp}">
+        <!-- Slider Background -->
+        <div class="slider-bg"></div>
+
+        <!-- Login Form -->
+        <div class="form-container login-form">
+            <h2>Welcome Back!</h2>
+            <p class="subtitle">Login to your Easy Finora account</p>
+
+            <div class="form-section">
+                <label>Email</label>
+                <input type="email" [(ngModel)]="loginEmail" placeholder="your@email.com" class="input-3d" />
+            </div>
+
+            <div class="form-section">
+                <label>Password</label>
+                <input type="password" [(ngModel)]="loginPassword" placeholder="••••••••" class="input-3d" />
+            </div>
+
+            <button class="btn-3d btn-submit" (click)="login()">
+                Login
+            </button>
+
+            <p class="toggle-text">
+                Don't have an account?
+                <span class="toggle-link" (click)="toggleMode()">Sign Up</span>
+            </p>
+        </div>
+
+        <!-- Signup Form -->
+        <div class="form-container signup-form">
+            <h2>Create Account</h2>
+            <p class="subtitle">Join Easy Finora today</p>
+
+            <div class="form-section">
+                <label>Full Name</label>
+                <input type="text" [(ngModel)]="signupName" placeholder="John Doe" class="input-3d" />
+            </div>
+
+            <div class="form-section">
+                <label>Email</label>
+                <input type="email" [(ngModel)]="signupEmail" placeholder="your@email.com" class="input-3d" />
+            </div>
+
+            <div class="form-section">
+                <label>Password</label>
+                <input type="password" [(ngModel)]="signupPassword" placeholder="••••••••" class="input-3d" />
+            </div>
+
+            <div class="form-section">
+                <label>Confirm Password</label>
+                <input type="password" [(ngModel)]="signupConfirmPassword" placeholder="••••••••" class="input-3d" />
+            </div>
+
+            <button class="btn-3d btn-submit" (click)="signup()">
+                Sign Up
+            </button>
+
+            <p class="toggle-text">
+                Already have an account?
+                <span class="toggle-link" (click)="toggleMode()">Login</span>
+            </p>
+        </div>
+
+        <!-- Info Panels -->
+        <div class="info-panel login-info">
+            <div class="logo">💰</div>
+            <h3>Easy Finora</h3>
+            <p>Your trusted financial partner for seamless transactions and secure banking.</p>
+        </div>
+
+        <div class="info-panel signup-info">
+            <div class="logo">🚀</div>
+            <h3>Get Started</h3>
+            <p>Create your account and start managing your finances with ease.</p>
+        </div>
+    </div>
+</div>

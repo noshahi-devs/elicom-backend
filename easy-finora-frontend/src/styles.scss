@@ -7,13 +7,13 @@
   --bg-surface: #ffffff;
   --text-main: #1a1a1a;
   --text-muted: #666666;
-  
+
   /* 3D Shadows */
-  --shadow-3d-soft: 
+  --shadow-3d-soft:
     0 10px 20px rgba(0, 0, 0, 0.05),
     0 6px 6px rgba(0, 0, 0, 0.1);
-    
-  --shadow-3d-deep: 
+
+  --shadow-3d-deep:
     0 15px 35px rgba(29, 224, 22, 0.1),
     0 5px 15px rgba(0, 0, 0, 0.07);
 
@@ -21,7 +21,8 @@
   --btn-3d-active: 0 2px 0 var(--primary-dark);
 }
 
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
   font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
@@ -39,6 +40,10 @@ app-root {
   display: flex;
   flex: 1;
   background-color: var(--bg-body);
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
 }
 
 app-sidebar {
@@ -49,6 +54,21 @@ app-sidebar {
   height: 100vh;
   box-shadow: 10px 0 30px rgba(0, 0, 0, 0.03);
   z-index: 100;
+
+  @media (max-width: 1024px) {
+    width: 240px;
+  }
+
+  @media (max-width: 768px) {
+    position: fixed;
+    left: -280px;
+    transition: left 0.3s ease;
+    height: 100vh;
+
+    &.mobile-open {
+      left: 0;
+    }
+  }
 }
 
 .main-content {
@@ -56,6 +76,72 @@ app-sidebar {
   padding: 30px;
   overflow-x: hidden;
   overflow-y: auto;
+
+  @media (max-width: 1024px) {
+    padding: 24px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+}
+
+/* Mobile Menu Toggle Button */
+.mobile-menu-toggle {
+  display: none;
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 1000;
+  box-shadow:
+    0 8px 16px rgba(29, 224, 22, 0.3),
+    0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  @media (max-width: 768px) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Mobile Overlay */
+.mobile-overlay {
+  display: none;
+
+  @media (max-width: 768px) {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+    animation: fadeIn 0.3s ease;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* 3D Utility Classes */
@@ -64,9 +150,9 @@ app-sidebar {
   border-radius: 20px;
   padding: 24px;
   box-shadow: var(--shadow-3d-soft);
-  border: 1px solid rgba(0,0,0,0.02);
+  border: 1px solid rgba(0, 0, 0, 0.02);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  
+
   &:hover {
     transform: translateY(-5px);
     box-shadow: var(--shadow-3d-deep);
@@ -83,7 +169,7 @@ app-sidebar {
   box-shadow: var(--btn-3d);
   transition: all 0.1s ease;
   cursor: pointer;
-  
+
   &:active {
     transform: translateY(2px);
     box-shadow: var(--btn-3d-active);
@@ -94,11 +180,12 @@ app-sidebar {
 ::-webkit-scrollbar {
   width: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--primary);
   border-radius: 10px;
 }
-

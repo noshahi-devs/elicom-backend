@@ -1,0 +1,42 @@
+<div class="page-container">
+    <div class="header-card-3d">
+        <div class="header-content">
+            <h3>Withdraw Funds to your Account</h3>
+            <div class="header-image">
+                <span class="icon">💰</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-card-3d">
+        <form (ngSubmit)="submitWithdraw()">
+            <!-- Bank Account Details -->
+            <div class="bank-details-card">
+                <div class="detail-row">
+                    <h4>Bank Name</h4>
+                    <h4>{{ bankDetails.bankName }}</h4>
+                </div>
+                <div class="detail-row">
+                    <h4>Account Title</h4>
+                    <h4>{{ bankDetails.accountTitle }}</h4>
+                </div>
+                <div class="detail-row">
+                    <h4>Account Number</h4>
+                    <h4>{{ bankDetails.accountNumber }}</h4>
+                </div>
+            </div>
+
+            <!-- Withdrawal Amount Input -->
+            <div class="form-group">
+                <label for="amount">Amount to Withdraw</label>
+                <input type="number" name="amount" id="amount" [(ngModel)]="amount" class="form-control"
+                    placeholder="Enter amount" min="1" required>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="form-group">
+                <button type="submit" class="btn-3d btn-submit">Continue</button>
+            </div>
+        </form>
+    </div>
+</div>
