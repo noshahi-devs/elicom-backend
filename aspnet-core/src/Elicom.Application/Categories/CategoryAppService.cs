@@ -14,7 +14,6 @@ using System.Threading.Tasks;
 
 namespace Elicom.Categories
 {
-    [AbpAuthorize(PermissionNames.Pages_Categories)]
     public class CategoryAppService : ApplicationService, ICategoryAppService
     {
         private readonly IRepository<Category, Guid> _categoryRepository;
@@ -26,6 +25,7 @@ namespace Elicom.Categories
             _mapper = mapper;
         }
 
+        [AbpAuthorize(PermissionNames.Pages_Categories)]
         public async Task<CategoryDto> Get(Guid id)
         {
             var entity = await _categoryRepository.GetAsync(id);
