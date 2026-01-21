@@ -1,38 +1,41 @@
-# Prime Ship: Wholesale Warehouse & Fulfillment
+# Prime Ship: Logistics & Dropshipping Platform
 
-This document describes the Prime Ship platform, the wholesale heart of the Elicom ecosystem.
+This document describes the **Prime Ship** platform, the logistics and shipping engine for the Elicom ecosystem.
+
+## Project Overview
+**Prime Ship** connects suppliers with dropshippers, handling inventory management and order fulfillment.
 
 ### User Isolation (Tenant 2)
-Prime Ship operates within **Tenant ID 2**. It isolates wholesale orders, inventory management, and supplier relationships.
-
-- **Internal Username**: Automatically prefixed with `PS_` (e.g., `PS_user@example.com`).
-- **User Branding**: Users see their standard email as their "Username".
-- **Cross-Platform Access**: A user can be a Reseller on Prime Ship (Tenant 2) and a Seller on Smart Store (Tenant 1) simultaneously with the same email.
+Prime Ship operates within **Tenant ID 2**.
+- **Internal Username Prefix**: `PS_`
+- **Roles**:
+    - **Supplier**: Can list products and fulfill orders.
+    - **Reseller**: Can source products for their stores.
 
 ---
 
-## 1. SMTP & Communication
-Prime Ship uses the default system SMTP configuration.
+## 1. Implementation Details
+The registration flow has been standardized across the Elicom ecosystem.
 
+### A. Extended Registration
+The registration APIs (`RegisterPrimeShipSeller`, `RegisterPrimeShipCustomer`) now accept:
+- **Email Address**: Primary identifier.
+- **Password**: Securely hashed.
+- **Country & Phone**: For shipping coordination and contact.
+
+### B. Verification Logic
+- **Cross-Tenant Verification**: Users can verify their email via the global `VerifyEmail` endpoint.
+- **Unit of Work**: Methods are `virtual` to ensure proper ABP framework interception.
+- **Default Redirection**: Users are redirected to the Prime Ship login page after verification.
+
+---
+
+## 2. SMTP Configuration
 - **Host**: `primeshipuk.com`
+- **Port**: `465` (SSL)
 - **Sender**: `no-reply@primeshipuk.com`
-- **Branding**: Primary corporate blue/red branding used for order updates and verification.
+- **Branding**: Uses Prime Ship blue branding (`#007bff`).
 
 ---
 
-## 2. Core Operational Flows
-
-### A. Wholesale Purchasing
-1. **Catalog**: Resellers browse products uploaded by the Warehouse Admin.
-2. **Checkout**: Payment is deducted from the user's Global Pay (Tenant 3) wallet.
-3. **Fulfillment**: Warehouse Admin updates status from `Purchased` -> `Processing` -> `Shipped` -> `Delivered`.
-
-### B. Smart Store Integration
-- **Reference Codes**: Every wholesale order generates a code (e.g., `WHOLE-XXXX`).
-- **Linking**: This code is pasted into Smart Store orders to bridge the retail and wholesale workflows.
-
----
-
-## 3. Account Management
-- **Verification**: New users receive a verification email that redirects to `/primeship/login`.
-- **Roles**: Distinct roles for `Admin` (Warehouse Manager) and `Reseller` (Inventory Buyer).
+*Last Updated: January 21, 2026*

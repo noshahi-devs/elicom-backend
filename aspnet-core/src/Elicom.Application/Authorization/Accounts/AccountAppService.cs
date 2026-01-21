@@ -113,33 +113,40 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
     }
 
     [HttpPost]
+    [HttpPost]
     public async Task RegisterSeller(string email)
     {
-        await RegisterPrimeShipSeller(email);
+        await RegisterPrimeShipSeller(new RegisterPrimeShipInput 
+        { 
+            EmailAddress = email, 
+            Password = "DefaultPassword123!", // Legacy support
+            Country = "United Kingdom",
+            PhoneNumber = "0000000000"
+        });
     }
 
     [HttpPost]
-    public async Task RegisterSmartStoreSeller(string email)
+    public async Task RegisterSmartStoreSeller(RegisterSmartStoreInput input)
     {
-        await RegisterPlatformUser(email, 1, StaticRoleNames.Tenants.Reseller, "Seller", "Smart Store", "SS", "#ff9900");
+        await RegisterPlatformUser(input.EmailAddress, 1, StaticRoleNames.Tenants.Reseller, "Seller", "Smart Store", "SS", "#ff9900", input.Password, input.Country, input.PhoneNumber);
     }
 
     [HttpPost]
-    public async Task RegisterSmartStoreCustomer(string email)
+    public async Task RegisterSmartStoreCustomer(RegisterSmartStoreInput input)
     {
-        await RegisterPlatformUser(email, 1, StaticRoleNames.Tenants.Buyer, "Customer", "Smart Store", "SS", "#ff9900");
+        await RegisterPlatformUser(input.EmailAddress, 1, StaticRoleNames.Tenants.Buyer, "Customer", "Smart Store", "SS", "#ff9900", input.Password, input.Country, input.PhoneNumber);
     }
 
     [HttpPost]
-    public async Task RegisterPrimeShipSeller(string email)
+    public async Task RegisterPrimeShipSeller(RegisterPrimeShipInput input)
     {
-        await RegisterPlatformUser(email, 2, StaticRoleNames.Tenants.Supplier, "Seller", "Prime Ship", "PS", "#007bff");
+        await RegisterPlatformUser(input.EmailAddress, 2, StaticRoleNames.Tenants.Supplier, "Seller", "Prime Ship", "PS", "#007bff", input.Password, input.Country, input.PhoneNumber);
     }
 
     [HttpPost]
-    public async Task RegisterPrimeShipCustomer(string email)
+    public async Task RegisterPrimeShipCustomer(RegisterPrimeShipInput input)
     {
-        await RegisterPlatformUser(email, 2, StaticRoleNames.Tenants.Reseller, "Customer", "Prime Ship", "PS", "#007bff");
+        await RegisterPlatformUser(input.EmailAddress, 2, StaticRoleNames.Tenants.Reseller, "Customer", "Prime Ship", "PS", "#007bff", input.Password, input.Country, input.PhoneNumber);
     }
 
     [HttpPost]

@@ -101,4 +101,62 @@ public class AccountAppService_Tests : ElicomTestBase
             verifiedUser.IsActive.ShouldBeTrue();
         });
     }
+
+    [Fact]
+    public async Task RegisterSmartStoreSeller_Test()
+    {
+        // Arrange
+        var input = new RegisterSmartStoreInput
+        {
+            EmailAddress = "seller@smartstore.com",
+            Password = "TestPassword123!",
+            PhoneNumber = "0987654321",
+            Country = "USA"
+        };
+
+        // Act
+        await _accountAppService.RegisterSmartStoreSeller(input);
+
+        // Assert
+        await UsingDbContextAsync(async context =>
+        {
+            var user = await context.Users
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.EmailAddress == input.EmailAddress && u.TenantId == 1);
+
+            user.ShouldNotBeNull($"User {input.EmailAddress} not found in Tenant 1.");
+            user.PhoneNumber.ShouldBe(input.PhoneNumber);
+            user.Country.ShouldBe(input.Country);
+            user.IsActive.ShouldBeFalse();
+        });
+    }
+
+    [Fact]
+    public async Task RegisterPrimeShipSeller_Test()
+    {
+        // Arrange
+        var input = new RegisterPrimeShipInput
+        {
+            EmailAddress = "seller@primeship.com",
+            Password = "TestPassword123!",
+            PhoneNumber = "1122334455",
+            Country = "Canada"
+        };
+
+        // Act
+        await _accountAppService.RegisterPrimeShipSeller(input);
+
+        // Assert
+        await UsingDbContextAsync(async context =>
+        {
+            var user = await context.Users
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.EmailAddress == input.EmailAddress && u.TenantId == 2);
+
+            user.ShouldNotBeNull($"User {input.EmailAddress} not found in Tenant 2.");
+            user.PhoneNumber.ShouldBe(input.PhoneNumber);
+            user.Country.ShouldBe(input.Country);
+            user.IsActive.ShouldBeFalse();
+        });
+    }
 }

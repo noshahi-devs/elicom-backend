@@ -18,11 +18,11 @@ public interface IAccountAppService : IApplicationService
 
     Task ResetPassword(ResetPasswordInput input);
 
-    Task RegisterSmartStoreSeller(string email);
-    Task RegisterSmartStoreCustomer(string email);
+    Task RegisterSmartStoreSeller(RegisterSmartStoreInput input);
+    Task RegisterSmartStoreCustomer(RegisterSmartStoreInput input);
 
-    Task RegisterPrimeShipSeller(string email);
-    Task RegisterPrimeShipCustomer(string email);
+    Task RegisterPrimeShipSeller(RegisterPrimeShipInput input);
+    Task RegisterPrimeShipCustomer(RegisterPrimeShipInput input);
 
     Task RegisterGlobalPayUser(RegisterGlobalPayInput input);
 
