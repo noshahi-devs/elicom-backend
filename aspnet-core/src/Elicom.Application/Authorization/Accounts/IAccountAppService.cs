@@ -24,5 +24,7 @@ public interface IAccountAppService : IApplicationService
     Task RegisterPrimeShipSeller(string email);
     Task RegisterPrimeShipCustomer(string email);
 
-    Task RegisterGlobalPayUser(string email);
+    Task RegisterGlobalPayUser(RegisterGlobalPayInput input);
+
+    Task SendSampleEmail();
 }

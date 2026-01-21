@@ -42,7 +42,7 @@ public class UserRegistrationManager : DomainService
         AbpSession = NullAbpSession.Instance;
     }
 
-    public async Task<User> RegisterAsync(string name, string surname, string emailAddress, string userName, string plainPassword, bool isEmailConfirmed)
+    public async Task<User> RegisterAsync(string name, string surname, string emailAddress, string userName, string plainPassword, bool isEmailConfirmed, string phoneNumber = null, string country = null)
     {
         CheckForTenant();
 
@@ -57,6 +57,9 @@ public class UserRegistrationManager : DomainService
             IsActive = true,
             UserName = userName,
             IsEmailConfirmed = isEmailConfirmed,
+            PhoneNumber = phoneNumber,
+            Country = country,
+            WalletId = GenerateWalletId(),
             Roles = new List<UserRole>()
         };
 
@@ -85,21 +88,20 @@ public class UserRegistrationManager : DomainService
 
     private void CheckForTenant()
     {
+        // Default to Tenant 1 if no tenant is provided, instead of throwing.
         if (!AbpSession.TenantId.HasValue && !CurrentUnitOfWork.GetTenantId().HasValue)
         {
-            throw new InvalidOperationException("Can not register host users!");
+            // We can optionally set it in the UOW here if needed, but the RegisterAsync logic 
+            // will now use 1 as a fallback via GetActiveTenantAsync.
+            return;
         }
     }
 
     private async Task<Tenant> GetActiveTenantAsync()
     {
-        var tenantId = AbpSession.TenantId ?? CurrentUnitOfWork.GetTenantId();
-        if (!tenantId.HasValue)
-        {
-            return null;
-        }
-
-        return await GetActiveTenantAsync(tenantId.Value);
+        var tenantId = CurrentUnitOfWork.GetTenantId() ?? AbpSession.TenantId ?? 1;
+        
+        return await GetActiveTenantAsync(tenantId);
     }
 
     private async Task<Tenant> GetActiveTenantAsync(int tenantId)
@@ -116,6 +118,15 @@ public class UserRegistrationManager : DomainService
         }
 
         return tenant;
+    }
+
+    private string GenerateWalletId()
+    {
+        var random = new Random();
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var randomPart = new string(Enumerable.Repeat(chars, 10)
+            .Select(s => s[random.Next(s.Length)]).ToArray());
+        return $"EF-{randomPart}";
     }
 
     protected virtual void CheckErrors(IdentityResult identityResult)

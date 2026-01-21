@@ -26,7 +26,7 @@ public class DefaultTenantBuilder
         var defaultTenant = _context.Tenants.IgnoreQueryFilters().FirstOrDefault(t => t.TenancyName == AbpTenantBase.DefaultTenantName);
         if (defaultTenant == null)
         {
-            defaultTenant = new Tenant(AbpTenantBase.DefaultTenantName, AbpTenantBase.DefaultTenantName);
+            defaultTenant = new Tenant(AbpTenantBase.DefaultTenantName, AbpTenantBase.DefaultTenantName) { Id = 1 };
             SeedTenant(defaultTenant);
         }
 
@@ -34,7 +34,7 @@ public class DefaultTenantBuilder
         var primeShipTenant = _context.Tenants.IgnoreQueryFilters().FirstOrDefault(t => t.TenancyName == "primeship");
         if (primeShipTenant == null)
         {
-            primeShipTenant = new Tenant("primeship", "Prime Ship");
+            primeShipTenant = new Tenant("primeship", "Prime Ship") { Id = 2 };
             SeedTenant(primeShipTenant);
         }
 
@@ -42,7 +42,7 @@ public class DefaultTenantBuilder
         var globalPayTenant = _context.Tenants.IgnoreQueryFilters().FirstOrDefault(t => t.TenancyName == "globalpay");
         if (globalPayTenant == null)
         {
-            globalPayTenant = new Tenant("globalpay", "Global Pay");
+            globalPayTenant = new Tenant("globalpay", "Global Pay") { Id = 3 };
             SeedTenant(globalPayTenant);
         }
     }

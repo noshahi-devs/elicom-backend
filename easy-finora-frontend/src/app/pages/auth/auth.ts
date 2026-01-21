@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { NgClass, NgIf, NgFor } from '@angular/common';
 import { Router } from '@angular/router';
 import { ToastService } from '../../shared/toast/toast.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
     selector: 'app-auth',
@@ -34,12 +35,29 @@ export class Auth {
     acceptTerms = false;
 
     // Forgot Password
-    resetEmail = ''; // Added
+    resetEmail = '';
+
+    isPendingVerification = false;
 
     constructor(
         private router: Router,
-        private toastService: ToastService
+        private toastService: ToastService,
+        private authService: AuthService
     ) { }
+
+    sendSampleEmail() {
+        this.isLoading = true;
+        this.authService.sendSampleEmail().subscribe({
+            next: () => {
+                this.isLoading = false;
+                this.toastService.showSuccess('Sample email triggered. Check inbox (and backend logs).');
+            },
+            error: (err: any) => {
+                this.isLoading = false;
+                this.toastService.showError(err.error?.error?.message || 'Failed to send sample email');
+            }
+        });
+    }
 
     toggleMode() {
         this.isSignUp = !this.isSignUp;
@@ -92,12 +110,27 @@ export class Auth {
 
         this.isLoading = true;
 
-        // Mock login - redirect to dashboard
-        setTimeout(() => {
-            this.isLoading = false;
-            this.toastService.showSuccess('Login successful! Welcome back.');
-            this.router.navigate(['/dashboard']);
-        }, 1500);
+        this.authService.login({
+            userNameOrEmailAddress: this.loginEmail,
+            password: this.loginPassword,
+            rememberClient: this.rememberMe
+        }).subscribe({
+            next: (res: any) => {
+                this.isLoading = false;
+                localStorage.setItem('token', res.result.accessToken);
+                this.toastService.showSuccess('Login successful! Welcome back.');
+                this.router.navigate(['/dashboard']);
+            },
+            error: (err: any) => {
+                this.isLoading = false;
+                if (err.error?.error?.details?.includes('EmailConfirmation')) {
+                    this.isPendingVerification = true;
+                    this.toastService.showError('Your email is not verified yet.');
+                } else {
+                    this.toastService.showError(err.error?.error?.message || 'Login failed. Please check your credentials.');
+                }
+            }
+        });
     }
 
     // Country Dropdown Logic
@@ -134,6 +167,7 @@ export class Auth {
     }
 
     signup() {
+        console.log('Signup process started');
         // Validation
         if (!this.signupName || this.signupName.trim().length < 3) {
             this.toastService.showError('Please enter your full name (minimum 3 characters)');
@@ -173,12 +207,33 @@ export class Auth {
 
         this.isLoading = true;
 
-        // Mock signup - redirect to dashboard
-        setTimeout(() => {
-            this.isLoading = false;
-            this.toastService.showSuccess('Account created successfully! Welcome to Easy Finora.');
-            this.router.navigate(['/dashboard']);
-        }, 1500);
+        const registerInput = {
+            emailAddress: this.signupEmail,
+            password: this.signupPassword,
+            phoneNumber: this.signupPhone,
+            country: this.signupCountry
+        };
+
+        console.log('Calling authService.register with:', registerInput);
+
+        this.authService.register(registerInput).subscribe({
+            next: (res: any) => {
+                console.log('Signup success response:', res);
+                this.isLoading = false;
+                if (res.result.canLogin) {
+                    this.toastService.showSuccess('Account created successfully!');
+                    this.isSignUp = false;
+                } else {
+                    this.isPendingVerification = true;
+                    this.toastService.showSuccess('Account created! Please check your email to verify your account.');
+                }
+            },
+            error: (err: any) => {
+                console.error('Signup error:', err);
+                this.isLoading = false;
+                this.toastService.showError(err.error?.error?.message || 'Registration failed. Please try again.');
+            }
+        });
     }
     sendResetLink() {
         if (!this.resetEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.resetEmail)) {

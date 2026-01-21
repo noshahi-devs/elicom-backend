@@ -519,3 +519,32 @@ body {
         transform: none;
     }
 }
+
+// Verification View Styles
+.verification-content {
+    text-align: center;
+    padding: 20px 0;
+
+    .verification-icon {
+        font-size: 60px;
+        color: $primary;
+        margin-bottom: 20px;
+        filter: drop-shadow(0 0 10px rgba(29, 224, 22, 0.3));
+    }
+
+    .verification-text {
+        font-size: 15px;
+        color: $text-muted;
+        line-height: 1.6;
+        margin-bottom: 30px;
+    }
+
+    .verification-actions {
+        margin-bottom: 25px;
+    }
+
+    .resend-text {
+        font-size: 14px;
+        color: $text-muted;
+    }
+}

@@ -37,12 +37,29 @@ public abstract class ElicomTestBase : AbpIntegratedTestBase<ElicomTestModule>
             new DefaultTenantBuilder(context).Create();
         });
 
-        // Seed initial data for default tenant
+        // Seed initial data for tenants
+        // 1. Smart Store
         AbpSession.TenantId = 1;
         UsingDbContext(context =>
         {
             NormalizeDbContext(context);
             new TenantRoleAndUserBuilder(context, 1).Create();
+        });
+
+        // 2. Prime Ship
+        AbpSession.TenantId = 2;
+        UsingDbContext(context =>
+        {
+            NormalizeDbContext(context);
+            new TenantRoleAndUserBuilder(context, 2).Create();
+        });
+
+        // 3. Global Pay (Easy Finora)
+        AbpSession.TenantId = 3;
+        UsingDbContext(context =>
+        {
+            NormalizeDbContext(context);
+            new TenantRoleAndUserBuilder(context, 3).Create();
         });
 
         LoginAsDefaultTenantAdmin();

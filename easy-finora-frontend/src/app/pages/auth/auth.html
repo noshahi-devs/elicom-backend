@@ -18,13 +18,14 @@
         <!-- Right Side: Form -->
         <div class="auth-form-container">
 
-            <div class="auth-tabs" *ngIf="!isForgotPassword">
+            <div class="auth-tabs" *ngIf="!isForgotPassword && !isPendingVerification">
                 <button class="tab-btn" [class.active]="!isSignUp" (click)="isSignUp = false">Sign In</button>
                 <button class="tab-btn" [class.active]="isSignUp" (click)="isSignUp = true">Sign Up</button>
             </div>
 
             <!-- Login Form -->
-            <form *ngIf="!isSignUp && !isForgotPassword" #loginForm="ngForm" (ngSubmit)="login()" class="form-content">
+            <form *ngIf="!isSignUp && !isForgotPassword && !isPendingVerification" #loginForm="ngForm"
+                (ngSubmit)="login()" class="form-content">
                 <h2 class="form-title">Welcome Back</h2>
 
                 <div class="auth-input-group">
@@ -61,10 +62,16 @@
                     <span *ngIf="!isLoading">Log In</span>
                     <span *ngIf="isLoading">Processing...</span>
                 </button>
+
+                <button type="button" class="submit-btn" [disabled]="isLoading" (click)="sendSampleEmail()"
+                    style="margin-top: 10px; background: transparent; border: 1px solid #d1d5db; color: #111827;">
+                    Send Sample Email (Debug)
+                </button>
             </form>
 
             <!-- Signup Form -->
-            <form *ngIf="isSignUp && !isForgotPassword" #signupForm="ngForm" (ngSubmit)="signup()" class="form-content">
+            <form *ngIf="isSignUp && !isForgotPassword && !isPendingVerification" #signupForm="ngForm"
+                (ngSubmit)="signup()" class="form-content">
                 <h2 class="form-title">Create Account</h2>
 
                 <!-- Row 1: Name & Email -->
@@ -156,8 +163,7 @@
                             class="required">*</span></span>
                 </label>
 
-                <button type="submit" class="submit-btn"
-                    [disabled]="signupForm.invalid || isLoading || signupPassword !== signupConfirmPassword || !acceptTerms">
+                <button type="submit" class="submit-btn" [disabled]="isLoading">
                     <span *ngIf="!isLoading">Sign Up</span>
                     <span *ngIf="isLoading">Creating...</span>
                 </button>
@@ -187,6 +193,26 @@
                     <a href="javascript:void(0)" class="link" (click)="toggleForgot()">Back to Login</a>
                 </div>
             </form>
+
+            <!-- Pending Verification View -->
+            <div *ngIf="isPendingVerification" class="form-content verification-content">
+                <div class="verification-icon">
+                    <i class="fas fa-envelope-open-text"></i>
+                </div>
+                <h2 class="form-title">Verify Your Email</h2>
+                <p class="verification-text">
+                    We've sent a verification link to your email address. Please check your inbox and click the link to
+                    activate your account.
+                </p>
+                <div class="verification-actions">
+                    <button class="submit-btn" (click)="isPendingVerification = false; isSignUp = false">
+                        Back to Login
+                    </button>
+                </div>
+                <p class="resend-text">
+                    Didn't receive the email? <a href="javascript:void(0)" class="link">Resend link</a>
+                </p>
+            </div>
 
         </div>
     </div>

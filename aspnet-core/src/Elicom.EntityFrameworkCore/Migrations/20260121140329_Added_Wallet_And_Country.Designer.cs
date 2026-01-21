@@ -4,6 +4,7 @@ using Elicom.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Elicom.Migrations
 {
     [DbContext(typeof(ElicomDbContext))]
-    partial class ElicomDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260121140329_Added_Wallet_And_Country")]
+    partial class Added_Wallet_And_Country
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -31,6 +31,12 @@ public class RegisterInput : IValidatableObject
     [DisableAuditing]
     public string Password { get; set; }
 
+    [Required]
+    public string PhoneNumber { get; set; }
+
+    [Required]
+    public string Country { get; set; }
+
     [DisableAuditing]
     public string CaptchaResponse { get; set; }
 

@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using MimeKit;
 using MailKit.Net.Smtp;
 using MailKit.Security;
+using Microsoft.EntityFrameworkCore;
 
 namespace Elicom.Authorization.Accounts;
 
@@ -52,6 +53,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
         return new IsTenantAvailableOutput(TenantAvailabilityState.Available, tenant.Id);
     }
 
+    [HttpPost]
     public async Task<RegisterOutput> Register(RegisterInput input)
     {
         var user = await _userRegistrationManager.RegisterAsync(
@@ -60,13 +62,54 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             input.EmailAddress,
             input.UserName,
             input.Password,
-            true // Assumed email address is always confirmed. Change this if you want to implement email confirmation.
+            false, // Email address is NOT confirmed by default.
+            input.PhoneNumber,
+            input.Country
         );
+
+        if (AbpSession.TenantId == 3)
+        {
+            await SendVerificationEmail(user, "Easy Finora", "#1de016");
+        }
 
         return new RegisterOutput
         {
             CanLogin = user.IsActive && user.IsEmailConfirmed
         };
+    }
+
+    private async Task SendVerificationEmail(User user, string platformName, string brandColor)
+    {
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var verificationLink = $"https://localhost:44311/api/services/app/Account/VerifyEmail?userId={user.Id}&token={Uri.EscapeDataString(token)}&platform={Uri.EscapeDataString(platformName)}";
+
+        var emailBody = $@"
+            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #ffffff;'>
+                <div style='text-align: center; border-bottom: 2px solid {brandColor}; padding-bottom: 15px;'>
+                    <h1 style='color: #333; margin: 0;'>{platformName.ToUpper()}</h1>
+                </div>
+                <div style='padding: 30px; line-height: 1.6; color: #333;'>
+                    <h2>Welcome to {platformName}!</h2>
+                    <p>Hi <b>{user.EmailAddress}</b>,</p>
+                    <p>You've successfully registered on {platformName}.</p>
+                    <div style='text-align: center; margin: 35px 0;'>
+                        <a href='{verificationLink}' style='background-color: {brandColor}; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 18px;'>
+                            VERIFY MY ACCOUNT
+                        </a>
+                    </div>
+                </div>
+            </div>";
+
+        await SendEmailWithCustomSmtp(
+            "easyfinora.com",
+            465,
+            "no-reply@easyfinora.com",
+            "qy,DI!+ZasZz",
+            platformName,
+            user.EmailAddress,
+            $"Action Required: Verify Your {platformName} Account",
+            emailBody
+        );
     }
 
     [HttpPost]
@@ -100,12 +143,33 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
     }
 
     [HttpPost]
-    public async Task RegisterGlobalPayUser(string email)
+    public async Task RegisterGlobalPayUser(RegisterGlobalPayInput input)
     {
-        await RegisterPlatformUser(email, 3, StaticRoleNames.Tenants.Reseller, "User", "Global Pay", "GP", "#28a745");
+        await RegisterPlatformUser(input.EmailAddress, 3, StaticRoleNames.Tenants.Reseller, "User", "Global Pay", "GP", "#28a745", input.Password, input.Country, input.PhoneNumber);
     }
 
-    private async Task RegisterPlatformUser(string email, int tenantId, string roleName, string userType, string platformName, string prefix, string brandColor)
+    [HttpPost]
+    public async Task SendSampleEmail()
+    {
+        const string toEmail = "noshahidevelopersinc@gmail.com";
+
+        Logger.Info($"SendSampleEmail: Start sending sample email to {toEmail}. TenantId={AbpSession.TenantId}");
+
+        await SendEmailWithCustomSmtp(
+            "easyfinora.com",
+            465,
+            "no-reply@easyfinora.com",
+            "qy,DI!+ZasZz",
+            "Global Pay",
+            toEmail,
+            "Sample Email (Global Pay UK Register)",
+            "<div style='font-family: Arial, sans-serif;'>Sample email from backend API.</div>"
+        );
+
+        Logger.Info($"SendSampleEmail: Completed send attempt to {toEmail}.");
+    }
+
+    private async Task RegisterPlatformUser(string email, int tenantId, string roleName, string userType, string platformName, string prefix, string brandColor, string password = "Noshahi.000", string country = null, string phoneNumber = null)
     {
         using (CurrentUnitOfWork.SetTenantId(tenantId))
         using (CurrentUnitOfWork.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
@@ -123,8 +187,10 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                     "User",
                     email,
                     userName,
-                    "Noshahi.000",
-                    false
+                    password,
+                    false,
+                    phoneNumber,
+                    country
                 );
             }
             else
@@ -157,9 +223,9 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                         <p>Hi <b>{email}</b>,</p>
                         <p>You've successfully registered as a <b>{userType}</b> on {platformName}.</p>
                         <p style='background-color: #f8f9fa; padding: 10px; border-radius: 4px; border-left: 4px solid {brandColor};'>
-                            <b>Username:</b> <code>{email}</code><br>
-                            <b>Password:</b> <code>Noshahi.000</code>
-                        </p>
+                        <b>Username:</b> <code>{email}</code><br>
+                        <b>Password:</b> <code>{(password == "Noshahi.000" ? password : "Your chosen password")}</code>
+                    </p>
                         <div style='text-align: center; margin: 35px 0;'>
                             <a href='{verificationLink}' style='background-color: {brandColor}; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 18px;'>
                                 VERIFY MY ACCOUNT
@@ -182,6 +248,19 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                     emailBody
                 );
             }
+            else if (tenantId == 2) // Prime Ship
+            {
+                await SendEmailWithCustomSmtp(
+                    "primeshipuk.com",
+                    465,
+                    "no-reply@primeshipuk.com",
+                    "xB}Q]@saOI^K",
+                    "Prime Ship",
+                    email,
+                    $"Action Required: Verify Your {platformName} Account",
+                    emailBody
+                );
+            }
             else if (tenantId == 3) // Global Pay
             {
                 await SendEmailWithCustomSmtp(
@@ -195,7 +274,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                     emailBody
                 );
             }
-            else // Prime Ship (Tenant 2) or default
+            else // Default or other
             {
                 var mail = new System.Net.Mail.MailMessage("no-reply@primeshipuk.com", email)
                 {
@@ -240,38 +319,48 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
     }
 
     [HttpGet]
-    public async Task<ContentResult> VerifyEmail(long userId, string token, string platform = "Prime Ship")
+    public virtual async Task<ContentResult> VerifyEmail(long userId, string token, string platform = "Prime Ship")
     {
-        var user = await _userManager.FindByIdAsync(userId.ToString());
+        User user;
+        // Use UnitOfWorkManager.Current to disable filters and find user across all tenants
+        using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
+        {
+            user = await _userManager.FindByIdAsync(userId.ToString());
+        }
+
         if (user == null) throw new UserFriendlyException("User not found");
 
-        var result = await _userManager.ConfirmEmailAsync(user, token);
-        if (result.Succeeded)
+        // Set the tenant context to the user's actual tenant (e.g., Tenant 3) for confirmation
+        using (UnitOfWorkManager.Current.SetTenantId(user.TenantId))
         {
-            user.IsActive = true;
-            await _userManager.UpdateAsync(user);
-
-            string redirectPath = "/account/login";
-            if (platform == "Smart Store") redirectPath = "/smartstore/login";
-            if (platform == "Prime Ship") redirectPath = "/primeship/login";
-            if (platform == "Global Pay") redirectPath = "/globalpay/login";
-
-            return new ContentResult
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+            if (result.Succeeded)
             {
-                ContentType = "text/html",
-                Content = $@"
-                    <html>
-                        <body style='text-align: center; font-family: sans-serif; padding-top: 100px;'>
-                            <h1 style='color: green;'>{platform} Account Verified!</h1>
-                            <p>You are being redirected to the login page...</p>
-                            <script>
-                                setTimeout(function() {{
-                                    window.location.href = '{redirectPath}';
-                                }}, 3000);
-                            </script>
-                        </body>
-                    </html>"
-            };
+                user.IsActive = true;
+                await _userManager.UpdateAsync(user);
+
+                string redirectPath = "/account/login";
+                if (platform == "Smart Store") redirectPath = "/smartstore/login";
+                if (platform == "Prime Ship") redirectPath = "/primeship/login";
+                if (platform == "Easy Finora" || platform == "Global Pay") redirectPath = "/auth";
+
+                return new ContentResult
+                {
+                    ContentType = "text/html",
+                    Content = $@"
+                        <html>
+                            <body style='text-align: center; font-family: sans-serif; padding-top: 100px;'>
+                                <h1 style='color: green;'>{platform} Account Verified!</h1>
+                                <p>You are being redirected to the login page...</p>
+                                <script>
+                                    setTimeout(function() {{
+                                        window.location.href = '{redirectPath}';
+                                    }}, 3000);
+                                </script>
+                            </body>
+                        </html>"
+                };
+            }
         }
 
         throw new UserFriendlyException("Invalid or expired verification token");
@@ -320,17 +409,47 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                     </div>
                 </div>";
 
-            var mail = new System.Net.Mail.MailMessage(
-                "no-reply@primeshipuk.com",
-                email
-            )
+            // 5. Send Platform-Specific Email
+            if (tenantId == 3) // Global Pay / Easy Finora
             {
-                Subject = "Reset Your Prime Ship Password",
-                Body = emailBody,
-                IsBodyHtml = true
-            };
+                await SendEmailWithCustomSmtp(
+                    "easyfinora.com",
+                    465,
+                    "no-reply@easyfinora.com",
+                    "qy,DI!+ZasZz",
+                    "Easy Finora",
+                    email,
+                    "Reset Your Easy Finora Password",
+                    emailBody
+                );
+            }
+            else if (tenantId == 2) // Prime Ship
+            {
+                 await SendEmailWithCustomSmtp(
+                    "primeshipuk.com",
+                    465,
+                    "no-reply@primeshipuk.com",
+                    "xB}Q]@saOI^K",
+                    "Prime Ship UK",
+                    email,
+                    "Reset Your Prime Ship Password",
+                    emailBody
+                );
+            }
+            else // Default (Smart Store or other)
+            {
+                var mail = new System.Net.Mail.MailMessage(
+                    "no-reply@primeshipuk.com",
+                    email
+                )
+                {
+                    Subject = "Reset Your Password",
+                    Body = emailBody,
+                    IsBodyHtml = true
+                };
 
-            await _emailSender.SendAsync(mail);
+                await _emailSender.SendAsync(mail);
+            }
             Logger.Info($"ForgotPassword: Email sent to {email}");
         }
     }
