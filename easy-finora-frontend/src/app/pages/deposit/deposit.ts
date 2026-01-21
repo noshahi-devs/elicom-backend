@@ -30,11 +30,48 @@ interface BankAccount {
 })
 export class Deposit {
 
+    // Main flow state
+    depositMethod: 'p2p' | 'cards' | null = null;
+    amount: number | null = null;
+
+    // P2P flow (existing)
     currentStep = 1;
     selectedAccount: BankAccount | null = null;
     paymentConfirmed = false;
-    amount: number | null = null;
     proofFile: File | null = null;
+
+    // Cards & Other Methods
+    showPaymentCards = false;
+    selectedCard: string | null = null;
+    showCardModal = false;
+
+    // Card form data
+    cardDetails = {
+        holderName: '',
+        cardNumber: '',
+        expiryMonth: '',
+        expiryYear: '',
+        cvv: ''
+    };
+
+    // Crypto form data
+    cryptoProofFile: File | null = null;
+
+    paymentMethods = [
+        { value: 'p2p', label: 'P2P Payments', icon: '🏦' },
+        { value: 'cards', label: 'Cards & Other Methods', icon: '💳' }
+    ];
+
+    paymentCards = [
+        { id: 'mastercard', name: 'MasterCard', gradient: 'linear-gradient(135deg, #f79e1b, #eb001b)', functional: false },
+        { id: 'discover', name: 'Discover', gradient: 'linear-gradient(135deg, #ff6000, #ff9900)', functional: false },
+        { id: 'bank', name: 'Bank Transfer', gradient: 'linear-gradient(135deg, #667eea, #764ba2)', functional: false },
+        { id: 'crypto', name: 'Crypto via Binance', gradient: 'linear-gradient(135deg, #f7931a, #f2a900)', functional: true },
+        { id: 'gpay', name: 'Google Pay', gradient: 'linear-gradient(135deg, #4285f4, #34a853)', functional: false },
+        { id: 'amex', name: 'American Express', gradient: 'linear-gradient(135deg, #006fcf, #00a3e0)', functional: false }
+    ];
+
+    cryptoWalletAddress = 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh';
 
     bankAccounts: BankAccount[] = [
         // North American
@@ -294,5 +331,118 @@ export class Deposit {
         this.paymentConfirmed = false;
         this.amount = null;
         this.proofFile = null;
+    }
+
+    // New methods for enhanced flow
+    onMethodChange() {
+        if (this.depositMethod === 'cards') {
+            this.showPaymentCards = true;
+        } else {
+            this.showPaymentCards = false;
+            this.selectedCard = null;
+        }
+    }
+
+    validateAmount(): boolean {
+        if (!this.amount || this.amount <= 0) {
+            this.toastService.showError('Please enter a valid amount');
+            return false;
+        }
+        if (this.amount < 10) {
+            this.toastService.showError('Minimum deposit amount is $10');
+            return false;
+        }
+        return true;
+    }
+
+    proceedWithP2P() {
+        if (!this.validateAmount()) return;
+        // Show existing P2P flow (bank selection)
+        this.currentStep = 1;
+    }
+
+    selectPaymentCard(cardId: string) {
+        if (!this.validateAmount()) return;
+
+        this.selectedCard = cardId;
+        this.showCardModal = true;
+    }
+
+    closeModal() {
+        this.showCardModal = false;
+        this.selectedCard = null;
+        // Clear form data
+        this.cardDetails = {
+            holderName: '',
+            cardNumber: '',
+            expiryMonth: '',
+            expiryYear: '',
+            cvv: ''
+        };
+    }
+
+    submitCardPayment() {
+        const card = this.paymentCards.find(c => c.id === this.selectedCard);
+
+        if (card?.functional) {
+            // Handle Crypto
+            if (this.selectedCard === 'crypto') {
+                this.submitCryptoDeposit();
+            }
+        } else {
+            // Show unavailable message
+            this.toastService.showError('This payment method is currently unavailable. Please use P2P Payments or Crypto via Binance.');
+            this.closeModal();
+        }
+    }
+
+    submitCryptoDeposit() {
+        if (!this.cryptoProofFile) {
+            this.toastService.showError('Please upload transaction proof');
+            return;
+        }
+
+        console.log('Crypto deposit submitted:', {
+            amount: this.amount,
+            walletAddress: this.cryptoWalletAddress,
+            proof: this.cryptoProofFile
+        });
+
+        this.toastService.showSuccess(`Crypto deposit request for $${this.amount} submitted successfully! Processing time: 1-2 hours.`);
+
+        // Reset
+        this.closeModal();
+        this.depositMethod = null;
+        this.showPaymentCards = false;
+        this.amount = null;
+        this.cryptoProofFile = null;
+    }
+
+    onCryptoFileSelected(event: any) {
+        const file = event.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                this.toastService.showError('File size must be less than 5MB');
+                return;
+            }
+            this.cryptoProofFile = file;
+        }
+    }
+
+    copyWalletAddress() {
+        navigator.clipboard.writeText(this.cryptoWalletAddress);
+        this.toastService.showSuccess('Wallet address copied to clipboard!');
+    }
+
+    formatCardNumber() {
+        // Format card number with spaces
+        let value = this.cardDetails.cardNumber.replace(/\s/g, '');
+        let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+        this.cardDetails.cardNumber = formattedValue.substring(0, 19); // Max 16 digits + 3 spaces
+    }
+
+    get selectedCardName(): string {
+        const card = this.paymentCards.find(c => c.id === this.selectedCard);
+        return card?.name || '';
     }
 }
