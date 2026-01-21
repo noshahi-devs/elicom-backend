@@ -1,9 +1,11 @@
 import { Component } from '@angular/core';
 import { NgFor, NgIf, CurrencyPipe, DatePipe } from '@angular/common';
 
+import { RouterLink } from '@angular/router';
+
 @Component({
   selector: 'app-dashboard',
-  imports: [NgFor, NgIf, CurrencyPipe, DatePipe],
+  imports: [NgFor, NgIf, CurrencyPipe, DatePipe, RouterLink],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })

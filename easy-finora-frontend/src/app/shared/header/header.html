@@ -4,65 +4,17 @@
   <div class="header-top">
     <div class="logo">Easy Finora</div>
 
-    <!-- SEARCH -->
-    <div class="search-bar">
-      <input type="text" placeholder="Search...">
-      <button><i class="fas fa-search"></i></button>
-    </div>
-
     <!-- ICONS -->
     <div class="header-icons">
 
       <!-- USER -->
       <div class="user-menu-wrapper">
-        <span class="user-icon">
+        <span class="user-icon" [routerLink]="['/profile']" style="cursor: pointer;">
           <i class="far fa-user"></i>
         </span>
       </div>
 
-
-
-      <!-- CART -->
-      <div class="cart-wrapper" (mouseenter)="cartDropdown.set(true)" (mouseleave)="cartDropdown.set(false)">
-        <a href="#"><i class="fas fa-shopping-cart"></i></a>
-        <div class="cart-tooltip-box" *ngIf="cartDropdown()">
-          <div class="tooltip-content">
-            <img src="assets/images/emptycart.PNG" alt="Cart Empty">
-            <p>Shopping cart is Empty</p>
-            <a href="#">Go to Shop</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- WISHLIST / MESSAGE -->
-      <a href="#"><i class="far fa-heart"></i></a>
-      <a href="#"><i class="far fa-comment-dots"></i></a>
-
-      <!-- GLOBE --> 
-      <div class="currency-menu-wrapper" (mouseenter)="globeDropdown.set(true)" (mouseleave)="globeDropdown.set(false)">
-        <a href="#"><i class="fas fa-globe"></i></a>
-        <div class="currency-tooltip-box" *ngIf="globeDropdown()">
-          <div class="tooltip-section">
-            <p class="section-title">Currency</p>
-            <select>
-              <option value="USD">$ USD</option>
-              <option value="EUR">€ EUR</option>
-              <option value="GBP">£ GBP</option>
-              <option value="JPY">¥ JPY</option>
-            </select>
-          </div>
-          <div class="tooltip-section">
-            <p class="section-title">Language</p>
-            <div class="language-options">
-              <span class="active">English</span>
-              <span>Español</span>
-            </div>
-          </div>
-          <a href="#" class="international-link">International Site</a>
-        </div>
-      </div>
-
     </div>
   </div>
-\
+  \
 </header>

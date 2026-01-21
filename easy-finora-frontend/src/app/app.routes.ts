@@ -19,9 +19,12 @@ import { Withdraw } from './pages/withdraw/withdraw';
 import { WithdrawHistory } from './pages/withdraw-history/withdraw-history';
 import { WithdrawMethods } from './pages/withdraw-methods/withdraw-methods';
 
+import { Profile } from './pages/profile/profile';
+
 export const routes: Routes = [
   { path: '', redirectTo: '/auth', pathMatch: 'full' },
   { path: 'auth', component: Auth },
+  { path: 'profile', component: Profile },
   { path: 'home', component: HomeComponent },
   { path: 'product-detail', component: ProductDetail },
   { path: 'add-to-cart', component: AddToCart },

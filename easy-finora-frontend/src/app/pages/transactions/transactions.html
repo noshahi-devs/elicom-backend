@@ -9,6 +9,8 @@
                 (click)="setFilter('withdrawal')">Withdrawals</button>
             <button class="filter-btn" [class.active]="filterType === 'transfer'"
                 (click)="setFilter('transfer')">Transfers</button>
+            <button class="filter-btn" [class.active]="filterType === 'card'" (click)="setFilter('card')">Card
+                Transactions</button>
         </div>
     </div>
 

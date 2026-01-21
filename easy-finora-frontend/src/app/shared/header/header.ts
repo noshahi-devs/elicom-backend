@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, signal, ElementRef, ViewChild } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-header',
   standalone: true, // <-- this makes it standalone
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './header.html',
   styleUrls: ['./header.scss']
 })

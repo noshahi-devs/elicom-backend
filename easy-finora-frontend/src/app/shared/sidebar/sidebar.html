@@ -1,17 +1,14 @@
-<div class="sidebar-inner">
-  <div class="logo">
-    <h2>Easy Finora</h2>
-  </div>
+<div class="sidebar-inner" style="overflow-y: auto; height: 100vh; padding-bottom: 2rem;">
 
-  <div class="menu-sections">
-    <div *ngFor="let section of menuSections" class="menu-section">
-      <div class="section-title">{{ section.title }}</div>
-      <ul class="menu">
-        <li *ngFor="let item of section.items" [routerLink]="item.route" class="menu-item">
-          <span class="icon">{{ item.icon }}</span>
-          <span class="label">{{ item.label }}</span>
-        </li>
-      </ul>
-    </div>
+
+  <div class="menu-list">
+    <ng-container *ngFor="let section of menuSections">
+      <div *ngFor="let item of section.items" [routerLink]="item.route" class="menu-item" routerLinkActive="active"
+        [routerLinkActiveOptions]="{exact: item.route === '/dashboard'}">
+        <!-- Exact match for dashboard usually needed to avoid always active -->
+        <span class="icon">{{ item.icon }}</span>
+        <span class="label">{{ item.label }}</span>
+      </div>
+    </ng-container>
   </div>
 </div>

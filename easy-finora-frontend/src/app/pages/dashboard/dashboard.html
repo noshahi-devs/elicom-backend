@@ -18,7 +18,7 @@
         </div>
         <div class="wallet-info">
             <span class="wallet-id">Wallet ID: {{ walletData.walletId }}</span>
-            <button class="btn-3d btn-sm">View Details</button>
+            <button class="btn-3d btn-sm" [routerLink]="['/transactions']">View Details</button>
         </div>
     </div>
 
@@ -76,19 +76,19 @@
     <div class="quick-actions">
         <h3>Quick Actions</h3>
         <div class="actions-grid">
-            <button class="action-btn-3d">
+            <button class="action-btn-3d" [routerLink]="['/transfer']">
                 <span class="icon">💸</span>
                 <span class="label">Transfer Money</span>
             </button>
-            <button class="action-btn-3d">
+            <button class="action-btn-3d" [routerLink]="['/deposit']">
                 <span class="icon">⬇️</span>
                 <span class="label">Deposit Funds</span>
             </button>
-            <button class="action-btn-3d">
+            <button class="action-btn-3d" [routerLink]="['/withdraw']">
                 <span class="icon">⬆️</span>
                 <span class="label">Withdraw</span>
             </button>
-            <button class="action-btn-3d">
+            <button class="action-btn-3d" [routerLink]="['/cards']">
                 <span class="icon">💳</span>
                 <span class="label">Apply for Card</span>
             </button>

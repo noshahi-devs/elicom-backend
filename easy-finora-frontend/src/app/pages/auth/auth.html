@@ -1,79 +1,193 @@
-<div class="auth-container">
-    <div class="auth-card-3d" [ngClass]="{'signup-mode': isSignUp}">
-        <!-- Slider Background -->
-        <div class="slider-bg"></div>
+<div class="auth-page-container">
+    <div class="auth-card-horizontal">
 
-        <!-- Login Form -->
-        <div class="form-container login-form">
-            <h2>Welcome Back!</h2>
-            <p class="subtitle">Login to your Easy Finora account</p>
-
-            <div class="form-section">
-                <label>Email</label>
-                <input type="email" [(ngModel)]="loginEmail" placeholder="your@email.com" class="input-3d" />
+        <!-- Left Side: Branding -->
+        <div class="auth-branding">
+            <div class="brand-content">
+                <div class="brand-logo">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <h1>Easy Finora</h1>
+                <p>Seamless banking for the modern age.</p>
             </div>
-
-            <div class="form-section">
-                <label>Password</label>
-                <input type="password" [(ngModel)]="loginPassword" placeholder="••••••••" class="input-3d" />
+            <div class="brand-footer">
+                <p>&copy; 2026 Easy Finora</p>
             </div>
-
-            <button class="btn-3d btn-submit" (click)="login()">
-                Login
-            </button>
-
-            <p class="toggle-text">
-                Don't have an account?
-                <span class="toggle-link" (click)="toggleMode()">Sign Up</span>
-            </p>
         </div>
 
-        <!-- Signup Form -->
-        <div class="form-container signup-form">
-            <h2>Create Account</h2>
-            <p class="subtitle">Join Easy Finora today</p>
+        <!-- Right Side: Form -->
+        <div class="auth-form-container">
 
-            <div class="form-section">
-                <label>Full Name</label>
-                <input type="text" [(ngModel)]="signupName" placeholder="John Doe" class="input-3d" />
+            <div class="auth-tabs" *ngIf="!isForgotPassword">
+                <button class="tab-btn" [class.active]="!isSignUp" (click)="isSignUp = false">Sign In</button>
+                <button class="tab-btn" [class.active]="isSignUp" (click)="isSignUp = true">Sign Up</button>
             </div>
 
-            <div class="form-section">
-                <label>Email</label>
-                <input type="email" [(ngModel)]="signupEmail" placeholder="your@email.com" class="input-3d" />
-            </div>
+            <!-- Login Form -->
+            <form *ngIf="!isSignUp && !isForgotPassword" #loginForm="ngForm" (ngSubmit)="login()" class="form-content">
+                <h2 class="form-title">Welcome Back</h2>
 
-            <div class="form-section">
-                <label>Password</label>
-                <input type="password" [(ngModel)]="signupPassword" placeholder="••••••••" class="input-3d" />
-            </div>
+                <div class="auth-input-group">
+                    <label>Email Address <span class="required">*</span></label>
+                    <div class="input-field">
+                        <i class="fas fa-envelope icon"></i>
+                        <input type="email" name="loginEmail" [(ngModel)]="loginEmail" placeholder="Enter your email"
+                            required email #loginEmailModel="ngModel">
+                    </div>
+                </div>
 
-            <div class="form-section">
-                <label>Confirm Password</label>
-                <input type="password" [(ngModel)]="signupConfirmPassword" placeholder="••••••••" class="input-3d" />
-            </div>
+                <div class="auth-input-group">
+                    <label>Password <span class="required">*</span></label>
+                    <div class="input-field">
+                        <i class="fas fa-lock icon"></i>
+                        <input [type]="loginPasswordType || 'password'" name="loginPassword" [(ngModel)]="loginPassword"
+                            placeholder="Enter password" required minlength="6" #loginPassModel="ngModel">
+                        <i class="fas toggle-pass" [class.fa-eye]="loginPasswordType === 'text'"
+                            [class.fa-eye-slash]="loginPasswordType !== 'text'"
+                            (click)="loginPasswordType = loginPasswordType === 'text' ? 'password' : 'text'"></i>
+                    </div>
+                </div>
 
-            <button class="btn-3d btn-submit" (click)="signup()">
-                Sign Up
-            </button>
+                <div class="form-row">
+                    <label class="checkbox-wrapper">
+                        <input type="checkbox" name="remember" [(ngModel)]="rememberMe">
+                        <span class="checkmark"></span>
+                        <span class="label-text">Remember me</span>
+                    </label>
+                    <a href="javascript:void(0)" class="link" (click)="toggleForgot()">Forgot Password?</a>
+                </div>
 
-            <p class="toggle-text">
-                Already have an account?
-                <span class="toggle-link" (click)="toggleMode()">Login</span>
-            </p>
-        </div>
+                <button type="submit" class="submit-btn" [disabled]="loginForm.invalid || isLoading">
+                    <span *ngIf="!isLoading">Log In</span>
+                    <span *ngIf="isLoading">Processing...</span>
+                </button>
+            </form>
 
-        <!-- Info Panels -->
-        <div class="info-panel login-info">
-            <div class="logo">💰</div>
-            <h3>Easy Finora</h3>
-            <p>Your trusted financial partner for seamless transactions and secure banking.</p>
-        </div>
+            <!-- Signup Form -->
+            <form *ngIf="isSignUp && !isForgotPassword" #signupForm="ngForm" (ngSubmit)="signup()" class="form-content">
+                <h2 class="form-title">Create Account</h2>
 
-        <div class="info-panel signup-info">
-            <div class="logo">🚀</div>
-            <h3>Get Started</h3>
-            <p>Create your account and start managing your finances with ease.</p>
+                <!-- Row 1: Name & Email -->
+                <div class="form-grid">
+                    <div class="auth-input-group">
+                        <label>Full Name <span class="required">*</span></label>
+                        <div class="input-field">
+                            <input type="text" name="signupName" [(ngModel)]="signupName" placeholder="John Doe"
+                                required minlength="3" #signupNameModel="ngModel">
+                        </div>
+                    </div>
+                    <div class="auth-input-group">
+                        <label>Email <span class="required">*</span></label>
+                        <div class="input-field">
+                            <input type="email" name="signupEmail" [(ngModel)]="signupEmail"
+                                placeholder="email@example.com" required email #signupEmailModel="ngModel">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 2: Phone & Country -->
+                <div class="form-grid">
+                    <div class="auth-input-group">
+                        <label>Phone No. <span class="required">*</span></label>
+                        <div class="input-field">
+                            <input type="text" name="signupPhone" [(ngModel)]="signupPhone" placeholder="+1 234 567"
+                                required #signupPhoneModel="ngModel">
+                        </div>
+                    </div>
+                    <div class="auth-input-group">
+                        <label>Country <span class="required">*</span></label>
+                        <div class="custom-select-wrapper" (click)="toggleCountryDropdown()">
+                            <div class="custom-select-trigger" [class.filled]="selectedCountryData">
+                                <span *ngIf="!selectedCountryData" class="placeholder">Select Country</span>
+
+                                <div *ngIf="selectedCountryData" class="selected-value">
+                                    <img [src]="selectedCountryData.flag" class="country-flag"
+                                        onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                                    <span class="country-name">{{ selectedCountryData.name }}</span>
+                                </div>
+
+                                <i class="fas fa-chevron-down arrow" [class.rotate]="isCountryDropdownOpen"></i>
+                            </div>
+
+                            <div class="custom-options" *ngIf="isCountryDropdownOpen">
+                                <div class="option" *ngFor="let country of countries"
+                                    (click)="selectCountry(country); $event.stopPropagation()">
+                                    <img [src]="country.flag" class="country-flag">
+                                    <span>{{ country.name }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 3: Password & Confirm -->
+                <div class="form-grid">
+                    <div class="auth-input-group">
+                        <label>Password <span class="required">*</span></label>
+                        <div class="input-field">
+                            <input [type]="signupPasswordType || 'password'" name="signupPassword"
+                                [(ngModel)]="signupPassword" placeholder="Password" required minlength="8"
+                                #signupPassModel="ngModel">
+                            <i class="fas toggle-pass" [class.fa-eye]="signupPasswordType === 'text'"
+                                [class.fa-eye-slash]="signupPasswordType !== 'text'"
+                                (click)="signupPasswordType = signupPasswordType === 'text' ? 'password' : 'text'"></i>
+                        </div>
+                    </div>
+                    <div class="auth-input-group">
+                        <label>Confirm Password <span class="required">*</span></label>
+                        <div class="input-field">
+                            <input type="password" name="confirmPass" [(ngModel)]="signupConfirmPassword"
+                                placeholder="Confirm" required #confirmPassModel="ngModel">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="error-message"
+                    *ngIf="signupConfirmPassword && signupPassword !== signupConfirmPassword && confirmPassModel.touched"
+                    style="margin-bottom: 10px;">
+                    Passwords do not match.
+                </div>
+
+
+                <label class="checkbox-wrapper terms">
+                    <input type="checkbox" name="terms" [(ngModel)]="acceptTerms" required #termsModel="ngModel">
+                    <span class="checkmark"></span>
+                    <span class="label-text">I accept <a href="#" class="link">Terms & Privacy</a> <span
+                            class="required">*</span></span>
+                </label>
+
+                <button type="submit" class="submit-btn"
+                    [disabled]="signupForm.invalid || isLoading || signupPassword !== signupConfirmPassword || !acceptTerms">
+                    <span *ngIf="!isLoading">Sign Up</span>
+                    <span *ngIf="isLoading">Creating...</span>
+                </button>
+            </form>
+
+            <!-- Forgot Password Form -->
+            <form *ngIf="isForgotPassword" #forgotForm="ngForm" (ngSubmit)="sendResetLink()" class="form-content">
+                <h2 class="form-title">Reset Password</h2>
+                <p style="text-align: center; color: #6b7280; margin-bottom: 25px;">Enter your email and we'll send you
+                    a link to reset your password.</p>
+
+                <div class="auth-input-group">
+                    <label>Email Address <span class="required">*</span></label>
+                    <div class="input-field">
+                        <i class="fas fa-envelope icon"></i>
+                        <input type="email" name="resetEmail" [(ngModel)]="resetEmail" placeholder="Enter your email"
+                            required email #resetEmailModel="ngModel">
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" [disabled]="forgotForm.invalid || isLoading">
+                    <span *ngIf="!isLoading">Send Reset Link</span>
+                    <span *ngIf="isLoading">Sending...</span>
+                </button>
+
+                <div style="text-align: center; margin-top: 20px;">
+                    <a href="javascript:void(0)" class="link" (click)="toggleForgot()">Back to Login</a>
+                </div>
+            </form>
+
         </div>
     </div>
 </div>
