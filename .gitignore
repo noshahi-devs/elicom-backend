@@ -10,3 +10,25 @@ aspnet-core/src/Elicom.Migrator/Logs/Logs.txt
 aspnet-core/build/outputs/
 aspnet-core/docker/mvc/Mvc-Logs/
 
+# ================================
+# Angular / Node.js
+# ================================
+node_modules/
+dist/
+out-tsc/
+.angular/
+.angular/cache/
+*.tsbuildinfo
+
+# Angular environment files (optional – keep if you manage envs separately)
+# src/environments/environment*.ts
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
