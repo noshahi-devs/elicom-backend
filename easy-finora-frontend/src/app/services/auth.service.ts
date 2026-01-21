@@ -31,4 +31,13 @@ export class AuthService {
     isTenantAvailable(tenancyName: string): Observable<any> {
         return this.http.post(`${this.apiUrl}/IsTenantAvailable`, { tenancyName });
     }
+
+    logout() {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userId');
+    }
+
+    isAuthenticated(): boolean {
+        return !!localStorage.getItem('authToken');
+    }
 }

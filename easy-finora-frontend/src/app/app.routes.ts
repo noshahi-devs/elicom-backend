@@ -18,31 +18,31 @@ import { DepositHistory } from './pages/deposit-history/deposit-history';
 import { Withdraw } from './pages/withdraw/withdraw';
 import { WithdrawHistory } from './pages/withdraw-history/withdraw-history';
 import { WithdrawMethods } from './pages/withdraw-methods/withdraw-methods';
-
 import { Profile } from './pages/profile/profile';
+import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/auth', pathMatch: 'full' },
   { path: 'auth', component: Auth },
-  { path: 'profile', component: Profile },
+  { path: 'profile', component: Profile, canActivate: [authGuard] },
   { path: 'home', component: HomeComponent },
   { path: 'product-detail', component: ProductDetail },
   { path: 'add-to-cart', component: AddToCart },
   { path: 'checkout', component: Checkout },
-  { path: 'dashboard', component: Dashboard },
-  { path: 'cards', component: Cards },
-  { path: 'apply-card', component: ApplyCard },
-  { path: 'transactions', component: Transactions },
-  { path: 'transfer', component: Transfer },
-  { path: 'business-plans', component: BusinessPlans },
-  { path: 'tickets', component: Tickets },
+  { path: 'dashboard', component: Dashboard, canActivate: [authGuard] },
+  { path: 'cards', component: Cards, canActivate: [authGuard] },
+  { path: 'apply-card', component: ApplyCard, canActivate: [authGuard] },
+  { path: 'transactions', component: Transactions, canActivate: [authGuard] },
+  { path: 'transfer', component: Transfer, canActivate: [authGuard] },
+  { path: 'business-plans', component: BusinessPlans, canActivate: [authGuard] },
+  { path: 'tickets', component: Tickets, canActivate: [authGuard] },
   { path: 'contact', component: Contact },
   // Deposit routes
-  { path: 'deposit', component: Deposit },
-  { path: 'deposit-methods', component: DepositMethods },
-  { path: 'deposit-history', component: DepositHistory },
+  { path: 'deposit', component: Deposit, canActivate: [authGuard] },
+  { path: 'deposit-methods', component: DepositMethods, canActivate: [authGuard] },
+  { path: 'deposit-history', component: DepositHistory, canActivate: [authGuard] },
   // Withdraw routes
-  { path: 'withdraw', component: Withdraw },
-  { path: 'withdraw-methods', component: WithdrawMethods },
-  { path: 'withdraw-history', component: WithdrawHistory }
+  { path: 'withdraw', component: Withdraw, canActivate: [authGuard] },
+  { path: 'withdraw-methods', component: WithdrawMethods, canActivate: [authGuard] },
+  { path: 'withdraw-history', component: WithdrawHistory, canActivate: [authGuard] }
 ];

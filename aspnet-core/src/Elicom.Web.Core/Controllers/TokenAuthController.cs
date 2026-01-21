@@ -75,8 +75,22 @@ namespace Elicom.Controllers
             {
                 case AbpLoginResultType.Success:
                     return loginResult;
+                case AbpLoginResultType.InvalidUserNameOrEmailAddress:
+                    throw new Abp.UI.UserFriendlyException("Invalid email address or username.");
+                case AbpLoginResultType.InvalidPassword:
+                    throw new Abp.UI.UserFriendlyException("Invalid password. Please try again.");
+                case AbpLoginResultType.UserIsNotActive:
+                    throw new Abp.UI.UserFriendlyException("Your account is not active. Please contact support.");
+                case AbpLoginResultType.InvalidTenancyName:
+                    throw new Abp.UI.UserFriendlyException("Invalid tenant name.");
+                case AbpLoginResultType.TenantIsNotActive:
+                    throw new Abp.UI.UserFriendlyException("Tenant is not active.");
+                case AbpLoginResultType.UserEmailIsNotConfirmed:
+                    throw new Abp.UI.UserFriendlyException("Your email is not confirmed. Please check your email for the verification link.");
+                case AbpLoginResultType.LockedOut:
+                    throw new Abp.UI.UserFriendlyException("Your account has been locked due to multiple failed login attempts. Please try again later.");
                 default:
-                    throw _abpLoginResultTypeHelper.CreateExceptionForFailedLoginAttempt(loginResult.Result, usernameOrEmailAddress, tenancyName);
+                    throw new Abp.UI.UserFriendlyException("Login failed. Please check your credentials and try again.");
             }
         }
 

@@ -1,8 +1,14 @@
 <div class="dashboard-container">
     <!-- Header Section -->
     <div class="dashboard-header">
-        <h1>Dashboard</h1>
-        <p class="subtitle">Welcome back! Here's your financial overview</p>
+        <div>
+            <h1>Dashboard</h1>
+            <p class="subtitle">Welcome back! Here's your financial overview</p>
+        </div>
+        <button class="btn-logout" (click)="logout()" title="Logout">
+            <span class="icon">🚪</span>
+            <span class="text">Logout</span>
+        </button>
     </div>
 
     <!-- Main Balance Card -->

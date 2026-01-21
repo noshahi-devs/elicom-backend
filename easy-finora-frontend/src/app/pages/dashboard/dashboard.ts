@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { NgFor, NgIf, CurrencyPipe, DatePipe } from '@angular/common';
-
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../shared/toast/toast.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -31,4 +32,16 @@ export class Dashboard {
     { id: 'TXN-004', type: 'Deposit', amount: 1000, status: 'Completed', date: new Date('2026-01-17') },
     { id: 'TXN-005', type: 'Transfer', amount: -75, status: 'Completed', date: new Date('2026-01-16') }
   ];
+
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private toastService: ToastService
+  ) { }
+
+  logout() {
+    this.authService.logout();
+    this.toastService.showSuccess('Logged out successfully');
+    this.router.navigate(['/auth'], { replaceUrl: true });
+  }
 }

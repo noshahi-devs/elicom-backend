@@ -5,6 +5,9 @@
 
 .dashboard-header {
     margin-bottom: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 
     h1 {
         margin: 0 0 8px 0;
@@ -17,6 +20,39 @@
         margin: 0;
         color: var(--text-muted);
         font-size: 16px;
+    }
+
+    .btn-logout {
+        background: linear-gradient(135deg, #ff6b6b, #ff5252);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 24px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        box-shadow:
+            0 6px 12px rgba(255, 107, 107, 0.3),
+            0 3px 6px rgba(0, 0, 0, 0.1);
+
+        .icon {
+            font-size: 18px;
+        }
+
+        &:hover {
+            transform: translateY(-3px);
+            box-shadow:
+                0 10px 20px rgba(255, 107, 107, 0.4),
+                0 5px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        &:active {
+            transform: translateY(-1px);
+        }
     }
 }
 

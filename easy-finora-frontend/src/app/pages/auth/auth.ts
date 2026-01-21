@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgClass, NgIf, NgFor } from '@angular/common';
 import { Router } from '@angular/router';
@@ -11,10 +11,10 @@ import { AuthService } from '../../services/auth.service';
     templateUrl: './auth.html',
     styleUrl: './auth.scss',
 })
-export class Auth {
+export class Auth implements OnInit {
 
     isSignUp = false;
-    isForgotPassword = false; // Added
+    isForgotPassword = false;
 
     // Login form
     loginEmail = '';
@@ -42,8 +42,46 @@ export class Auth {
     constructor(
         private router: Router,
         private toastService: ToastService,
-        private authService: AuthService
+        private authService: AuthService,
+        private cdr: ChangeDetectorRef
     ) { }
+
+    ngOnInit() {
+        // If already logged in, redirect to dashboard
+        if (localStorage.getItem('authToken')) {
+            this.router.navigate(['/dashboard'], { replaceUrl: true });
+        }
+    }
+
+    /**
+     * Resets all view state flags to show the login form
+     * Call this whenever you want to return to the default login view
+     */
+    resetViewState() {
+        console.log('🔄 BEFORE resetViewState:', {
+            isSignUp: this.isSignUp,
+            isForgotPassword: this.isForgotPassword,
+            isPendingVerification: this.isPendingVerification,
+            isLoading: this.isLoading
+        });
+
+        this.isSignUp = false;
+        this.isForgotPassword = false;
+        this.isPendingVerification = false;
+        this.isLoading = false;
+
+        console.log('✅ AFTER resetViewState:', {
+            isSignUp: this.isSignUp,
+            isForgotPassword: this.isForgotPassword,
+            isPendingVerification: this.isPendingVerification,
+            isLoading: this.isLoading
+        });
+        console.log('🎯 Login form should be visible:', !this.isSignUp && !this.isForgotPassword && !this.isPendingVerification);
+
+        // Force Angular to detect changes
+        this.cdr.detectChanges();
+        console.log('🔄 Change detection triggered');
+    }
 
     sendSampleEmail() {
         this.isLoading = true;
@@ -60,13 +98,35 @@ export class Auth {
     }
 
     toggleMode() {
-        this.isSignUp = !this.isSignUp;
-        this.isForgotPassword = false; // Ensure forgot password is off when toggling mode
+        console.log('🔀 toggleMode called, current isSignUp:', this.isSignUp);
+        if (this.isSignUp) {
+            // Switching from signup to login
+            console.log('📝 Switching from SIGNUP to LOGIN');
+            this.resetViewState();
+        } else {
+            // Switching from login to signup
+            console.log('📝 Switching from LOGIN to SIGNUP');
+            this.isSignUp = true;
+            this.isForgotPassword = false;
+            this.isPendingVerification = false;
+            console.log('✅ State after switching to signup:', {
+                isSignUp: this.isSignUp,
+                isForgotPassword: this.isForgotPassword,
+                isPendingVerification: this.isPendingVerification
+            });
+        }
     }
 
-    toggleForgot() { // Added
-        this.isForgotPassword = !this.isForgotPassword;
-        this.isSignUp = false; // Ensure signup is off when toggling forgot password
+    toggleForgot() {
+        if (this.isForgotPassword) {
+            // Switching from forgot password to login
+            this.resetViewState();
+        } else {
+            // Switching from login to forgot password
+            this.isForgotPassword = true;
+            this.isSignUp = false;
+            this.isPendingVerification = false;
+        }
     }
 
     // New logic used in HTML template directly, but keeping it here if needed or for other toggles
@@ -96,6 +156,13 @@ export class Auth {
     }
 
     login() {
+        console.log('🔐 LOGIN ATTEMPT - Current state:', {
+            isSignUp: this.isSignUp,
+            isForgotPassword: this.isForgotPassword,
+            isPendingVerification: this.isPendingVerification,
+            loginEmail: this.loginEmail
+        });
+
         // Validation
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!this.loginEmail || !emailPattern.test(this.loginEmail)) {
@@ -117,17 +184,23 @@ export class Auth {
         }).subscribe({
             next: (res: any) => {
                 this.isLoading = false;
-                localStorage.setItem('token', res.result.accessToken);
+                // Store token with correct key for auth guard
+                localStorage.setItem('authToken', res.result.accessToken);
+                localStorage.setItem('userId', res.result.userId);
                 this.toastService.showSuccess('Login successful! Welcome back.');
-                this.router.navigate(['/dashboard']);
+                // Navigate to dashboard and replace history to prevent back button from returning to login
+                this.router.navigate(['/dashboard'], { replaceUrl: true });
             },
             error: (err: any) => {
                 this.isLoading = false;
-                if (err.error?.error?.details?.includes('EmailConfirmation')) {
+                const errorMessage = err.error?.error?.message || 'Login failed. Please check your credentials.';
+
+                // Check for specific error types
+                if (errorMessage.includes('email is not confirmed') || errorMessage.includes('not verified')) {
                     this.isPendingVerification = true;
-                    this.toastService.showError('Your email is not verified yet.');
+                    this.toastService.showError('Your email is not verified. Please check your inbox for the verification link.');
                 } else {
-                    this.toastService.showError(err.error?.error?.message || 'Login failed. Please check your credentials.');
+                    this.toastService.showError(errorMessage);
                 }
             }
         });
@@ -167,6 +240,15 @@ export class Auth {
     }
 
     signup() {
+        console.log('📝 SIGNUP ATTEMPT - Current state BEFORE validation:', {
+            isSignUp: this.isSignUp,
+            isForgotPassword: this.isForgotPassword,
+            isPendingVerification: this.isPendingVerification,
+            isLoading: this.isLoading,
+            signupEmail: this.signupEmail
+        });
+        console.log('🎯 Login form visibility check:', !this.isSignUp && !this.isForgotPassword && !this.isPendingVerification);
+
         console.log('Signup process started');
         // Validation
         if (!this.signupName || this.signupName.trim().length < 3) {
@@ -214,19 +296,41 @@ export class Auth {
             country: this.signupCountry
         };
 
-        console.log('Calling authService.register with:', registerInput);
+        console.log('🚀 Calling API with:', registerInput);
+        console.log('📊 State BEFORE API call:', {
+            isSignUp: this.isSignUp,
+            isForgotPassword: this.isForgotPassword,
+            isPendingVerification: this.isPendingVerification,
+            isLoading: this.isLoading
+        });
 
         this.authService.register(registerInput).subscribe({
             next: (res: any) => {
-                console.log('Signup success response:', res);
-                this.isLoading = false;
-                if (res.result.canLogin) {
-                    this.toastService.showSuccess('Account created successfully!');
-                    this.isSignUp = false;
-                } else {
-                    this.isPendingVerification = true;
-                    this.toastService.showSuccess('Account created! Please check your email to verify your account.');
-                }
+                console.log('✅ Signup API SUCCESS response:', res);
+                console.log('📊 State IMMEDIATELY after API success (before any changes):', {
+                    isSignUp: this.isSignUp,
+                    isForgotPassword: this.isForgotPassword,
+                    isPendingVerification: this.isPendingVerification,
+                    isLoading: this.isLoading
+                });
+
+                // Clear form
+                this.clearSignupForm();
+
+                // Show success message
+                this.toastService.showSuccess('Account created successfully! Please check your email to verify your account.');
+
+                console.log('🔄 About to call resetViewState()...');
+                // Reset all view state flags to show login form
+                this.resetViewState();
+
+                console.log('📊 State AFTER resetViewState:', {
+                    isSignUp: this.isSignUp,
+                    isForgotPassword: this.isForgotPassword,
+                    isPendingVerification: this.isPendingVerification,
+                    isLoading: this.isLoading
+                });
+                console.log('🎯 Final login form visibility:', !this.isSignUp && !this.isForgotPassword && !this.isPendingVerification);
             },
             error: (err: any) => {
                 console.error('Signup error:', err);
@@ -235,6 +339,25 @@ export class Auth {
             }
         });
     }
+
+    clearSignupForm() {
+        this.signupName = '';
+        this.signupEmail = '';
+        this.signupPhone = '';
+        this.signupCountry = '';
+        this.signupPassword = '';
+        this.signupConfirmPassword = '';
+        this.acceptTerms = false;
+        this.selectedCountryData = null;
+    }
+
+    logout() {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userId');
+        this.toastService.showSuccess('Logged out successfully');
+        this.router.navigate(['/auth'], { replaceUrl: true });
+    }
+
     sendResetLink() {
         if (!this.resetEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.resetEmail)) {
             this.toastService.showError('Please enter a valid email address');

@@ -108,5 +108,81 @@ public class TenantRoleAndUserBuilder
             _context.UserRoles.Add(new UserRole(_tenantId, adminUser.Id, adminRole.Id));
             _context.SaveChanges();
         }
+
+        // Create verified test users for each platform
+        CreateVerifiedTestUser();
+    }
+
+    private void CreateVerifiedTestUser()
+    {
+        var passwordHasher = new PasswordHasher<User>(new OptionsWrapper<PasswordHasherOptions>(new PasswordHasherOptions()));
+        string testEmail = "";
+        string userName = "";
+        string roleToAssign = StaticRoleNames.Tenants.Reseller;
+
+        // Determine test user based on tenant
+        if (_tenantId == 1) // Smart Store
+        {
+            // Create Seller
+            testEmail = "noshahis@worldcart.com";
+            userName = "SS_noshahis@worldcart.com";
+            roleToAssign = StaticRoleNames.Tenants.Reseller;
+            CreateUser(testEmail, userName, roleToAssign, passwordHasher);
+
+            // Create Customer
+            testEmail = "noshahic@worldcart.com";
+            userName = "SS_noshahic@worldcart.com";
+            roleToAssign = StaticRoleNames.Tenants.Buyer;
+            CreateUser(testEmail, userName, roleToAssign, passwordHasher);
+        }
+        else if (_tenantId == 2) // Prime Ship
+        {
+            testEmail = "noshahi@primeshipuk.com";
+            userName = "PS_noshahi@primeshipuk.com";
+            roleToAssign = StaticRoleNames.Tenants.Supplier;
+            CreateUser(testEmail, userName, roleToAssign, passwordHasher);
+        }
+        else if (_tenantId == 3) // Easy Finora / Global Pay
+        {
+            testEmail = "noshahi@easyfinora.com";
+            userName = "GP_noshahi@easyfinora.com";
+            roleToAssign = StaticRoleNames.Tenants.Reseller;
+            CreateUser(testEmail, userName, roleToAssign, passwordHasher);
+        }
+    }
+
+    private void CreateUser(string email, string userName, string roleName, PasswordHasher<User> passwordHasher)
+    {
+        var existingUser = _context.Users.IgnoreQueryFilters().FirstOrDefault(u => u.TenantId == _tenantId && u.UserName == userName);
+        if (existingUser == null)
+        {
+            var testUser = new User
+            {
+                TenantId = _tenantId,
+                UserName = userName,
+                Name = "Test",
+                Surname = "User",
+                EmailAddress = email,
+                IsEmailConfirmed = true,
+                IsActive = true,
+                PhoneNumber = "+923001234567",
+                Country = "Pakistan"
+            };
+
+            // Set normalized names (required for database)
+            testUser.SetNormalizedNames();
+
+            testUser.Password = passwordHasher.HashPassword(testUser, "Noshahi.000");
+            _context.Users.Add(testUser);
+            _context.SaveChanges();
+
+            // Assign role
+            var role = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == roleName);
+            if (role != null)
+            {
+                _context.UserRoles.Add(new UserRole(_tenantId, testUser.Id, role.Id));
+                _context.SaveChanges();
+            }
+        }
     }
 }
