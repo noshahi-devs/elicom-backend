@@ -25,6 +25,9 @@ namespace Elicom.EntityFrameworkCore
         public DbSet<SupplierOrder> SupplierOrders { get; set; }
         public DbSet<SupplierOrderItem> SupplierOrderItems { get; set; }
         public DbSet<DepositRequest> DepositRequests { get; set; }
+        public DbSet<Cards.VirtualCard> VirtualCards { get; set; }
+        public DbSet<WithdrawRequest> WithdrawRequests { get; set; }
+        public DbSet<AppTransaction> AppTransactions { get; set; }
 
         public ElicomDbContext(DbContextOptions<ElicomDbContext> options)
             : base(options)

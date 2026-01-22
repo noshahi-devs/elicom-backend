@@ -1,8 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { NgFor, NgIf, CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../shared/toast/toast.service';
+import { CardService } from '../../services/card.service';
+import { TransactionService } from '../../services/transaction.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
@@ -10,34 +13,81 @@ import { ToastService } from '../../shared/toast/toast.service';
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
-export class Dashboard {
+export class Dashboard implements OnInit {
 
   walletData = {
-    balance: 12450.75,
-    walletId: 'WLT-8472-9301',
+    balance: 0,
+    walletId: '---',
     currency: 'USD'
   };
 
   stats = [
-    { label: 'Total Deposits', value: 25340.50, icon: '⬇️', color: '#1de016' },
-    { label: 'Total Withdrawals', value: 12889.75, icon: '⬆️', color: '#ff6b6b' },
-    { label: 'Pending Requests', value: 3, icon: '⏳', color: '#ffa500' },
-    { label: 'Active Cards', value: 2, icon: '💳', color: '#4a90e2' }
+    { label: 'Total Credits', value: 0, icon: '⬇️', color: '#1de016' },
+    { label: 'Total Debits', value: 0, icon: '⬆️', color: '#ff6b6b' },
+    { label: 'Recent Transactions', value: 0, icon: '📊', color: '#ffa500' },
+    { label: 'Active Cards', value: 0, icon: '💳', color: '#4a90e2' }
   ];
 
-  recentTransactions = [
-    { id: 'TXN-001', type: 'Deposit', amount: 500, status: 'Completed', date: new Date('2026-01-20') },
-    { id: 'TXN-002', type: 'Transfer', amount: -150, status: 'Completed', date: new Date('2026-01-19') },
-    { id: 'TXN-003', type: 'Withdrawal', amount: -300, status: 'Pending', date: new Date('2026-01-18') },
-    { id: 'TXN-004', type: 'Deposit', amount: 1000, status: 'Completed', date: new Date('2026-01-17') },
-    { id: 'TXN-005', type: 'Transfer', amount: -75, status: 'Completed', date: new Date('2026-01-16') }
-  ];
+  recentTransactions: any[] = [];
+  isLoading = false;
 
   constructor(
     private authService: AuthService,
     private router: Router,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private cardService: CardService,
+    private transactionService: TransactionService,
+    private cdr: ChangeDetectorRef
   ) { }
+
+  ngOnInit() {
+    this.loadData();
+  }
+
+  loadData() {
+    this.isLoading = true;
+    this.cdr.detectChanges();
+
+    forkJoin({
+      balance: this.cardService.getBalance(),
+      cards: this.cardService.getUserCards(),
+      history: this.transactionService.getHistory(0, 5)
+    }).subscribe({
+      next: (res: any) => {
+        console.log('Dashboard: Loaded Data:', res);
+
+        // Update Wallet
+        this.walletData.balance = res.balance.result.totalBalance;
+        this.walletData.walletId = res.balance.result.userId ? `WLT-${res.balance.result.userId}-GP` : '---';
+
+        // Update Transactions
+        this.recentTransactions = res.history.result.items.map((t: any) => ({
+          id: t.id,
+          type: t.category,
+          amount: t.transactionType === 'Debit' ? -t.amount : t.amount,
+          status: 'Completed',
+          date: t.creationTime
+        }));
+
+        // Update Stats
+        const credits = this.recentTransactions.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
+        const debits = Math.abs(this.recentTransactions.filter(t => t.amount < 0).reduce((sum, t) => sum + t.amount, 0));
+
+        this.stats[0].value = credits;
+        this.stats[1].value = debits;
+        this.stats[2].value = res.history.result.totalCount;
+        this.stats[3].value = res.cards.result.length;
+
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Dashboard: Load Error:', err);
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
 
   logout() {
     this.authService.logout();

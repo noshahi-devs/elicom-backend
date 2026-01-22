@@ -1,7 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIf } from '@angular/common';
+import { Router } from '@angular/router';
 import { ToastService } from '../../shared/toast/toast.service';
+import { CardService } from '../../services/card.service';
 
 @Component({
     selector: 'app-apply-card',
@@ -15,9 +17,16 @@ export class ApplyCard {
     contact = '';
     address = '';
     cardType = 'virtual';
+    cardBrand = 'Visa'; // Default to Visa for virtual
     documentFile: File | null = null;
+    isLoading = false;
 
-    constructor(private toastService: ToastService) { }
+    constructor(
+        private toastService: ToastService,
+        private cardService: CardService,
+        private router: Router,
+        private cdr: ChangeDetectorRef
+    ) { }
 
     onFileSelected(event: any) {
         const file = event.target.files[0];
@@ -26,7 +35,7 @@ export class ApplyCard {
         }
     }
 
-    submitApplication() {
+    async submitApplication() {
         // Validation
         if (!this.fullName || this.fullName.trim().length < 3) {
             this.toastService.showError('Please enter a valid full name (minimum 3 characters)');
@@ -54,21 +63,55 @@ export class ApplyCard {
             return;
         }
 
-        console.log('Card Application:', {
+        if (this.cardType === 'physical') {
+            this.toastService.showError('Physical cards are currently out of stock. Please apply for a Virtual Card.');
+            return;
+        }
+
+        this.isLoading = true;
+        this.cdr.detectChanges();
+
+        const payload = {
             fullName: this.fullName,
             contact: this.contact,
             address: this.address,
-            cardType: this.cardType,
-            document: this.documentFile
+            cardType: this.cardBrand, // For virtual, we use the brand (Visa/MasterCard/Amex)
+            document: this.documentFile.name // In a real app we'd upload this
+        };
+
+        console.log('ApplyCard: Submit Payload:', payload);
+
+        this.cardService.createVirtualCard(this.cardBrand).subscribe({
+            next: (response) => {
+                console.log('ApplyCard: Submit Response:', response);
+                this.toastService.showSuccess('Virtual Card generated successfully!');
+
+                // Reset form
+                this.resetForm();
+
+                // Redirect to cards list
+                this.router.navigate(['/cards']);
+            },
+            error: (err) => {
+                console.error('ApplyCard: Submit Error:', err);
+                this.toastService.showError(err.error?.error?.message || 'Failed to create virtual card. Please try again.');
+                this.isLoading = false;
+                this.cdr.detectChanges();
+            },
+            complete: () => {
+                this.isLoading = false;
+                this.cdr.detectChanges();
+            }
         });
+    }
 
-        this.toastService.showSuccess('Card application submitted successfully! We will review it shortly.');
-
-        // Reset form
+    resetForm() {
         this.fullName = '';
         this.contact = '';
         this.address = '';
         this.cardType = 'virtual';
+        this.cardBrand = 'Visa';
         this.documentFile = null;
+        this.isLoading = false;
     }
 }

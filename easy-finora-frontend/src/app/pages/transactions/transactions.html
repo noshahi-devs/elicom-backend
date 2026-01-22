@@ -14,7 +14,7 @@
         </div>
     </div>
 
-    <div class="transactions-table-3d">
+    <div class="transactions-table-3d" [class.loading-overlay]="isLoading">
         <div class="table-header">
             <div class="col">Transaction ID</div>
             <div class="col">Type</div>
@@ -22,6 +22,12 @@
             <div class="col">Amount</div>
             <div class="col">Status</div>
             <div class="col">Date</div>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="isLoading" class="loading-spinner-container">
+            <div class="spinner"></div>
+            <p>Loading transactions...</p>
         </div>
 
         <div *ngFor="let txn of filteredTransactions" class="table-row">
@@ -39,7 +45,7 @@
             <div class="col">{{ txn.date | date: 'MMM d, y h:mm a' }}</div>
         </div>
 
-        <div *ngIf="filteredTransactions.length === 0" class="empty-state">
+        <div *ngIf="!isLoading && filteredTransactions.length === 0" class="empty-state">
             <p>No transactions found for this filter.</p>
         </div>
     </div>

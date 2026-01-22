@@ -4,33 +4,56 @@
         <p class="subtitle">Fill out the form below to apply for a new debit card</p>
     </div>
 
-    <div class="apply-form-3d">
+    <div class="apply-form-3d" [class.loading-overlay]="isLoading">
         <div class="form-section">
             <label>Full Name <span class="required">*</span></label>
-            <input type="text" [(ngModel)]="fullName" placeholder="John Doe" class="input-3d" required />
+            <input type="text" [(ngModel)]="fullName" placeholder="John Doe" class="input-3d" required
+                [disabled]="isLoading" />
         </div>
 
         <div class="form-section">
             <label>Contact Number <span class="required">*</span></label>
-            <input type="tel" [(ngModel)]="contact" placeholder="+1 (555) 123-4567" class="input-3d" required />
+            <input type="tel" [(ngModel)]="contact" placeholder="+1 (555) 123-4567" class="input-3d" required
+                [disabled]="isLoading" />
         </div>
 
         <div class="form-section">
             <label>Shipping Address <span class="required">*</span></label>
             <textarea [(ngModel)]="address" placeholder="123 Main St, City, State, ZIP" class="input-3d" rows="3"
-                required></textarea>
+                required [disabled]="isLoading"></textarea>
         </div>
 
         <div class="form-section">
             <label>Card Type <span class="required">*</span></label>
             <div class="radio-group">
                 <label class="radio-option">
-                    <input type="radio" name="cardType" value="virtual" [(ngModel)]="cardType" />
+                    <input type="radio" name="cardType" value="virtual" [(ngModel)]="cardType" [disabled]="isLoading" />
                     <span>Virtual Card (Instant)</span>
                 </label>
                 <label class="radio-option">
-                    <input type="radio" name="cardType" value="physical" [(ngModel)]="cardType" />
+                    <input type="radio" name="cardType" value="physical" [(ngModel)]="cardType"
+                        [disabled]="isLoading" />
                     <span>Physical Card (7-10 days delivery)</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Brand Selection for Virtual Card -->
+        <div class="form-section" *ngIf="cardType === 'virtual'">
+            <label>Card Brand <span class="required">*</span></label>
+            <div class="radio-group">
+                <label class="radio-option">
+                    <input type="radio" name="cardBrand" value="Visa" [(ngModel)]="cardBrand" [disabled]="isLoading" />
+                    <span>Visa</span>
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="cardBrand" value="MasterCard" [(ngModel)]="cardBrand"
+                        [disabled]="isLoading" />
+                    <span>MasterCard</span>
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="cardBrand" value="Amex" [(ngModel)]="cardBrand" [disabled]="isLoading" />
+                    <span>American Express</span>
                 </label>
             </div>
         </div>
@@ -39,7 +62,7 @@
             <label>Government ID Document <span class="required">*</span></label>
             <div class="file-upload">
                 <input type="file" id="document" (change)="onFileSelected($event)" accept="image/*,.pdf"
-                    class="file-input" />
+                    class="file-input" [disabled]="isLoading" />
                 <label for="document" class="file-label">
                     <span class="icon">📄</span>
                     <span *ngIf="!documentFile">Choose File</span>
@@ -59,8 +82,11 @@
         </div>
 
         <button class="btn-3d btn-submit" (click)="submitApplication()"
-            [disabled]="!fullName || !contact || !address || !documentFile">
-            Submit Application
+            [disabled]="!fullName || !contact || !address || !documentFile || isLoading">
+            <span *ngIf="!isLoading">Submit Application</span>
+            <span *ngIf="isLoading" class="spinner-container">
+                <i class="spinner"></i> Generating Card...
+            </span>
         </button>
     </div>
 </div>

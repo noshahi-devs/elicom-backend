@@ -6,6 +6,7 @@ using Elicom.Authorization;
 using Elicom.Entities;
 using Elicom.GlobalPay.Dto;
 using Elicom.Wallets;
+using Elicom.Cards;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -19,13 +20,19 @@ namespace Elicom.GlobalPay
     {
         private readonly IRepository<DepositRequest, Guid> _depositRequestRepository;
         private readonly IWalletManager _walletManager;
+        private readonly IRepository<AppTransaction, long> _transactionRepository;
+        private readonly IRepository<VirtualCard, long> _cardRepository;
 
         public DepositRequestAppService(
             IRepository<DepositRequest, Guid> depositRequestRepository,
-            IWalletManager walletManager)
+            IWalletManager walletManager,
+            IRepository<VirtualCard, long> cardRepository,
+            IRepository<AppTransaction, long> transactionRepository)
         {
             _depositRequestRepository = depositRequestRepository;
             _walletManager = walletManager;
+            _cardRepository = cardRepository;
+            _transactionRepository = transactionRepository;
         }
 
         public async Task<DepositRequestDto> Create(CreateDepositRequestInput input)
@@ -35,11 +42,13 @@ namespace Elicom.GlobalPay
             var request = new DepositRequest
             {
                 UserId = user.Id,
+                CardId = input.CardId,
                 Amount = input.Amount,
                 Country = input.Country,
                 ProofImage = input.ProofImage,
                 Status = "Pending",
-                SourcePlatform = "GlobalPay",
+                Method = input.Method ?? "P2P",
+                SourcePlatform = AbpSession.TenantId == 3 ? "EasyFinora" : "GlobalPay",
                 DestinationAccount = GetDestinationAccountForCountry(input.Country)
             };
 
@@ -98,13 +107,32 @@ namespace Elicom.GlobalPay
             request.Status = "Approved";
             request.AdminRemarks = input.AdminRemarks;
 
-            // ACTUAL DEPOSIT INTO WALLET
+            // ACTUAL DEPOSIT INTO WALLET (Existing GlobalPay logic)
             await _walletManager.DepositAsync(
                 request.UserId,
                 request.Amount,
                 request.Id.ToString(),
                 $"Manual Deposit Approved - Reference: {request.Id}"
             );
+
+            // UPDATE VIRTUAL CARD BALANCE (New EasyFinora logic)
+            if (request.CardId.HasValue)
+            {
+                var card = await _cardRepository.GetAsync(request.CardId.Value);
+                card.Balance += request.Amount;
+
+                // RECORD TRANSACTION
+                await _transactionRepository.InsertAsync(new AppTransaction
+                {
+                    UserId = request.UserId,
+                    CardId = request.CardId,
+                    Amount = request.Amount,
+                    TransactionType = "Credit",
+                    Category = "Deposit",
+                    ReferenceId = request.Id.ToString(),
+                    Description = $"Deposit Approved for Card {request.CardId}"
+                });
+            }
         }
 
         [AbpAuthorize(PermissionNames.Pages_GlobalPay_Admin)]

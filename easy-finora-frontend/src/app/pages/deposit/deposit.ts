@@ -1,7 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIf, NgFor } from '@angular/common';
+import { NgIf, NgFor, CurrencyPipe } from '@angular/common';
+import { Router } from '@angular/router';
 import { ToastService } from '../../shared/toast/toast.service';
+import { DepositService } from '../../services/deposit.service';
+import { CardService } from '../../services/card.service';
 
 interface BankAccount {
     id: number;
@@ -24,18 +27,47 @@ interface BankAccount {
 
 @Component({
     selector: 'app-deposit',
-    imports: [FormsModule, NgIf, NgFor],
+    imports: [FormsModule, NgIf, NgFor, CurrencyPipe],
     templateUrl: './deposit.html',
     styleUrl: './deposit.scss',
 })
-export class Deposit {
+export class Deposit implements OnInit {
 
     // Main flow state
     depositMethod: 'p2p' | 'cards' | null = null;
     amount: number | null = null;
+    userCards: any[] = [];
+    selectedTargetCardId: number | null = null;
+    isLoading = false;
 
     // P2P flow (existing)
     currentStep = 1;
+
+    constructor(
+        private toastService: ToastService,
+        private depositService: DepositService,
+        private cardService: CardService,
+        private router: Router,
+        private cdr: ChangeDetectorRef
+    ) { }
+
+    ngOnInit() {
+        this.loadCards();
+    }
+
+    loadCards() {
+        this.cardService.getUserCards().subscribe({
+            next: (res) => {
+                console.log('Deposit: Cards Response:', res);
+                this.userCards = res.result;
+                if (this.userCards.length > 0) {
+                    this.selectedTargetCardId = this.userCards[0].cardId;
+                }
+                this.cdr.detectChanges();
+            },
+            error: (err) => console.error('Deposit: Cards Error:', err)
+        });
+    }
     selectedAccount: BankAccount | null = null;
     paymentConfirmed = false;
     proofFile: File | null = null;
@@ -256,7 +288,6 @@ export class Deposit {
         }
     ];
 
-    constructor(private toastService: ToastService) { }
 
     get regions() {
         return [...new Set(this.bankAccounts.map(acc => acc.region))];
@@ -311,26 +342,51 @@ export class Deposit {
             return;
         }
 
-        // Check file size (max 5MB)
-        if (this.proofFile.size > 5 * 1024 * 1024) {
-            this.toastService.showError('File size must be less than 5MB');
+        if (!this.selectedTargetCardId) {
+            this.toastService.showError('Please select a target card for the deposit');
             return;
         }
 
-        console.log('Deposit submitted:', {
-            account: this.selectedAccount,
+        this.isLoading = true;
+        this.cdr.detectChanges();
+
+        const input = {
+            cardId: this.selectedTargetCardId,
             amount: this.amount,
-            proof: this.proofFile
+            country: this.selectedAccount?.country || 'Unknown',
+            method: 'P2P',
+            proofImage: this.proofFile.name // In a real app we'd upload this and get a URL/ID
+        };
+
+        console.log('Deposit: Submit Payload (P2P):', input);
+
+        this.depositService.submitDepositRequest(input).subscribe({
+            next: (res) => {
+                console.log('Deposit: Submit Response (P2P):', res);
+                this.toastService.showSuccess(`P2P Deposit request for $${this.amount} submitted successfully!`);
+                this.resetForm();
+                this.router.navigate(['/transactions']);
+            },
+            error: (err) => {
+                console.error('Deposit: Submit Error (P2P):', err);
+                this.toastService.showError(err.error?.error?.message || 'Failed to submit deposit request');
+                this.isLoading = false;
+                this.cdr.detectChanges();
+            }
         });
+    }
 
-        this.toastService.showSuccess(`P2P Deposit request for $${this.amount} submitted successfully! Processing time: 4-6 hours for regional payments.`);
-
-        // Reset form
+    resetForm() {
         this.currentStep = 1;
         this.selectedAccount = null;
         this.paymentConfirmed = false;
         this.amount = null;
         this.proofFile = null;
+        this.isLoading = false;
+        this.depositMethod = null;
+        this.showPaymentCards = false;
+        this.selectedCard = null;
+        this.cryptoProofFile = null;
     }
 
     // New methods for enhanced flow
@@ -402,20 +458,39 @@ export class Deposit {
             return;
         }
 
-        console.log('Crypto deposit submitted:', {
+        if (!this.selectedTargetCardId) {
+            this.toastService.showError('Please select a target card for the deposit');
+            return;
+        }
+
+        this.isLoading = true;
+        this.cdr.detectChanges();
+
+        const input = {
+            cardId: this.selectedTargetCardId,
             amount: this.amount,
-            walletAddress: this.cryptoWalletAddress,
-            proof: this.cryptoProofFile
+            country: 'Crypto',
+            method: 'Crypto',
+            proofImage: this.cryptoProofFile.name
+        };
+
+        console.log('Deposit: Submit Payload (Crypto):', input);
+
+        this.depositService.submitDepositRequest(input).subscribe({
+            next: (res) => {
+                console.log('Deposit: Submit Response (Crypto):', res);
+                this.toastService.showSuccess(`Crypto deposit request for $${this.amount} submitted successfully!`);
+                this.closeModal();
+                this.resetForm();
+                this.router.navigate(['/transactions']);
+            },
+            error: (err) => {
+                console.error('Deposit: Submit Error (Crypto):', err);
+                this.toastService.showError(err.error?.error?.message || 'Failed to submit crypto deposit request');
+                this.isLoading = false;
+                this.cdr.detectChanges();
+            }
         });
-
-        this.toastService.showSuccess(`Crypto deposit request for $${this.amount} submitted successfully! Processing time: 1-2 hours.`);
-
-        // Reset
-        this.closeModal();
-        this.depositMethod = null;
-        this.showPaymentCards = false;
-        this.amount = null;
-        this.cryptoProofFile = null;
     }
 
     onCryptoFileSelected(event: any) {

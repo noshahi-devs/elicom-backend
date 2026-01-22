@@ -6,12 +6,21 @@
         </button>
     </div>
 
+    <!-- Total Balance Summary -->
+    <div class="balance-summary-3d" *ngIf="!isLoading">
+        <div class="summary-item">
+            <span class="label">Total Aggregated Balance</span>
+            <span class="value">{{ totalBalance | currency: 'USD' }}</span>
+        </div>
+    </div>
+
     <!-- Active Cards -->
     <div class="section">
         <h3>Active Cards</h3>
-        <div class="cards-grid">
+        <div class="cards-grid" *ngIf="activeCards.length > 0; else noCards">
             <div *ngFor="let card of activeCards" class="card-3d-item">
-                <div class="card-visual">
+                <div class="card-visual" [class.visa]="card.type === 'Visa'" [class.master]="card.type === 'MasterCard'"
+                    [class.amex]="card.type === 'Amex'">
                     <div class="card-chip">💳</div>
                     <div class="card-number">{{ card.cardNumber }}</div>
                     <div class="card-footer">
@@ -31,10 +40,15 @@
                 </div>
             </div>
         </div>
+        <ng-template #noCards>
+            <div class="empty-state-3d" *ngIf="!isLoading">
+                <p>No active cards found. Apply for one to get started!</p>
+            </div>
+        </ng-template>
     </div>
 
-    <!-- Card Applications -->
-    <div class="section">
+    <!-- Card Applications (Optional - for UI completeness) -->
+    <div class="section" *ngIf="cardApplications.length > 0">
         <h3>Card Applications</h3>
         <div class="table-3d">
             <div class="table-header">
@@ -59,41 +73,62 @@
 </div>
 
 <!-- Apply Card Modal -->
-<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
-    <div class="modal-content-3d" (click)="$event.stopPropagation()">
+<div class="modal-overlay" *ngIf="showModal" (click)="!isLoading && closeModal()">
+    <div class="modal-content-3d" (click)="$event.stopPropagation()" [class.loading-overlay]="isLoading">
         <div class="modal-header">
             <div class="header-content">
                 <h3>Apply for Debit Card</h3>
-                <button class="close-btn" (click)="closeModal()">✕</button>
+                <button class="close-btn" (click)="closeModal()" [disabled]="isLoading">✕</button>
             </div>
         </div>
 
         <div class="modal-body">
             <form (ngSubmit)="submitApplication()">
                 <div class="form-group">
-                    <label for="name">Full Name</label>
+                    <label for="name">Full Name <span class="required">*</span></label>
                     <input type="text" name="name" id="name" [(ngModel)]="fullName" class="form-control"
-                        placeholder="First Name" required>
+                        placeholder="John Doe" required [disabled]="isLoading">
                 </div>
 
                 <div class="form-group">
-                    <label for="contact">Contact Number</label>
+                    <label for="contact">Contact Number <span class="required">*</span></label>
                     <input type="text" name="contact" id="contact" [(ngModel)]="contact" class="form-control"
-                        placeholder="Your Contact Number" required>
+                        placeholder="Your Contact Number" required [disabled]="isLoading">
                 </div>
 
                 <div class="form-group">
-                    <label for="address">Full Address</label>
+                    <label for="address">Full Address <span class="required">*</span></label>
                     <input type="text" name="address" id="address" [(ngModel)]="address" class="form-control"
-                        placeholder="Your Full address" required>
+                        placeholder="Your Full address" required [disabled]="isLoading">
                 </div>
 
                 <div class="form-group">
-                    <label for="document">Govt Issued Document</label>
+                    <label>Card Brand <span class="required">*</span></label>
+                    <div class="radio-brand-group">
+                        <label class="brand-option">
+                            <input type="radio" name="cardBrand" value="Visa" [(ngModel)]="cardBrand"
+                                [disabled]="isLoading" />
+                            <span>Visa</span>
+                        </label>
+                        <label class="brand-option">
+                            <input type="radio" name="cardBrand" value="MasterCard" [(ngModel)]="cardBrand"
+                                [disabled]="isLoading" />
+                            <span>MasterCard</span>
+                        </label>
+                        <label class="brand-option">
+                            <input type="radio" name="cardBrand" value="Amex" [(ngModel)]="cardBrand"
+                                [disabled]="isLoading" />
+                            <span>Amex</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="document">Govt Issued Document <span class="required">*</span></label>
                     <div class="file-upload">
-                        <input type="file" id="document" (change)="onFileSelected($event)" accept="image/*,.pdf"
-                            class="file-input" required>
-                        <label for="document" class="file-label">
+                        <input type="file" id="document-modal" (change)="onFileSelected($event)" accept="image/*,.pdf"
+                            class="file-input" required [disabled]="isLoading">
+                        <label for="document-modal" class="file-label">
                             <span class="icon">📄</span>
                             <span *ngIf="!documentFile">Attach your Govt Issued Document</span>
                             <span *ngIf="documentFile">{{ documentFile.name }}</span>
@@ -102,7 +137,11 @@
                 </div>
 
                 <div class="form-group">
-                    <button type="submit" class="btn-3d btn-submit">Apply now</button>
+                    <button type="submit" class="btn-3d btn-submit"
+                        [disabled]="!fullName || !contact || !address || !documentFile || isLoading">
+                        <span *ngIf="!isLoading">Apply now</span>
+                        <span *ngIf="isLoading">Processing...</span>
+                    </button>
                 </div>
             </form>
         </div>

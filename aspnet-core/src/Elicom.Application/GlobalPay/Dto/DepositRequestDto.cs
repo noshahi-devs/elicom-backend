@@ -7,20 +7,25 @@ namespace Elicom.GlobalPay.Dto
     {
         public long UserId { get; set; }
         public string UserName { get; set; }
+        public long? CardId { get; set; }
         public decimal Amount { get; set; }
         public string Currency { get; set; }
         public string Country { get; set; }
         public string DestinationAccount { get; set; }
         public string ProofImage { get; set; }
         public string Status { get; set; }
+        public string Method { get; set; }
+        public string SourcePlatform { get; set; }
         public string AdminRemarks { get; set; }
         public DateTime CreationTime { get; set; }
     }
 
     public class CreateDepositRequestInput
     {
+        public long? CardId { get; set; }
         public decimal Amount { get; set; }
         public string Country { get; set; }
+        public string Method { get; set; } // P2P, Crypto
         public string ProofImage { get; set; } // Base64 or URL after upload
     }
 

@@ -1,18 +1,31 @@
 <div class="page-container">
     <!-- Initial View: Amount & Method Selection -->
-    <div *ngIf="!depositMethod || depositMethod === 'cards'" class="initial-view">
+    <div *ngIf="(!depositMethod || depositMethod === 'cards') && !isLoading" class="initial-view">
         <div class="deposit-header">
             <h2>💰 Deposit Money</h2>
             <p>Choose your preferred deposit method</p>
         </div>
 
+        <!-- Target Card Selection -->
+        <div class="form-section-3d" *ngIf="userCards.length > 0">
+            <label>Deposit Into Card <span class="required">*</span></label>
+            <select [(ngModel)]="selectedTargetCardId" class="method-dropdown" [disabled]="isLoading">
+                <option *ngFor="let card of userCards" [value]="card.cardId">
+                    {{ card.cardType }} - {{ card.cardNumber }} ({{ card.balance | currency }})
+                </option>
+            </select>
+        </div>
+        <div class="info-box warning-card" *ngIf="userCards.length === 0 && !isLoading">
+            <p>⚠️ You don't have any active cards. Please apply for a card first.</p>
+        </div>
+
         <!-- Amount Input (Always First) -->
-        <div class="amount-section">
-            <label for="depositAmount">Amount</label>
+        <div class="amount-section" [class.disabled]="userCards.length === 0">
+            <label for="depositAmount">Amount <span class="required">*</span></label>
             <div class="amount-input-group">
                 <span class="currency-symbol">$</span>
                 <input type="number" id="depositAmount" [(ngModel)]="amount" placeholder="Enter amount" min="10"
-                    step="0.01" class="amount-input">
+                    step="0.01" class="amount-input" [disabled]="isLoading || userCards.length === 0">
                 <span class="currency-code">USD</span>
             </div>
             <div class="fee-info">
@@ -22,9 +35,10 @@
         </div>
 
         <!-- Payment Method Dropdown -->
-        <div class="method-selection">
-            <label for="paymentMethod">Select Deposit Method</label>
-            <select id="paymentMethod" [(ngModel)]="depositMethod" (change)="onMethodChange()" class="method-dropdown">
+        <div class="method-selection" *ngIf="amount && amount >= 10">
+            <label for="paymentMethod">Select Deposit Method <span class="required">*</span></label>
+            <select id="paymentMethod" [(ngModel)]="depositMethod" (change)="onMethodChange()" class="method-dropdown"
+                [disabled]="isLoading">
                 <option [value]="null" disabled selected>Choose a method</option>
                 <option *ngFor="let method of paymentMethods" [value]="method.value">
                     {{ method.icon }} {{ method.label }}
@@ -267,7 +281,10 @@
 
                 <div class="button-group">
                     <button class="btn-secondary" (click)="currentStep = 2">Back</button>
-                    <button class="btn-3d" (click)="submitDeposit()">Submit for Review</button>
+                    <button class="btn-3d" (click)="submitDeposit()" [disabled]="isLoading">
+                        <span *ngIf="!isLoading">Submit for Review</span>
+                        <span *ngIf="isLoading">Processing...</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -303,7 +320,10 @@
                         <span *ngIf="cryptoProofFile" class="file-name">{{ cryptoProofFile.name }}</span>
                     </div>
 
-                    <button class="btn-3d btn-primary" (click)="submitCardPayment()">Submit Deposit</button>
+                    <button class="btn-3d btn-primary" (click)="submitCardPayment()" [disabled]="isLoading">
+                        <span *ngIf="!isLoading">Submit Deposit</span>
+                        <span *ngIf="isLoading">Processing...</span>
+                    </button>
                 </div>
 
                 <!-- Card Payment Form -->
