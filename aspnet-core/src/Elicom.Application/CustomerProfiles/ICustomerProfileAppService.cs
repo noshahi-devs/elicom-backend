@@ -14,6 +14,8 @@ namespace Elicom.CustomerProfiles
 
         Task<CustomerProfileDto> GetByUserIdAsync(long userId);
 
+        Task<CustomerProfileDto> GetMyProfileAsync();
+
         Task DeleteAsync(Guid id);
     }
 }

@@ -1,7 +1,9 @@
-import { Component } from '@angular/core';
+
 import { CommonModule } from '@angular/common'; // Import CommonModule for ngIf
 import { FormsModule } from '@angular/forms'; // Import FormsModule for ngModel
 import { ToastService } from '../../shared/toast/toast.service';
+import { SessionService } from '../../services/session.service';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 
 @Component({
     selector: 'app-profile',
@@ -10,22 +12,71 @@ import { ToastService } from '../../shared/toast/toast.service';
     templateUrl: './profile.html',
     styleUrl: './profile.scss'
 })
-export class Profile {
+export class Profile implements OnInit {
 
     isEditing = false;
     isLoading = false;
 
-    user = {
-        name: 'John Doe',
-        email: 'admin@nim.com',
-        phone: '+1 234 567 890',
-        address: '123 Wall Street, New York, NY'
+    user: any = {
+        name: '',
+        email: '',
+        phone: '',
+        address: ''
     };
 
     // Backup for cancel
     originalUser: any = {};
 
-    constructor(private toastService: ToastService) { }
+    constructor(
+        private toastService: ToastService,
+        private sessionService: SessionService,
+        private cdr: ChangeDetectorRef
+    ) { }
+
+    ngOnInit() {
+        this.loadProfile();
+    }
+
+    loadProfile() {
+        this.isLoading = true;
+        this.sessionService.getCurrentLoginInformations().subscribe({
+            next: (res: any) => {
+                const u = res.result.user;
+                if (u) {
+                    this.user.name = u.name + ' ' + u.surname;
+                    this.user.email = u.emailAddress;
+                    this.user.phone = 'Not set'; // Backend DTO limits
+                    this.user.address = 'Not set';
+
+                    // Try to fetch more details if possible, or just settle with this
+                    this.fetchUserDetails(u.id);
+                }
+                this.isLoading = false;
+                this.cdr.detectChanges();
+            },
+            error: (err) => {
+                console.error('Failed to load profile', err);
+                this.isLoading = false;
+            }
+        });
+    }
+
+    fetchUserDetails(id: number) {
+        this.sessionService.getUser(id).subscribe({
+            next: (res: any) => {
+                if (res?.result) {
+                    const u = res.result;
+                    this.user.name = u.fullName;
+                    this.user.email = u.emailAddress;
+                    // If backend updated to send phone/country
+                    if (u.phoneNumber) this.user.phone = u.phoneNumber;
+                    if (u.country) this.user.address = u.country;
+                }
+                this.cdr.detectChanges();
+            },
+            error: () => { } // Ignore error if User/Get is restricted
+        });
+    }
 
     toggleEdit() {
         if (!this.isEditing) {

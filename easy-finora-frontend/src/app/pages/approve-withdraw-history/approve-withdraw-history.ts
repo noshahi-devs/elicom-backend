@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { WithdrawService } from '../../services/withdraw.service';
 
@@ -14,7 +14,10 @@ export class ApproveWithdrawHistory implements OnInit {
     withdrawals: any[] = [];
     isLoading = false;
 
-    constructor(private withdrawService: WithdrawService) { }
+    constructor(
+        private withdrawService: WithdrawService,
+        private cdr: ChangeDetectorRef
+    ) { }
 
     ngOnInit() {
         this.fetchHistory();
@@ -22,14 +25,18 @@ export class ApproveWithdrawHistory implements OnInit {
 
     fetchHistory() {
         this.isLoading = true;
+        this.cdr.detectChanges();
+
         this.withdrawService.getAllWithdrawRequests().subscribe({
             next: (res: any) => {
                 this.withdrawals = res?.result?.items ?? [];
                 this.isLoading = false;
+                this.cdr.detectChanges();
             },
             error: (err) => {
                 console.error('Failed to load all withdraw requests', err);
                 this.isLoading = false;
+                this.cdr.detectChanges();
             }
         });
     }

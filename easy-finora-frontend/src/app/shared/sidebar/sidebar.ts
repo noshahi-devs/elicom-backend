@@ -77,8 +77,10 @@ export class Sidebar {
       title: 'Admin Management',
       expanded: true,
       items: [
-        { label: 'Approve Deposit Request', icon: '✅', route: '/approve-deposits' },
-        { label: 'Approve Withdraw Request', icon: '🏧', route: '/approve-withdrawals' },
+        { label: 'Admin Dashboard', icon: '🏛️', route: '/admin-dashboard' },
+        { label: 'User Management', icon: '👥', route: '/user-management' },
+        { label: 'Approve Deposit', icon: '✅', route: '/approve-deposits' },
+        { label: 'Approve Withdraw', icon: '🏧', route: '/approve-withdrawals' },
         { label: 'Support Management', icon: '🛠️', route: '/approve-support' },
         { label: 'Global Transactions', icon: '📈', route: '/approve-transactions' }
       ],
@@ -95,7 +97,7 @@ export class Sidebar {
 
   get isAdmin(): boolean {
     const email = localStorage.getItem('userEmail');
-    return email === 'noshahi@easyfinora.com';
+    return (email?.toLowerCase() === 'noshahi@easyfinora.com' || email?.toLowerCase() === 'noshahi@finora.com');
   }
 
   get filteredMenuSections() {

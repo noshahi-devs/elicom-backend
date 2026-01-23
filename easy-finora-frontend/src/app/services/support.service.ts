@@ -38,7 +38,7 @@ export class SupportService {
     }
 
     updateStatus(id: string, status: string, adminRemarks: string): Observable<any> {
-        return this.http.post(`${this.apiUrl}/UpdateStatus`, { id, status, adminRemarks }, {
+        return this.http.put(`${this.apiUrl}/UpdateStatus`, { id, status, adminRemarks }, {
             headers: this.getHeaders()
         });
     }

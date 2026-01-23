@@ -1,0 +1,67 @@
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="glow-text">Support Management</h1>
+        <div class="header-actions">
+            <span class="admin-badge">ADMIN PANEL</span>
+        </div>
+    </div>
+
+    <div class="history-table-3d">
+        <div class="table-header">
+            <div class="col">User / Email</div>
+            <div class="col">Title</div>
+            <div class="col">Priority</div>
+            <div class="col">Status</div>
+            <div class="col">Date</div>
+            <div class="col actions">Actions</div>
+        </div>
+
+        @if (isLoading) {
+        <div class="table-row">
+            <div class="col" style="width: 100%; text-align: center;">Loading tickets...</div>
+        </div>
+        }
+
+        @for (ticket of tickets; track ticket.id) {
+        <div class="table-row admin-row">
+            <div class="col user-info">
+                <span class="user-email">{{ ticket.userName || ticket.contactName || 'Anonymous' }}</span>
+                <small class="details">{{ ticket.contactEmail }}</small>
+            </div>
+            <div class="col method-info">
+                <strong>{{ ticket.title }}</strong>
+                <small class="details">{{ ticket.message | slice:0:50 }}{{ ticket.message.length > 50 ? '...' : ''
+                    }}</small>
+            </div>
+            <div class="col priority" [ngClass]="(ticket.priority || 'medium').toLowerCase()">
+                {{ ticket.priority }}
+            </div>
+            <div class="col">
+                <span class="status-badge" [ngClass]="(ticket.status || 'open').toLowerCase()">
+                    {{ ticket.status }}
+                </span>
+            </div>
+            <div class="col">{{ ticket.creationTime | date: 'MMM d, y h:mm a' }}</div>
+            <div class="col actions">
+                <ng-container *ngIf="ticket.status !== 'Closed'">
+                    <button class="btn-approve" (click)="reply(ticket)">Reply</button>
+                    <button class="btn-reject" (click)="closeTicket(ticket)">Close</button>
+                </ng-container>
+                <span *ngIf="ticket.status === 'Closed'" class="processed-text">
+                    Closed
+                </span>
+                <small *ngIf="ticket.adminRemarks" class="details"
+                    style="width: 100%; display: block; margin-top: 5px; color: #aaa;">
+                    Admin: {{ ticket.adminRemarks }}
+                </small>
+            </div>
+        </div>
+        } @empty {
+        @if (!isLoading) {
+        <div class="table-row">
+            <div class="col" style="width: 100%; text-align: center;">No support tickets found.</div>
+        </div>
+        }
+        }
+    </div>
+</div>

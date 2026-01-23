@@ -1,0 +1,24 @@
+@use '../deposit-history/deposit-history.scss' as *;
+
+.col.priority {
+    font-weight: bold;
+
+    &.high {
+        color: #ff6b6b;
+    }
+
+    &.medium {
+        color: #fcc419;
+    }
+
+    &.low {
+        color: #51cf66;
+    }
+}
+
+.details {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    display: block;
+    margin-top: 0.25rem;
+}

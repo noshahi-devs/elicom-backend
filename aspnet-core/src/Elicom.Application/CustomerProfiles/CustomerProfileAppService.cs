@@ -64,6 +64,24 @@ namespace Elicom.CustomerProfiles
             return ObjectMapper.Map<CustomerProfileDto>(profile);
         }
 
+        // GET MY PROFILE
+        public async Task<CustomerProfileDto> GetMyProfileAsync()
+        {
+            var userId = AbpSession.GetUserId();
+            var profile = await _customerProfileRepository
+                .GetAll()
+                .FirstOrDefaultAsync(x => x.UserId == userId);
+
+            if (profile == null)
+            {
+                // Optionally create one if it doesn't exist?
+                // For now, return null or empty DTO to avoid error in frontend
+                return new CustomerProfileDto { UserId = userId };
+            }
+
+            return ObjectMapper.Map<CustomerProfileDto>(profile);
+        }
+
         // DELETE
         public async Task DeleteAsync(Guid id)
         {

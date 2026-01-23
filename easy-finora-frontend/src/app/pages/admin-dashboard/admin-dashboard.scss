@@ -1,0 +1,274 @@
+@import "../../../styles.scss";
+
+.page-container {
+    padding: 30px;
+    background: #080808;
+    min-height: calc(100vh - 80px);
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+
+    .glow-text {
+        color: #fff;
+        font-size: 32px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        background: linear-gradient(135deg, #fff, #888);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+
+        .pulse-icon {
+            width: 10px;
+            height: 10px;
+            background: #00ff00;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00ff00;
+            animation: pulse 1.5s infinite;
+        }
+
+        .live-tag {
+            color: #00ff00;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+    }
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+
+    .stat-card {
+        position: relative;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 25px;
+        overflow: hidden;
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        cursor: default;
+
+        &:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .icon-box {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .info {
+            .label {
+                color: #888;
+                font-size: 14px;
+                margin-bottom: 5px;
+                display: block;
+            }
+
+            .value {
+                color: #fff;
+                font-size: 28px;
+                font-weight: 700;
+                margin: 0;
+            }
+        }
+
+        &.gold .icon-box i {
+            color: #d4af37;
+        }
+
+        &.green .icon-box i {
+            color: #28a745;
+        }
+
+        &.red .icon-box i {
+            color: #dc3545;
+        }
+
+        &.blue .icon-box i {
+            color: #007bff;
+        }
+    }
+}
+
+.main-content-row {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 30px;
+
+    @media (max-width: 1100px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.volume-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 35px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+
+        h3 {
+            color: #888;
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .period {
+            background: rgba(0, 255, 0, 0.1);
+            color: #00ff00;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+    }
+
+    .volume-display {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        margin-bottom: 30px;
+
+        .currency {
+            color: #d4af37;
+            font-size: 40px;
+            font-weight: 300;
+        }
+
+        .amount {
+            color: #fff;
+            font-size: 64px;
+            font-weight: 800;
+            margin: 0;
+        }
+    }
+
+    .volume-footer {
+        display: flex;
+        gap: 40px;
+        padding-top: 30px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+
+            span {
+                color: #666;
+                font-size: 12px;
+                margin-bottom: 5px;
+            }
+
+            strong {
+                color: #fff;
+                font-size: 18px;
+            }
+
+            .green-text {
+                color: #00ff00;
+            }
+        }
+    }
+}
+
+.admin-quick-links {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
+    padding: 30px;
+
+    h3 {
+        color: #fff;
+        margin-bottom: 25px;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .link-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+
+        .q-link {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            color: #ccc;
+            cursor: pointer;
+            transition: 0.2s;
+
+            i {
+                font-size: 24px;
+                color: goldenrod;
+            }
+
+            span {
+                font-size: 13px;
+                font-weight: 500;
+            }
+
+            &:hover {
+                background: rgba(255, 215, 0, 0.1);
+                border-color: rgba(255, 215, 0, 0.2);
+                color: #fff;
+                transform: scale(1.02);
+            }
+        }
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.5);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}

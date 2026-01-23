@@ -25,24 +25,43 @@ namespace Elicom.Support
 
         public async Task<SupportTicketDto> Create(CreateSupportTicketInput input)
         {
-            var ticket = new SupportTicket
+            try 
             {
-                TenantId = AbpSession.TenantId ?? 3, // Default to EasyFinora if not specified
-                Title = input.Title,
-                Message = input.Message,
-                Priority = input.Priority ?? "Medium",
-                ContactEmail = input.ContactEmail,
-                ContactName = input.ContactName,
-                Status = "Open"
-            };
+                var ticket = new SupportTicket
+                {
+                    Id = Guid.NewGuid(), // Explicitly generate ID
+                    TenantId = AbpSession.TenantId ?? 3,
+                    UserId = AbpSession.UserId ?? null,
+                    Title = input.Title,
+                    Message = input.Message,
+                    Priority = input.Priority ?? "Medium",
+                    ContactEmail = input.ContactEmail,
+                    ContactName = input.ContactName,
+                    Status = "Open"
+                };
 
-            if (AbpSession.UserId.HasValue)
-            {
-                ticket.UserId = AbpSession.UserId.Value;
+                if (AbpSession.UserId.HasValue)
+                {
+                    ticket.UserId = AbpSession.UserId.Value;
+                    // Auto-fill contact info if not provided
+                    if (string.IsNullOrEmpty(ticket.ContactEmail))
+                    {
+                        var user = await UserManager.GetUserByIdAsync(ticket.UserId.Value);
+                        ticket.ContactEmail = user.EmailAddress;
+                        ticket.ContactName = user.Name + " " + user.Surname;
+                    }
+                }
+
+                await _supportTicketRepository.InsertAsync(ticket);
+                await CurrentUnitOfWork.SaveChangesAsync(); // Ensure DB constraint errors are caught here
+
+                return ObjectMapper.Map<SupportTicketDto>(ticket);
             }
-
-            var id = await _supportTicketRepository.InsertAndGetIdAsync(ticket);
-            return ObjectMapper.Map<SupportTicketDto>(ticket);
+            catch (Exception ex)
+            {
+                Logger.Error("Failed to create support ticket", ex);
+                throw new UserFriendlyException("Failed to create support ticket. " + ex.InnerException?.Message ?? ex.Message);
+            }
         }
 
         [AbpAuthorize]

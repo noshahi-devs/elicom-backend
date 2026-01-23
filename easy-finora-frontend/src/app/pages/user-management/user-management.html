@@ -1,0 +1,49 @@
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="glow-text">User Management</h1>
+        <div class="header-actions">
+            <div class="search-box">
+                <input type="text" [(ngModel)]="searchKeyword" (keyup.enter)="onSearch()" placeholder="Search users...">
+                <button (click)="onSearch()"><i class="fas fa-search"></i></button>
+            </div>
+            <span class="admin-badge">ADMIN PANEL</span>
+        </div>
+    </div>
+
+    <div class="user-table-3d">
+        <div class="table-header">
+            <div class="col">User Info</div>
+            <div class="col">Email</div>
+            <div class="col">Status</div>
+            <div class="col">Joined Date</div>
+            <div class="col actions">Actions</div>
+        </div>
+
+        <div *ngFor="let user of users" class="table-row admin-row">
+            <div class="col user-info">
+                <span class="user-name">{{ user.name }} {{ user.surname }}</span>
+                <small class="user-id">@{{ user.userName }}</small>
+            </div>
+            <div class="col email-info">{{ user.emailAddress }}</div>
+            <div class="col">
+                <span class="status-badge" [class.active-user]="user.isActive" [class.inactive-user]="!user.isActive">
+                    {{ user.isActive ? 'Active' : 'Inactive' }}
+                </span>
+            </div>
+            <div class="col">{{ user.creationTime | date: 'MMM d, y' }}</div>
+            <div class="col actions">
+                <button [class]="user.isActive ? 'btn-deactivate' : 'btn-activate'" (click)="toggleStatus(user)">
+                    {{ user.isActive ? 'Deactivate' : 'Activate' }}
+                </button>
+            </div>
+        </div>
+
+        <div *ngIf="users.length === 0 && !isLoading" class="table-row">
+            <div class="col" style="width: 100%; text-align: center;">No users found.</div>
+        </div>
+
+        <div *ngIf="isLoading" class="table-row">
+            <div class="col" style="width: 100%; text-align: center;">Loading users...</div>
+        </div>
+    </div>
+</div>

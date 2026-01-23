@@ -21,8 +21,10 @@ import { WithdrawMethods } from './pages/withdraw-methods/withdraw-methods';
 import { Profile } from './pages/profile/profile';
 import { ApproveDepositHistory } from './pages/approve-deposit-history/approve-deposit-history';
 import { ApproveWithdrawHistory } from './pages/approve-withdraw-history/approve-withdraw-history';
-import { ApproveSupportHistory } from './pages/approve-support-history/approve-support-history';
+import { ApproveSupport } from './pages/approve-support/approve-support';
 import { ApproveAllTransactions } from './pages/approve-all-transactions/approve-all-transactions';
+import { UserManagement } from './pages/user-management/user-management';
+import { AdminDashboard } from './pages/admin-dashboard/admin-dashboard';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -47,8 +49,10 @@ export const routes: Routes = [
   { path: 'deposit-history', component: DepositHistory, canActivate: [authGuard] },
   { path: 'approve-deposits', component: ApproveDepositHistory, canActivate: [authGuard] },
   { path: 'approve-withdrawals', component: ApproveWithdrawHistory, canActivate: [authGuard] },
-  { path: 'approve-support', component: ApproveSupportHistory, canActivate: [authGuard] },
+  { path: 'approve-support', component: ApproveSupport, canActivate: [authGuard] },
   { path: 'approve-transactions', component: ApproveAllTransactions, canActivate: [authGuard] },
+  { path: 'user-management', component: UserManagement, canActivate: [authGuard] },
+  { path: 'admin-dashboard', component: AdminDashboard, canActivate: [authGuard] },
   // Withdraw routes
   { path: 'withdraw', component: Withdraw, canActivate: [authGuard] },
   { path: 'withdraw-methods', component: WithdrawMethods, canActivate: [authGuard] },
