@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc.ApplicationParts;
 namespace Elicom.Web.Tests;
 
 [DependsOn(
-    typeof(ElicomWebMvcModule),
+    typeof(ElicomWebCoreModule),
     typeof(AbpAspNetCoreTestBaseModule)
 )]
 public class ElicomWebTestModule : AbpModule
@@ -32,6 +32,6 @@ public class ElicomWebTestModule : AbpModule
     public override void PostInitialize()
     {
         IocManager.Resolve<ApplicationPartManager>()
-            .AddApplicationPartsIfNotAddedBefore(typeof(ElicomWebMvcModule).Assembly);
+            .AddApplicationPartsIfNotAddedBefore(typeof(ElicomWebCoreModule).Assembly);
     }
 }

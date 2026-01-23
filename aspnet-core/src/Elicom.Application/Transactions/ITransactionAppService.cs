@@ -8,5 +8,6 @@ namespace Elicom.Transactions
     public interface ITransactionAppService : IApplicationService
     {
         Task<PagedResultDto<TransactionDto>> GetHistory(PagedAndSortedResultRequestDto input);
+        Task<PagedResultDto<TransactionDto>> GetAll(PagedAndSortedResultRequestDto input);
     }
 }

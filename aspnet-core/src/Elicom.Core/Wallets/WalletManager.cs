@@ -64,6 +64,44 @@ namespace Elicom.Wallets
             return true;
         }
 
+        public async Task TransferAsync(long senderUserId, long receiverUserId, decimal amount, string description)
+        {
+            if (amount <= 0) throw new UserFriendlyException("Amount must be positive");
+            if (senderUserId == receiverUserId) throw new UserFriendlyException("Cannot transfer to yourself");
+
+            var senderWallet = await GetOrCreateWalletAsync(senderUserId);
+            var receiverWallet = await GetOrCreateWalletAsync(receiverUserId);
+
+            if (senderWallet.Balance < amount)
+            {
+                throw new UserFriendlyException("Insufficient balance in your wallet.");
+            }
+
+            var refId = $"TRF-{DateTime.Now.Ticks}";
+
+            // 1. Debit sender
+            senderWallet.Balance -= amount;
+            await _transactionRepository.InsertAsync(new WalletTransaction
+            {
+                WalletId = senderWallet.Id,
+                Amount = -amount,
+                TransactionType = "Transfer Out",
+                ReferenceId = refId,
+                Description = description
+            });
+
+            // 2. Credit receiver
+            receiverWallet.Balance += amount;
+            await _transactionRepository.InsertAsync(new WalletTransaction
+            {
+                WalletId = receiverWallet.Id,
+                Amount = amount,
+                TransactionType = "Transfer In",
+                ReferenceId = refId,
+                Description = $"From User {senderUserId}: {description}"
+            });
+        }
+
         private async Task<Wallet> GetOrCreateWalletAsync(long userId)
         {
             var wallet = await _walletRepository.FirstOrDefaultAsync(w => w.UserId == userId);

@@ -1,0 +1,98 @@
+.page-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+
+    .glow-text {
+        margin: 0;
+        font-size: 32px;
+        font-weight: 800;
+        background: linear-gradient(135deg, #10ac84, #01a3a4);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 10px rgba(16, 172, 132, 0.2);
+    }
+}
+
+.admin-badge {
+    background: #222f3e;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.history-table-3d {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+
+    .table-header {
+        display: grid;
+        grid-template-columns: 1fr 0.8fr 1fr 2fr 1.2fr;
+        gap: 16px;
+        padding: 20px 24px;
+        background: #f8f9fa;
+        font-weight: 700;
+        color: #576574;
+        text-transform: uppercase;
+        font-size: 12px;
+    }
+
+    .table-row {
+        display: grid;
+        grid-template-columns: 1fr 0.8fr 1fr 2fr 1.2fr;
+        gap: 16px;
+        padding: 20px 24px;
+        border-bottom: 1px solid #eeeff1;
+        align-items: center;
+
+        .ref-id {
+            font-family: monospace;
+            color: #222f3e;
+            font-weight: 600;
+        }
+
+        .amount {
+            font-weight: 700;
+
+            &.credit {
+                color: #10ac84;
+            }
+
+            &.debit {
+                color: #ee5253;
+            }
+        }
+
+        .type-badge {
+            background: #f1f2f6;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            display: block;
+            width: fit-content;
+        }
+
+        .category {
+            color: #8395a7;
+            font-size: 11px;
+        }
+
+        .desc {
+            color: #576574;
+            font-size: 13px;
+        }
+    }
+}

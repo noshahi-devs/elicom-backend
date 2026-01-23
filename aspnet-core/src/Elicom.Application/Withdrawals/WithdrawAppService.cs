@@ -7,6 +7,7 @@ using Elicom.Authorization;
 using Elicom.Cards;
 using Elicom.Entities;
 using Elicom.Withdrawals.Dto;
+using Elicom.Wallets;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,14 +21,17 @@ namespace Elicom.Withdrawals
         private readonly IRepository<WithdrawRequest, long> _withdrawRepository;
         private readonly IRepository<VirtualCard, long> _cardRepository;
         private readonly IRepository<AppTransaction, long> _transactionRepository;
+        private readonly IWalletManager _walletManager;
 
         public WithdrawAppService(
             IRepository<WithdrawRequest, long> withdrawRepository,
             IRepository<VirtualCard, long> cardRepository,
+            IWalletManager walletManager,
             IRepository<AppTransaction, long> transactionRepository)
         {
             _withdrawRepository = withdrawRepository;
             _cardRepository = cardRepository;
+            _walletManager = walletManager;
             _transactionRepository = transactionRepository;
         }
 
@@ -121,6 +125,14 @@ namespace Elicom.Withdrawals
 
             card.Balance -= request.Amount;
 
+            // 1.5 Sync Master Wallet
+            await _walletManager.TryDebitAsync(
+                request.UserId,
+                request.Amount,
+                request.Id.ToString(),
+                $"Withdrawal Approved - Reference: {request.Id}"
+            );
+
             // 2. Record Transaction
             await _transactionRepository.InsertAsync(new AppTransaction
             {
@@ -149,6 +161,36 @@ namespace Elicom.Withdrawals
 
             request.Status = "Rejected";
             request.AdminRemarks = input.AdminRemarks;
+        }
+
+        [AbpAuthorize(PermissionNames.Pages_GlobalPay_Admin)]
+        public async Task<PagedResultDto<WithdrawRequestDto>> GetAllWithdrawRequests(PagedAndSortedResultRequestDto input)
+        {
+            var query = _withdrawRepository.GetAll().Include(r => r.User);
+
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .OrderByDescending(r => r.CreationTime)
+                .Skip(input.SkipCount)
+                .Take(input.MaxResultCount)
+                .ToListAsync();
+
+            return new PagedResultDto<WithdrawRequestDto>(
+                totalCount,
+                items.Select(r => new WithdrawRequestDto
+                {
+                    Id = r.Id,
+                    UserId = r.UserId,
+                    UserName = r.User != null ? r.User.UserName : "Unknown",
+                    CardId = r.CardId,
+                    Amount = r.Amount,
+                    Method = r.Method,
+                    PaymentDetails = r.PaymentDetails,
+                    Status = r.Status,
+                    AdminRemarks = r.AdminRemarks,
+                    CreationTime = r.CreationTime
+                }).ToList()
+            );
         }
     }
 }

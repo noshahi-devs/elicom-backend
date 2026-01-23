@@ -1,5 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { NgFor, NgIf, CurrencyPipe, DatePipe } from '@angular/common';
+import { NgFor, NgIf, CurrencyPipe, DatePipe, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ToastService } from '../../shared/toast/toast.service';
@@ -7,7 +7,7 @@ import { CardService } from '../../services/card.service';
 
 @Component({
     selector: 'app-cards',
-    imports: [NgFor, NgIf, CurrencyPipe, DatePipe, FormsModule],
+    imports: [NgFor, NgIf, CurrencyPipe, DatePipe, FormsModule, SlicePipe],
     templateUrl: './cards.html',
     styleUrl: './cards.scss',
 })

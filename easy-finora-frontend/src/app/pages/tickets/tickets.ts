@@ -1,44 +1,74 @@
-import { Component } from '@angular/core';
-import { NgFor, NgIf, DatePipe } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { NgFor, NgIf, DatePipe, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { SupportService } from '../../services/support.service';
+import { ToastService } from '../../shared/toast/toast.service';
 
 @Component({
     selector: 'app-tickets',
-    imports: [NgFor, NgIf, DatePipe, FormsModule],
+    standalone: true,
+    imports: [CommonModule, NgFor, NgIf, DatePipe, FormsModule],
     templateUrl: './tickets.html',
     styleUrl: './tickets.scss',
 })
-export class Tickets {
+export class Tickets implements OnInit {
 
     isCreating = false;
+    isLoading = false;
     newTicket = {
         title: '',
         priority: 'Medium',
         message: ''
     };
 
-    tickets = [
-        { id: 'TKT-001', title: 'Withdrawal not processed', priority: 'High', status: 'Open', created: new Date('2026-01-20'), replies: 2 },
-        { id: 'TKT-002', title: 'Question about business plan', priority: 'Medium', status: 'Replied', created: new Date('2026-01-18'), replies: 1 },
-        { id: 'TKT-003', title: 'Card application status', priority: 'Low', status: 'Closed', created: new Date('2026-01-15'), replies: 3 }
-    ];
+    tickets: any[] = [];
+
+    constructor(
+        private supportService: SupportService,
+        private toastService: ToastService
+    ) { }
+
+    ngOnInit() {
+        this.fetchTickets();
+    }
+
+    fetchTickets() {
+        this.isLoading = true;
+        this.supportService.getMyTickets().subscribe({
+            next: (res: any) => {
+                this.tickets = res?.result?.items ?? [];
+                this.isLoading = false;
+            },
+            error: (err) => {
+                console.error('Failed to fetch tickets', err);
+                this.isLoading = false;
+            }
+        });
+    }
 
     toggleCreate() {
         this.isCreating = !this.isCreating;
     }
 
     submitTicket() {
-        // Mock submission
-        const newId = 'TKT-' + (this.tickets.length + 1).toString().padStart(3, '0');
-        this.tickets.unshift({
-            id: newId,
-            title: this.newTicket.title,
-            priority: this.newTicket.priority,
-            status: 'Open',
-            created: new Date(),
-            replies: 0
+        if (!this.newTicket.title || !this.newTicket.message) {
+            this.toastService.showError('Please fill in all fields');
+            return;
+        }
+
+        this.isLoading = true;
+        this.supportService.createTicket(this.newTicket).subscribe({
+            next: () => {
+                this.toastService.showSuccess('Ticket created successfully!');
+                this.isCreating = false;
+                this.newTicket = { title: '', priority: 'Medium', message: '' };
+                this.fetchTickets();
+            },
+            error: (err) => {
+                console.error('Failed to create ticket', err);
+                this.toastService.showError('Error creating ticket');
+                this.isLoading = false;
+            }
         });
-        this.isCreating = false;
-        this.newTicket = { title: '', priority: 'Medium', message: '' };
     }
 }

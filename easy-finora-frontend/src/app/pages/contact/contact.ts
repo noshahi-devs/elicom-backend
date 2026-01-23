@@ -1,10 +1,13 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ToastService } from '../../shared/toast/toast.service';
+import { SupportService } from '../../services/support.service';
+import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'app-contact',
-    imports: [FormsModule],
+    standalone: true,
+    imports: [FormsModule, CommonModule],
     templateUrl: './contact.html',
     styleUrl: './contact.scss',
 })
@@ -14,8 +17,12 @@ export class Contact {
     email = '';
     subject = '';
     message = '';
+    isLoading = false;
 
-    constructor(private toastService: ToastService) { }
+    constructor(
+        private toastService: ToastService,
+        private supportService: SupportService
+    ) { }
 
     submitContact() {
         // Validation
@@ -40,19 +47,30 @@ export class Contact {
             return;
         }
 
-        console.log('Contact form:', {
-            name: this.name,
-            email: this.email,
-            subject: this.subject,
-            message: this.message
+        this.isLoading = true;
+        const input = {
+            title: this.subject,
+            message: this.message,
+            contactEmail: this.email,
+            contactName: this.name,
+            priority: 'Medium'
+        };
+
+        this.supportService.createTicket(input).subscribe({
+            next: () => {
+                this.toastService.showSuccess('Message sent successfully! We will get back to you soon.');
+                this.isLoading = false;
+                // Reset form
+                this.name = '';
+                this.email = '';
+                this.subject = '';
+                this.message = '';
+            },
+            error: (err) => {
+                console.error('Contact error:', err);
+                this.toastService.showError('Failed to send message. Please try again later.');
+                this.isLoading = false;
+            }
         });
-
-        this.toastService.showSuccess('Message sent successfully! We will get back to you soon.');
-
-        // Reset form
-        this.name = '';
-        this.email = '';
-        this.subject = '';
-        this.message = '';
     }
 }

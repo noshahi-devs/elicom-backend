@@ -36,7 +36,7 @@ public abstract class ElicomWebTestBase : AbpAspNetCoreIntegratedTestBase<Startu
         return base
             .CreateWebHostBuilder()
             .UseContentRoot(ContentRootFolder.Value)
-            .UseSetting(WebHostDefaults.ApplicationKey, typeof(ElicomWebMvcModule).Assembly.FullName);
+            .UseSetting(WebHostDefaults.ApplicationKey, typeof(ElicomWebCoreModule).Assembly.FullName);
     }
 
     #region Get response

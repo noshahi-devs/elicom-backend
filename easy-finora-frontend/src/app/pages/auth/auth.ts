@@ -1,13 +1,13 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgClass, NgIf, NgFor } from '@angular/common';
+import { NgIf, NgFor } from '@angular/common';
 import { Router } from '@angular/router';
 import { ToastService } from '../../shared/toast/toast.service';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
     selector: 'app-auth',
-    imports: [FormsModule, NgClass, NgIf, NgFor],
+    imports: [FormsModule, NgIf, NgFor],
     templateUrl: './auth.html',
     styleUrl: './auth.scss',
 })
@@ -187,6 +187,7 @@ export class Auth implements OnInit {
                 // Store token with correct key for auth guard
                 localStorage.setItem('authToken', res.result.accessToken);
                 localStorage.setItem('userId', res.result.userId);
+                localStorage.setItem('userEmail', this.loginEmail);
                 this.toastService.showSuccess('Login successful! Welcome back.');
                 // Navigate to dashboard and replace history to prevent back button from returning to login
                 this.router.navigate(['/dashboard'], { replaceUrl: true });

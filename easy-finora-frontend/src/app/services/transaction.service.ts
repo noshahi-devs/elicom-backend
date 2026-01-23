@@ -29,4 +29,11 @@ export class TransactionService {
             tap(response => console.log('TransactionService.getHistory response is:', response))
         );
     }
+
+    getAllTransactions(skipCount: number = 0, maxResultCount: number = 50): Observable<any> {
+        return this.http.get(`${this.apiUrl}/GetAll`, {
+            headers: this.getHeaders(),
+            params: { skipCount, maxResultCount }
+        });
+    }
 }

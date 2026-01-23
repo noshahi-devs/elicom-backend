@@ -1,0 +1,56 @@
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="glow-text">Approve Deposit Requests</h1>
+        <div class="header-actions">
+            <span class="admin-badge">ADMIN PANEL</span>
+        </div>
+    </div>
+
+    <div class="history-table-3d">
+        <div class="table-header">
+            <div class="col">User</div>
+            <div class="col">Amount</div>
+            <div class="col">Method</div>
+            <div class="col">Status</div>
+            <div class="col">Date</div>
+            <div class="col actions">Actions</div>
+        </div>
+
+        @if (isLoading) {
+        <div class="table-row">
+            <div class="col" style="width: 100%; text-align: center;">Loading requests...</div>
+        </div>
+        }
+
+        @for (deposit of deposits; track deposit.id) {
+        <div class="table-row admin-row">
+            <div class="col user-info">
+                <span class="user-email">{{ deposit.userName || 'Unknown' }}</span>
+                <small class="ref-id">{{ deposit.id | slice:0:8 }}</small>
+            </div>
+            <div class="col amount">{{ deposit.amount | currency: (deposit.currency || 'USD') }}</div>
+            <div class="col">{{ deposit.method }}</div>
+            <div class="col">
+                <span class="status-badge" [ngClass]="(deposit.status || 'pending').toLowerCase()">{{ deposit.status
+                    }}</span>
+            </div>
+            <div class="col">{{ deposit.creationTime | date: 'MMM d, y h:mm a' }}</div>
+            <div class="col actions">
+                <ng-container *ngIf="deposit.status === 'Pending'">
+                    <button class="btn-approve" (click)="approve(deposit)">Approve</button>
+                    <button class="btn-reject" (click)="reject(deposit)">Reject</button>
+                </ng-container>
+                <span *ngIf="deposit.status !== 'Pending'" class="processed-text">
+                    {{ deposit.adminRemarks || 'Processed' }}
+                </span>
+            </div>
+        </div>
+        } @empty {
+        @if (!isLoading) {
+        <div class="table-row">
+            <div class="col" style="width: 100%; text-align: center;">No deposit requests found.</div>
+        </div>
+        }
+        }
+    </div>
+</div>

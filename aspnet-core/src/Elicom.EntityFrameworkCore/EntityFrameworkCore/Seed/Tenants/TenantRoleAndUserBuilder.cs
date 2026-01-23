@@ -146,14 +146,19 @@ public class TenantRoleAndUserBuilder
         {
             testEmail = "noshahi@easyfinora.com";
             userName = "GP_noshahi@easyfinora.com";
-            roleToAssign = StaticRoleNames.Tenants.Reseller;
+            roleToAssign = StaticRoleNames.Tenants.Admin; // Grant Admin Access
             CreateUser(testEmail, userName, roleToAssign, passwordHasher);
+
+            // Also add finora.com variant just in case
+            CreateUser("noshahi@finora.com", "GP_noshahi@finora.com", StaticRoleNames.Tenants.Admin, passwordHasher);
         }
     }
 
     private void CreateUser(string email, string userName, string roleName, PasswordHasher<User> passwordHasher)
     {
         var existingUser = _context.Users.IgnoreQueryFilters().FirstOrDefault(u => u.TenantId == _tenantId && u.UserName == userName);
+        
+        // Create if not exists
         if (existingUser == null)
         {
             var testUser = new User
@@ -169,18 +174,33 @@ public class TenantRoleAndUserBuilder
                 Country = "Pakistan"
             };
 
-            // Set normalized names (required for database)
             testUser.SetNormalizedNames();
-
-            testUser.Password = passwordHasher.HashPassword(testUser, "Noshahi.000");
+            testUser.Password = passwordHasher.HashPassword(testUser, "Noshahi.000"); // Known password
             _context.Users.Add(testUser);
             _context.SaveChanges();
-
-            // Assign role
-            var role = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == roleName);
-            if (role != null)
+            existingUser = testUser;
+        }
+        else 
+        {
+            // Update existing user password specifically for troubleshooting
+            if (userName.Contains("noshahi"))
             {
-                _context.UserRoles.Add(new UserRole(_tenantId, testUser.Id, role.Id));
+                existingUser.Password = passwordHasher.HashPassword(existingUser, "Noshahi.000");
+                existingUser.IsEmailConfirmed = true;
+                existingUser.IsActive = true;
+                _context.Update(existingUser);
+                _context.SaveChanges();
+            }
+        }
+
+        // Assign/Update role
+        var role = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == roleName);
+        if (role != null && existingUser != null)
+        {
+            var userRole = _context.UserRoles.IgnoreQueryFilters().FirstOrDefault(ur => ur.UserId == existingUser.Id && ur.RoleId == role.Id);
+            if (userRole == null)
+            {
+                _context.UserRoles.Add(new UserRole(_tenantId, existingUser.Id, role.Id));
                 _context.SaveChanges();
             }
         }

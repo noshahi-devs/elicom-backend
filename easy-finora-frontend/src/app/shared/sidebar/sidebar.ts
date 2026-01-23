@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
-import { NgFor, NgIf, NgClass } from '@angular/common';
+import { NgFor } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [NgFor, RouterLink, RouterLinkActive, NgIf, NgClass],
+  imports: [NgFor, RouterLink, RouterLinkActive],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
 })
@@ -74,6 +74,17 @@ export class Sidebar {
       ]
     },
     {
+      title: 'Admin Management',
+      expanded: true,
+      items: [
+        { label: 'Approve Deposit Request', icon: '✅', route: '/approve-deposits' },
+        { label: 'Approve Withdraw Request', icon: '🏧', route: '/approve-withdrawals' },
+        { label: 'Support Management', icon: '🛠️', route: '/approve-support' },
+        { label: 'Global Transactions', icon: '📈', route: '/approve-transactions' }
+      ],
+      isAdminOnly: true
+    },
+    {
       title: 'Exit',
       expanded: false,
       items: [
@@ -81,6 +92,15 @@ export class Sidebar {
       ]
     }
   ];
+
+  get isAdmin(): boolean {
+    const email = localStorage.getItem('userEmail');
+    return email === 'noshahi@easyfinora.com';
+  }
+
+  get filteredMenuSections() {
+    return this.menuSections.filter(section => !section['isAdminOnly'] || this.isAdmin);
+  }
 
   toggleSection(index: number) {
     this.menuSections.forEach((section, i) => {

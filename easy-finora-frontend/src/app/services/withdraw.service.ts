@@ -37,4 +37,23 @@ export class WithdrawService {
             tap(response => console.log('WithdrawService.getMyWithdrawRequests response is:', response))
         );
     }
+
+    getAllWithdrawRequests(skipCount: number = 0, maxResultCount: number = 50): Observable<any> {
+        return this.http.get(`${this.apiUrl}/GetAllWithdrawRequests`, {
+            headers: this.getHeaders(),
+            params: { skipCount, maxResultCount }
+        });
+    }
+
+    approveWithdraw(id: number, adminRemarks: string): Observable<any> {
+        return this.http.post(`${this.apiUrl}/ApproveWithdraw`, { id, adminRemarks }, {
+            headers: this.getHeaders()
+        });
+    }
+
+    rejectWithdraw(id: number, adminRemarks: string): Observable<any> {
+        return this.http.post(`${this.apiUrl}/RejectWithdraw`, { id, adminRemarks }, {
+            headers: this.getHeaders()
+        });
+    }
 }

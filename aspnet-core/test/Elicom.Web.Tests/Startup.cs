@@ -5,8 +5,8 @@ using Elicom.Authentication.JwtBearer;
 using Elicom.Configuration;
 using Elicom.EntityFrameworkCore;
 using Elicom.Identity;
-using Elicom.Web.Resources;
-using Elicom.Web.Startup;
+// using Elicom.Web.Resources;
+using Elicom.Web.Host.Startup;
 using Castle.MicroKernel.Registration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -36,7 +36,7 @@ public class Startup
         IdentityRegistrar.Register(services);
         AuthConfigurer.Configure(services, _appConfiguration);
 
-        services.AddScoped<IWebResourceManager, WebResourceManager>();
+        // services.AddScoped<IWebResourceManager, WebResourceManager>();
 
         //Configure Abp and Dependency Injection
         return services.AddAbp<ElicomWebTestModule>(options =>

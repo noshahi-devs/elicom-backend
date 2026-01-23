@@ -11,7 +11,7 @@
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Elicom.Web.Mvc\Elicom.Web.Mvc.csproj" />
+    <ProjectReference Include="..\..\src\Elicom.Web.Host\Elicom.Web.Host.csproj" />
     <ProjectReference Include="..\Elicom.Tests\Elicom.Tests.csproj" />
   </ItemGroup>
   <ItemGroup>

@@ -37,4 +37,23 @@ export class DepositService {
             tap(response => console.log('DepositService.getMyDepositRequests response is:', response))
         );
     }
+
+    getAllDepositRequests(skipCount: number = 0, maxResultCount: number = 50): Observable<any> {
+        return this.http.get(`${this.apiUrl}/GetAllRequests`, {
+            headers: this.getHeaders(),
+            params: { skipCount, maxResultCount }
+        });
+    }
+
+    approveDeposit(id: string, adminRemarks: string): Observable<any> {
+        return this.http.post(`${this.apiUrl}/Approve`, { id, adminRemarks }, {
+            headers: this.getHeaders()
+        });
+    }
+
+    rejectDeposit(id: string, adminRemarks: string): Observable<any> {
+        return this.http.post(`${this.apiUrl}/Reject`, { id, adminRemarks }, {
+            headers: this.getHeaders()
+        });
+    }
 }

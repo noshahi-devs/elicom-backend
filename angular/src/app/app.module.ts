@@ -22,8 +22,12 @@ import { SidebarComponent } from './layout/sidebar.component';
 import { SidebarLogoComponent } from './layout/sidebar-logo.component';
 import { SidebarUserPanelComponent } from './layout/sidebar-user-panel.component';
 import { SidebarMenuComponent } from './layout/sidebar-menu.component';
+import { DepositRequestsComponent } from './deposit-requests/deposit-requests.component';
 
 @NgModule({
+    declarations: [
+        DepositRequestsComponent
+    ],
     imports: [
         AppRoutingModule,
         CommonModule,

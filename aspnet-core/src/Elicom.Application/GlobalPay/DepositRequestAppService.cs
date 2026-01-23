@@ -39,8 +39,14 @@ namespace Elicom.GlobalPay
         {
             var user = await GetCurrentUserAsync();
 
+            if (!AbpSession.TenantId.HasValue)
+            {
+                throw new UserFriendlyException("Tenant is required to create a deposit request.");
+            }
+
             var request = new DepositRequest
             {
+                TenantId = AbpSession.TenantId.Value,
                 UserId = user.Id,
                 CardId = input.CardId,
                 Amount = input.Amount,
@@ -152,6 +158,11 @@ namespace Elicom.GlobalPay
         private string GetDestinationAccountForCountry(string country)
         {
             // Dummy logic: In a real app, this would come from settings or a separate entity
+            if (string.IsNullOrWhiteSpace(country))
+            {
+                return "Central Global Account - Acc: 00000000";
+            }
+
             return country.ToLower() switch
             {
                 "uk" => "Barclays Bank - Acc: 12345678",

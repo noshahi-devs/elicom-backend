@@ -6,23 +6,42 @@
 
     <div class="history-table-3d">
         <div class="table-header">
-            <div class="col">Deposit ID</div>
+            <div class="col">Ref ID</div>
             <div class="col">Amount</div>
             <div class="col">Method</div>
-            <div class="col">Fee</div>
+            <div class="col">Country</div>
             <div class="col">Status</div>
             <div class="col">Date</div>
         </div>
 
-        <div *ngFor="let deposit of deposits" class="table-row">
-            <div class="col">{{ deposit.id }}</div>
-            <div class="col amount">{{ deposit.amount | currency: 'USD' }}</div>
+        @for (deposit of deposits; track deposit.id) {
+        <div class="table-row">
+            <div class="col" title="{{ deposit.id }}">{{ deposit.id | slice:0:8 }}...</div>
+            <div class="col amount">{{ deposit.amount | currency: (deposit.currency || 'USD') }}</div>
             <div class="col">{{ deposit.method }}</div>
-            <div class="col">{{ deposit.fee | currency: 'USD' }}</div>
+            <div class="col">{{ deposit.country }}</div>
             <div class="col">
-                <span class="status-badge" [class]="deposit.status.toLowerCase()">{{ deposit.status }}</span>
+                <span class="status-badge" [ngClass]="(deposit.status || 'pending').toLowerCase()">
+                    {{ deposit.status }}
+                </span>
             </div>
-            <div class="col">{{ deposit.date | date: 'MMM d, y h:mm a' }}</div>
+            <div class="col">{{ deposit.creationTime | date: 'MMM d, y h:mm a' }}</div>
         </div>
+        } @empty {
+        @if (!isLoading) {
+        <div class="table-row">
+            <div class="col" style="width: 100%; text-align: center;">No deposit history found.</div>
+        </div>
+        }
+        }
+
+        @if (isLoading) {
+        <div class="table-row">
+            <div class="col" style="width: 100%; text-align: center;">
+                <div class="loading-spinner"></div>
+                Loading...
+            </div>
+        </div>
+        }
     </div>
 </div>

@@ -1,19 +1,63 @@
-import { Component } from '@angular/core';
-import { NgFor, DatePipe, CurrencyPipe } from '@angular/common';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { NgFor, DatePipe, CurrencyPipe, NgIf, SlicePipe, CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { DepositService } from '../../services/deposit.service';
 
 @Component({
     selector: 'app-deposit-history',
-    imports: [NgFor, DatePipe, CurrencyPipe, RouterLink],
+    standalone: true,
+    imports: [CommonModule, RouterLink], // CommonModule includes DatePipe, CurrencyPipe, NgIf, NgFor, SlicePipe
     templateUrl: './deposit-history.html',
     styleUrl: './deposit-history.scss',
 })
-export class DepositHistory {
+export class DepositHistory implements OnInit {
 
-    deposits = [
-        { id: 'DEP-001', amount: 500, method: 'Bank Transfer', status: 'Completed', date: new Date('2026-01-20'), fee: 0 },
-        { id: 'DEP-002', amount: 1000, method: 'Credit Card', status: 'Pending', date: new Date('2026-01-19'), fee: 25 },
-        { id: 'DEP-003', amount: 250, method: 'Cryptocurrency', status: 'Completed', date: new Date('2026-01-18'), fee: 2.5 },
-        { id: 'DEP-004', amount: 750, method: 'Bank Transfer', status: 'Rejected', date: new Date('2026-01-17'), fee: 0 }
-    ];
+    deposits: any[] = [];
+    isLoading = false;
+
+    constructor(
+        private depositService: DepositService,
+        private cdr: ChangeDetectorRef
+    ) { }
+
+    ngOnInit() {
+        this.fetchHistory();
+    }
+
+    // fetchHistory() {
+    //     this.isLoading = true;
+    //     this.depositService.getMyDepositRequests()
+    //         .subscribe({
+    //             next: (result) => {
+    //                 this.deposits = result?.result?.items ?? [];
+    //                 this.isLoading = false;
+    //             },
+    //             error: (err) => {
+    //                 console.error('Failed to load deposit history', err);
+    //                 this.isLoading = false;
+    //             }
+    //         });
+    // }
+    fetchHistory() {
+        this.isLoading = true;
+
+        this.depositService.getMyDepositRequests().subscribe({
+            next: (res: any) => {
+                console.log('RAW API RESPONSE', res);
+
+                // ✅ ONLY ARRAY ASSIGNED
+                this.deposits = res?.result?.items ?? [];
+
+                console.log('DEPOSITS ARRAY', this.deposits);
+                this.isLoading = false;
+                this.cdr.detectChanges(); // Force UI update
+            },
+            error: (err) => {
+                console.error('Failed to load deposit history', err);
+                this.isLoading = false;
+                this.cdr.detectChanges(); // Force UI update
+            }
+        });
+    }
+
 }

@@ -13,6 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Elicom.Application\Elicom.Application.csproj" />
     <ProjectReference Include="..\..\src\Elicom.EntityFrameworkCore\Elicom.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\src\Elicom.Web.Core\Elicom.Web.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.0" />

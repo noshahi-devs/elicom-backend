@@ -1,19 +1,44 @@
-import { Component } from '@angular/core';
-import { NgFor, DatePipe, CurrencyPipe } from '@angular/common';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { NgFor, DatePipe, CurrencyPipe, CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { WithdrawService } from '../../services/withdraw.service';
 
 @Component({
     selector: 'app-withdraw-history',
-    imports: [NgFor, DatePipe, CurrencyPipe, RouterLink],
+    imports: [CommonModule, RouterLink],
     templateUrl: './withdraw-history.html',
     styleUrl: './withdraw-history.scss',
 })
-export class WithdrawHistory {
+export class WithdrawHistory implements OnInit {
 
-    withdrawals = [
-        { id: 'WTH-001', amount: 300, method: 'Bank Transfer', status: 'Completed', date: new Date('2026-01-19'), fee: 0 },
-        { id: 'WTH-002', amount: 500, method: 'PayPal', status: 'Pending', date: new Date('2026-01-18'), fee: 10 },
-        { id: 'WTH-003', amount: 200, method: 'Cryptocurrency', status: 'Completed', date: new Date('2026-01-16'), fee: 2 },
-        { id: 'WTH-004', amount: 1000, method: 'Bank Transfer', status: 'Rejected', date: new Date('2026-01-15'), fee: 0 }
-    ];
+    withdrawals: any[] = [];
+    isLoading = false;
+
+    constructor(
+        private withdrawService: WithdrawService,
+        private cdr: ChangeDetectorRef
+    ) { }
+
+    ngOnInit() {
+        this.fetchHistory();
+    }
+
+    fetchHistory() {
+        this.isLoading = true;
+        this.cdr.detectChanges();
+
+        this.withdrawService.getMyWithdrawRequests().subscribe({
+            next: (res: any) => {
+                console.log('WithdrawHistory: API Response:', res);
+                this.withdrawals = res?.result?.items ?? [];
+                this.isLoading = false;
+                this.cdr.detectChanges();
+            },
+            error: (err) => {
+                console.error('Failed to load withdraw history', err);
+                this.isLoading = false;
+                this.cdr.detectChanges();
+            }
+        });
+    }
 }

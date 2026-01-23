@@ -8,5 +8,6 @@ namespace Elicom.Wallets
     {
         Task<WalletDto> GetMyWallet();
         Task Deposit(DepositInput input);
+        Task Transfer(TransferInput input);
     }
 }

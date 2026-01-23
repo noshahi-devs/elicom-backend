@@ -2,7 +2,7 @@
 
 
   <div class="menu-list">
-    <ng-container *ngFor="let section of menuSections">
+    <ng-container *ngFor="let section of filteredMenuSections">
       <div *ngFor="let item of section.items" [routerLink]="item.route" class="menu-item" routerLinkActive="active"
         [routerLinkActiveOptions]="{exact: item.route === '/dashboard'}">
         <!-- Exact match for dashboard usually needed to avoid always active -->

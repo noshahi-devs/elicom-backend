@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { AppRouteGuard } from '@shared/auth/auth-route-guard';
 import { AppComponent } from './app.component';
+import { DepositRequestsComponent } from './deposit-requests/deposit-requests.component';
 
 @NgModule({
     imports: [
@@ -37,6 +38,12 @@ import { AppComponent } from './app.component';
                         loadChildren: () => import('./tenants/tenants.module').then((m) => m.TenantsModule),
                         data: { permission: 'Pages.Tenants' },
                         canActivate: [AppRouteGuard],
+                    },
+                    {
+                        path: 'deposit-requests',
+                        component: DepositRequestsComponent,
+                        data: { permission: 'Pages.GlobalPay.Admin' },
+                        canActivate: [AppRouteGuard]
                     },
                     {
                         path: 'update-password',

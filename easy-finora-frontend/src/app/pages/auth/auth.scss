@@ -1,3 +1,5 @@
+@use "sass:color";
+
 // Variables
 $primary: #1de016;
 $primary-dark: #15803d;
@@ -320,7 +322,7 @@ body {
 }
 
 .custom-select-wrapper:hover .custom-select-trigger {
-    border-color: darken($border-color, 15%);
+    border-color: color.adjust($border-color, $lightness: -15%);
 }
 
 .custom-options {

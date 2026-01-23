@@ -89,5 +89,36 @@ namespace Elicom.Tests.GlobalPay
             var requests = await _depositRequestAppService.GetMyRequests(new Abp.Application.Services.Dto.PagedAndSortedResultRequestDto());
             requests.Items.First(r => r.Id == deposit.Id).Status.ShouldBe("Approved");
         }
+
+        [Fact]
+        public async Task Should_Reject_Deposit_Request()
+        {
+            // Arrange
+            LoginAsDefaultTenantAdmin();
+
+            // 1. Create deposit request
+            var deposit = await _depositRequestAppService.Create(new CreateDepositRequestInput
+            {
+                Amount = 200,
+                Country = "UK",
+                Method = "P2P",
+                ProofImage = "reject_test.jpg"
+            });
+
+            // 2. Reject request
+            await _depositRequestAppService.Reject(new ApproveDepositRequestInput
+            {
+                Id = deposit.Id,
+                AdminRemarks = "Invalid proof"
+            });
+
+            // Act
+            var requests = await _depositRequestAppService.GetMyRequests(new Abp.Application.Services.Dto.PagedAndSortedResultRequestDto());
+            var rejectedRequest = requests.Items.First(r => r.Id == deposit.Id);
+
+            // Assert
+            rejectedRequest.Status.ShouldBe("Rejected");
+            rejectedRequest.AdminRemarks.ShouldBe("Invalid proof");
+        }
     }
 }

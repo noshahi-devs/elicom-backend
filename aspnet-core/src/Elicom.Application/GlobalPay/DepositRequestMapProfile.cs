@@ -9,7 +9,7 @@ namespace Elicom.GlobalPay
         public DepositRequestMapProfile()
         {
             CreateMap<DepositRequest, DepositRequestDto>()
-                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.UserName));
+                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User != null ? src.User.UserName : null));
             
             CreateMap<CreateDepositRequestInput, DepositRequest>();
         }

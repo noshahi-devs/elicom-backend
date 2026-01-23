@@ -1,0 +1,52 @@
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="glow-text">Approve Withdraw Requests</h1>
+        <div class="header-actions">
+            <span class="admin-badge">ADMIN PANEL</span>
+        </div>
+    </div>
+
+    <div class="history-table-3d">
+        <div class="table-header">
+            <div class="col">User / Card</div>
+            <div class="col">Amount</div>
+            <div class="col">Method / Details</div>
+            <div class="col">Status</div>
+            <div class="col">Date</div>
+            <div class="col actions">Actions</div>
+        </div>
+
+        <div *ngFor="let withdraw of withdrawals" class="table-row admin-row">
+            <div class="col user-info">
+                <span class="user-email">{{ withdraw.userName || 'Unknown' }}</span>
+                <small class="ref-id">Card: {{ withdraw.cardId }}</small>
+            </div>
+            <div class="col amount debit">-{{ withdraw.amount | currency: (withdraw.currency || 'USD') }}</div>
+            <div class="col method-info">
+                <strong>{{ withdraw.method }}</strong>
+                <small class="details">{{ withdraw.paymentDetails }}</small>
+            </div>
+            <div class="col">
+                <span class="status-badge" [class]="withdraw.status.toLowerCase()">{{ withdraw.status }}</span>
+            </div>
+            <div class="col">{{ withdraw.creationTime | date: 'MMM d, y h:mm a' }}</div>
+            <div class="col actions">
+                <ng-container *ngIf="withdraw.status === 'Pending'">
+                    <button class="btn-approve" (click)="approve(withdraw)">Approve</button>
+                    <button class="btn-reject" (click)="reject(withdraw)">Reject</button>
+                </ng-container>
+                <span *ngIf="withdraw.status !== 'Pending'" class="processed-text">
+                    {{ withdraw.adminRemarks || 'Processed' }}
+                </span>
+            </div>
+        </div>
+
+        <div *ngIf="withdrawals.length === 0 && !isLoading" class="table-row">
+            <div class="col" style="width: 100%; text-align: center;">No withdraw requests found.</div>
+        </div>
+
+        <div *ngIf="isLoading" class="table-row">
+            <div class="col" style="width: 100%; text-align: center;">Loading requests...</div>
+        </div>
+    </div>
+</div>

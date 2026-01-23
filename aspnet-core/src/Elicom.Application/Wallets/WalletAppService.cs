@@ -1,6 +1,7 @@
 using Abp.Application.Services;
 using Abp.Authorization;
 using Abp.Domain.Repositories;
+using Abp.UI;
 using Elicom.Entities;
 using Elicom.Wallets.Dto;
 using System;
@@ -49,6 +50,25 @@ namespace Elicom.Wallets
                 input.Amount, 
                 $"DEP-{DateTime.Now.Ticks}", 
                 $"Deposit via {input.Method}"
+            );
+        }
+
+        public async Task Transfer(TransferInput input)
+        {
+            var sender = await GetCurrentUserAsync();
+            
+            // Find receiver user by email
+            var receiver = await UserManager.FindByEmailAsync(input.RecipientEmail);
+            if (receiver == null)
+            {
+                throw new UserFriendlyException($"Recipient user with email {input.RecipientEmail} not found.");
+            }
+
+            await _walletManager.TransferAsync(
+                sender.Id,
+                receiver.Id,
+                input.Amount,
+                input.Description ?? "Wallet Transfer"
             );
         }
     }

@@ -21,20 +21,44 @@
             <div *ngFor="let card of activeCards" class="card-3d-item">
                 <div class="card-visual" [class.visa]="card.type === 'Visa'" [class.master]="card.type === 'MasterCard'"
                     [class.amex]="card.type === 'Amex'">
-                    <div class="card-chip">💳</div>
-                    <div class="card-number">{{ card.cardNumber }}</div>
+
+                    <div class="card-header">
+                        <div class="chip-sim"></div>
+                        <div class="contactless-icon">)))</div>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="card-number">
+                            <span>{{ card.cardNumber | slice:0:4 }}</span>
+                            <span>{{ card.cardNumber | slice:5:9 }}</span>
+                            <span>{{ card.cardNumber | slice:10:14 }}</span>
+                            <span>{{ card.cardNumber | slice:15:19 }}</span>
+                        </div>
+                    </div>
+
                     <div class="card-footer">
-                        <div class="card-type">{{ card.type }}</div>
-                        <div class="card-expiry">{{ card.expiryDate }}</div>
+                        <div class="card-holder">
+                            <label>Card Holder</label>
+                            <span>{{ card.type === 'MasterCard' ? 'Adeel Shahi' : (card.holderName || 'Noshahi Dev')
+                                }}</span>
+                        </div>
+                        <div class="card-meta">
+                            <label>Valid Thru</label>
+                            <span>{{ card.expiryDate }}</span>
+                        </div>
+                        <div class="brand-logo">
+                            {{ card.type.toUpperCase() }}
+                        </div>
                     </div>
                 </div>
-                <div class="card-info">
+
+                <div class="card-info-panel">
                     <div class="info-row">
-                        <span class="label">Balance:</span>
+                        <span class="label">Current Balance</span>
                         <span class="value">{{ card.balance | currency: 'USD' }}</span>
                     </div>
                     <div class="info-row">
-                        <span class="label">Status:</span>
+                        <span class="label">Status</span>
                         <span class="status-badge active">{{ card.status }}</span>
                     </div>
                 </div>

@@ -11,5 +11,6 @@ namespace Elicom.Withdrawals
         Task<PagedResultDto<WithdrawRequestDto>> GetMyWithdrawRequests(PagedAndSortedResultRequestDto input);
         Task ApproveWithdraw(ApproveWithdrawRequestInput input);
         Task RejectWithdraw(ApproveWithdrawRequestInput input);
+        Task<PagedResultDto<WithdrawRequestDto>> GetAllWithdrawRequests(PagedAndSortedResultRequestDto input);
     }
 }

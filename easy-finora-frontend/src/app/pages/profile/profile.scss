@@ -1,3 +1,5 @@
+@use "sass:color";
+
 $primary: #1de016;
 $success: #16a34a;
 
@@ -138,7 +140,7 @@ $success: #16a34a;
         color: white;
 
         &:hover {
-            background: darken($primary, 5%);
+            background: color.adjust($primary, $lightness: -5%);
         }
     }
 
@@ -147,7 +149,7 @@ $success: #16a34a;
         color: white;
 
         &:hover {
-            background: darken($success, 5%);
+            background: color.adjust($success, $lightness: -5%);
         }
 
         &:disabled {

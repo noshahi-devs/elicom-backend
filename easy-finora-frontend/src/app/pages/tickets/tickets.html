@@ -47,7 +47,7 @@
         </div>
 
         <div *ngFor="let ticket of tickets" class="table-row">
-            <div class="col">{{ ticket.id }}</div>
+            <div class="col" title="{{ ticket.id }}">{{ ticket.id.substring(0,8) }}</div>
             <div class="col">{{ ticket.title }}</div>
             <div class="col">
                 <span class="priority-badge" [class]="ticket.priority.toLowerCase()">{{ ticket.priority }}</span>
@@ -55,8 +55,11 @@
             <div class="col">
                 <span class="status-badge" [class]="ticket.status.toLowerCase()">{{ ticket.status }}</span>
             </div>
-            <div class="col">{{ ticket.created | date: 'MMM d, y' }}</div>
-            <div class="col">{{ ticket.replies }}</div>
+            <div class="col">{{ ticket.creationTime | date: 'MMM d, y h:mm a' }}</div>
+            <div class="col">
+                <span *ngIf="ticket.adminRemarks" class="replied-badge">Yes</span>
+                <span *ngIf="!ticket.adminRemarks">No</span>
+            </div>
         </div>
     </div>
 </div>

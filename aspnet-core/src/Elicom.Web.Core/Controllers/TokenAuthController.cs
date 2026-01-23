@@ -8,6 +8,7 @@ using Elicom.Authorization.Users;
 using Elicom.Models.TokenAuth;
 using Elicom.MultiTenancy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -24,17 +25,20 @@ namespace Elicom.Controllers
         private readonly ITenantCache _tenantCache;
         private readonly AbpLoginResultTypeHelper _abpLoginResultTypeHelper;
         private readonly TokenAuthConfiguration _configuration;
+        private readonly UserManager _userManager;
 
         public TokenAuthController(
             LogInManager logInManager,
             ITenantCache tenantCache,
             AbpLoginResultTypeHelper abpLoginResultTypeHelper,
-            TokenAuthConfiguration configuration)
+            TokenAuthConfiguration configuration,
+            UserManager userManager)
         {
             _logInManager = logInManager;
             _tenantCache = tenantCache;
             _abpLoginResultTypeHelper = abpLoginResultTypeHelper;
             _configuration = configuration;
+            _userManager = userManager;
         }
 
         [HttpPost]
@@ -59,24 +63,80 @@ namespace Elicom.Controllers
 
         private string GetTenancyNameOrNull()
         {
-            if (!AbpSession.TenantId.HasValue)
+            int? tenantId = AbpSession.TenantId;
+
+            // Fallback for manual header if session is not populated (sometimes happens in some middleware configurations)
+            if (!tenantId.HasValue && Request.Headers.TryGetValue("Abp-TenantId", out var headerValue))
+            {
+                if (int.TryParse(headerValue, out var id))
+                {
+                    tenantId = id;
+                }
+            }
+
+            if (!tenantId.HasValue)
             {
                 return null;
             }
 
-            return _tenantCache.GetOrNull(AbpSession.TenantId.Value)?.TenancyName;
+            return _tenantCache.GetOrNull(tenantId.Value)?.TenancyName;
         }
 
         private async Task<AbpLoginResult<Tenant, User>> GetLoginResultAsync(string usernameOrEmailAddress, string password, string tenancyName)
         {
             var loginResult = await _logInManager.LoginAsync(usernameOrEmailAddress, password, tenancyName);
 
+            // Hide Platform Prefixes Support: If login fails and we have a tenant context, try prefixing
+            if (loginResult.Result == AbpLoginResultType.InvalidUserNameOrEmailAddress && !string.IsNullOrEmpty(tenancyName))
+            {
+                string prefix = "";
+                switch (tenancyName.ToLower())
+                {
+                    case "globalpay": prefix = "GP_"; break;
+                    case "primeship": prefix = "PS_"; break;
+                    case "default": prefix = "SS_"; break;
+                }
+
+                if (!string.IsNullOrEmpty(prefix) && !usernameOrEmailAddress.StartsWith(prefix))
+                {
+                    var prefixedLoginResult = await _logInManager.LoginAsync(prefix + usernameOrEmailAddress, password, tenancyName);
+                    if (prefixedLoginResult.Result != AbpLoginResultType.InvalidUserNameOrEmailAddress)
+                    {
+                        return prefixedLoginResult;
+                    }
+                }
+            }
+
+            // Global Tenant Discovery: Find user by email across all tenants using direct DB query to bypass filters
+            if (loginResult.Result == AbpLoginResultType.InvalidUserNameOrEmailAddress)
+            {
+                using (UnitOfWorkManager.Current.DisableFilter(Abp.Domain.Uow.AbpDataFilters.MayHaveTenant, Abp.Domain.Uow.AbpDataFilters.MustHaveTenant))
+                {
+                    // Use IgnoreQueryFilters to be absolutely sure we scan the whole table
+                    var user = await _userManager.Users
+                        .IgnoreQueryFilters()
+                        .FirstOrDefaultAsync(u => u.EmailAddress == usernameOrEmailAddress || u.UserName == usernameOrEmailAddress);
+
+                    if (user != null)
+                    {
+                        var tenant = user.TenantId.HasValue ? _tenantCache.GetOrNull(user.TenantId.Value) : null;
+                        var targetTenancyName = tenant?.TenancyName; 
+
+                        var globalLoginResult = await _logInManager.LoginAsync(user.UserName, password, targetTenancyName);
+                        if (globalLoginResult.Result != AbpLoginResultType.InvalidUserNameOrEmailAddress)
+                        {
+                            return globalLoginResult;
+                        }
+                    }
+                }
+            }
+
             switch (loginResult.Result)
             {
                 case AbpLoginResultType.Success:
                     return loginResult;
                 case AbpLoginResultType.InvalidUserNameOrEmailAddress:
-                    throw new Abp.UI.UserFriendlyException("Invalid email address or username.");
+                    throw new Abp.UI.UserFriendlyException("Invalid email address or username. Please ensure you are using the correct credentials or register if you haven't yet.");
                 case AbpLoginResultType.InvalidPassword:
                     throw new Abp.UI.UserFriendlyException("Invalid password. Please try again.");
                 case AbpLoginResultType.UserIsNotActive:
@@ -86,7 +146,7 @@ namespace Elicom.Controllers
                 case AbpLoginResultType.TenantIsNotActive:
                     throw new Abp.UI.UserFriendlyException("Tenant is not active.");
                 case AbpLoginResultType.UserEmailIsNotConfirmed:
-                    throw new Abp.UI.UserFriendlyException("Your email is not confirmed. Please check your email for the verification link.");
+                    throw new Abp.UI.UserFriendlyException("Your email is not confirmed. Please check your email for the verification link before logging in.");
                 case AbpLoginResultType.LockedOut:
                     throw new Abp.UI.UserFriendlyException("Your account has been locked due to multiple failed login attempts. Please try again later.");
                 default:

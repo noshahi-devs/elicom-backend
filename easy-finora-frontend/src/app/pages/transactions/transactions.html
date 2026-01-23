@@ -24,29 +24,34 @@
             <div class="col">Date</div>
         </div>
 
-        <!-- Loading State -->
-        <div *ngIf="isLoading" class="loading-spinner-container">
-            <div class="spinner"></div>
+        @if (isLoading) {
+        <div class="loading-spinner-container">
+            <div class="spinner"></div> <!-- Ensure this has CSS in global or component styles -->
             <p>Loading transactions...</p>
         </div>
+        }
 
-        <div *ngFor="let txn of filteredTransactions" class="table-row">
+        @for (txn of filteredTransactions; track txn.id) {
+        <div class="table-row">
             <div class="col">{{ txn.id }}</div>
             <div class="col">
-                <span class="type-badge" [class]="txn.type.toLowerCase()">{{ txn.type }}</span>
+                <span class="type-badge" [ngClass]="(txn.type || 'unknown').toLowerCase()">{{ txn.type }}</span>
             </div>
             <div class="col">{{ txn.description }}</div>
             <div class="col" [class.negative]="txn.amount < 0" [class.positive]="txn.amount > 0">
                 {{ txn.amount | currency: 'USD' }}
             </div>
             <div class="col">
-                <span class="status-badge" [class]="txn.status.toLowerCase()">{{ txn.status }}</span>
+                <span class="status-badge" [ngClass]="(txn.status || 'completed').toLowerCase()">{{ txn.status }}</span>
             </div>
             <div class="col">{{ txn.date | date: 'MMM d, y h:mm a' }}</div>
         </div>
-
-        <div *ngIf="!isLoading && filteredTransactions.length === 0" class="empty-state">
+        } @empty {
+        @if (!isLoading) {
+        <div class="empty-state">
             <p>No transactions found for this filter.</p>
         </div>
+        }
+        }
     </div>
 </div>

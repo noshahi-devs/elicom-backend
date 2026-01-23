@@ -28,6 +28,7 @@ namespace Elicom.EntityFrameworkCore
         public DbSet<Cards.VirtualCard> VirtualCards { get; set; }
         public DbSet<WithdrawRequest> WithdrawRequests { get; set; }
         public DbSet<AppTransaction> AppTransactions { get; set; }
+        public DbSet<SupportTicket> SupportTickets { get; set; }
 
         public ElicomDbContext(DbContextOptions<ElicomDbContext> options)
             : base(options)

@@ -1,10 +1,11 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { NgFor, NgIf, CurrencyPipe, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { TransactionService } from '../../services/transaction.service';
 
 @Component({
     selector: 'app-transactions',
-    imports: [NgFor, NgIf, CurrencyPipe, DatePipe],
+    standalone: true,
+    imports: [CommonModule],
     templateUrl: './transactions.html',
     styleUrl: './transactions.scss',
 })
@@ -30,15 +31,17 @@ export class Transactions implements OnInit {
         this.transactionService.getHistory().subscribe({
             next: (res) => {
                 console.log('Transactions: List Response:', res);
-                this.allTransactions = res.result.items.map((t: any) => ({
+                this.allTransactions = (res?.result?.items ?? []).map((t: any) => ({
                     id: t.id,
-                    type: t.category,
+                    type: t.category || 'Unknown',  // Fallback
                     amount: t.transactionType === 'Debit' ? -t.amount : t.amount,
                     status: 'Completed',
                     date: t.creationTime,
                     description: t.description,
                     cardId: t.cardId
                 }));
+                this.isLoading = false;
+                this.cdr.detectChanges(); // Ensure UI update
                 this.isLoading = false;
                 this.cdr.detectChanges();
             },
@@ -52,7 +55,7 @@ export class Transactions implements OnInit {
 
     get filteredTransactions() {
         if (this.filterType === 'all') return this.allTransactions;
-        return this.allTransactions.filter(t => t.type.toLowerCase() === this.filterType.toLowerCase());
+        return this.allTransactions.filter(t => (t.type || '').toLowerCase() === this.filterType.toLowerCase());
     }
 
     setFilter(type: string) {
