@@ -10,7 +10,10 @@
         </div>
     </div>
 
-    <div class="user-table-3d">
+    <!-- Premium Loader -->
+    <app-loader *ngIf="isLoading" message="Retrieving global user registry..."></app-loader>
+
+    <div class="user-table-3d" *ngIf="!isLoading">
         <div class="table-header">
             <div class="col">User Info</div>
             <div class="col">Email</div>
@@ -38,12 +41,8 @@
             </div>
         </div>
 
-        <div *ngIf="users.length === 0 && !isLoading" class="table-row">
+        <div *ngIf="users.length === 0" class="table-row">
             <div class="col" style="width: 100%; text-align: center;">No users found.</div>
-        </div>
-
-        <div *ngIf="isLoading" class="table-row">
-            <div class="col" style="width: 100%; text-align: center;">Loading users...</div>
         </div>
     </div>
 </div>

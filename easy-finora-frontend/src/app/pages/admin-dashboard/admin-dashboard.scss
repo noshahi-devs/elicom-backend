@@ -2,7 +2,7 @@
 
 .page-container {
     padding: 30px;
-    background: #080808;
+    background: var(--bg-body);
     min-height: calc(100vh - 80px);
 }
 
@@ -13,11 +13,10 @@
     margin-bottom: 40px;
 
     .glow-text {
-        color: #fff;
         font-size: 32px;
         font-weight: 800;
         letter-spacing: -0.5px;
-        background: linear-gradient(135deg, #fff, #888);
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
         -webkit-background-clip: text;
         background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -27,22 +26,23 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        background: rgba(255, 255, 255, 0.05);
+        background: var(--bg-surface);
         padding: 8px 16px;
         border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: var(--shadow-3d-soft);
 
         .pulse-icon {
             width: 10px;
             height: 10px;
-            background: #00ff00;
+            background: var(--primary);
             border-radius: 50%;
-            box-shadow: 0 0 10px #00ff00;
+            box-shadow: 0 0 10px var(--primary);
             animation: pulse 1.5s infinite;
         }
 
         .live-tag {
-            color: #00ff00;
+            color: var(--primary-dark);
             font-size: 11px;
             font-weight: 700;
             letter-spacing: 1px;
@@ -57,24 +57,13 @@
     margin-bottom: 40px;
 
     .stat-card {
-        position: relative;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 20px;
-        padding: 25px;
-        overflow: hidden;
-        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        @extend .card-3d;
         cursor: default;
-
-        &:hover {
-            transform: translateY(-5px);
-            background: rgba(255, 255, 255, 0.05);
-        }
 
         .icon-box {
             width: 50px;
             height: 50px;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.03);
             border-radius: 14px;
             display: flex;
             align-items: center;
@@ -85,14 +74,14 @@
 
         .info {
             .label {
-                color: #888;
+                color: var(--text-muted);
                 font-size: 14px;
                 margin-bottom: 5px;
                 display: block;
             }
 
             .value {
-                color: #fff;
+                color: var(--text-main);
                 font-size: 28px;
                 font-weight: 700;
                 margin: 0;
@@ -104,7 +93,7 @@
         }
 
         &.green .icon-box i {
-            color: #28a745;
+            color: var(--primary);
         }
 
         &.red .icon-box i {
@@ -128,10 +117,7 @@
 }
 
 .volume-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 24px;
-    padding: 35px;
+    @extend .card-3d;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -142,15 +128,15 @@
         margin-bottom: 20px;
 
         h3 {
-            color: #888;
+            color: var(--text-muted);
             margin: 0;
             font-size: 16px;
             font-weight: 500;
         }
 
         .period {
-            background: rgba(0, 255, 0, 0.1);
-            color: #00ff00;
+            background: rgba(29, 224, 22, 0.1);
+            color: var(--primary-dark);
             padding: 4px 12px;
             border-radius: 12px;
             font-size: 11px;
@@ -164,13 +150,13 @@
         margin-bottom: 30px;
 
         .currency {
-            color: #d4af37;
+            color: var(--primary);
             font-size: 40px;
             font-weight: 300;
         }
 
         .amount {
-            color: #fff;
+            color: var(--text-main);
             font-size: 64px;
             font-weight: 800;
             margin: 0;
@@ -181,38 +167,35 @@
         display: flex;
         gap: 40px;
         padding-top: 30px;
-        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
 
         .detail-item {
             display: flex;
             flex-direction: column;
 
             span {
-                color: #666;
+                color: var(--text-muted);
                 font-size: 12px;
                 margin-bottom: 5px;
             }
 
             strong {
-                color: #fff;
+                color: var(--text-main);
                 font-size: 18px;
             }
 
             .green-text {
-                color: #00ff00;
+                color: var(--primary-dark);
             }
         }
     }
 }
 
 .admin-quick-links {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 24px;
-    padding: 30px;
+    @extend .card-3d;
 
     h3 {
-        color: #fff;
+        color: var(--text-main);
         margin-bottom: 25px;
         font-size: 18px;
         font-weight: 600;
@@ -224,21 +207,21 @@
         gap: 15px;
 
         .q-link {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(0, 0, 0, 0.05);
             padding: 20px;
             border-radius: 16px;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 12px;
-            color: #ccc;
+            color: var(--text-muted);
             cursor: pointer;
             transition: 0.2s;
 
             i {
                 font-size: 24px;
-                color: goldenrod;
+                color: var(--primary);
             }
 
             span {
@@ -247,9 +230,9 @@
             }
 
             &:hover {
-                background: rgba(255, 215, 0, 0.1);
-                border-color: rgba(255, 215, 0, 0.2);
-                color: #fff;
+                background: rgba(29, 224, 22, 0.05);
+                border-color: rgba(29, 224, 22, 0.1);
+                color: var(--primary-dark);
                 transform: scale(1.02);
             }
         }

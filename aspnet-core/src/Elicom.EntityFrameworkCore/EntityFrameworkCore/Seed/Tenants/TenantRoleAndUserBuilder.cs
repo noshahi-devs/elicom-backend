@@ -141,7 +141,11 @@ public class TenantRoleAndUserBuilder
             userName = "PS_noshahi@primeshipuk.com";
             roleToAssign = StaticRoleNames.Tenants.Supplier;
             CreateUser(testEmail, userName, roleToAssign, passwordHasher);
+            
+            // Create Admin user for Prime Ship
+            CreateUser("admin@primeshipuk.com", "PS_admin@primeshipuk.com", StaticRoleNames.Tenants.Admin, passwordHasher);
         }
+
         else if (_tenantId == 3) // Easy Finora / Global Pay
         {
             testEmail = "noshahi@easyfinora.com";

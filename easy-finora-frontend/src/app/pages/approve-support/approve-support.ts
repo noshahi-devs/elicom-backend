@@ -1,11 +1,12 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DatePipe, SlicePipe } from '@angular/common';
 import { SupportService } from '../../services/support.service';
+import { Loader } from '../../shared/loader/loader';
 
 @Component({
     selector: 'app-approve-support',
     standalone: true,
-    imports: [CommonModule, DatePipe, SlicePipe],
+    imports: [CommonModule, DatePipe, SlicePipe, Loader],
     templateUrl: './approve-support.html',
     styleUrl: './approve-support.scss',
 })

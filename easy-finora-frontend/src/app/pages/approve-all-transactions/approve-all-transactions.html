@@ -34,8 +34,6 @@
             <div class="col" style="width: 100%; text-align: center;">No transactions found.</div>
         </div>
 
-        <div *ngIf="isLoading" class="table-row">
-            <div class="col" style="width: 100%; text-align: center;">Loading all transactions...</div>
-        </div>
+        <app-loader *ngIf="isLoading" message="Auditing global transaction stream..."></app-loader>
     </div>
 </div>

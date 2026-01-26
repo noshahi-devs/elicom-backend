@@ -1,11 +1,12 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { NgFor, DatePipe, CurrencyPipe, NgIf, SlicePipe, CommonModule } from '@angular/common';
 import { DepositService } from '../../services/deposit.service';
+import { Loader } from '../../shared/loader/loader';
 
 @Component({
     selector: 'app-approve-deposit-history',
     standalone: true,
-    imports: [CommonModule, DatePipe, CurrencyPipe, SlicePipe],
+    imports: [CommonModule, DatePipe, CurrencyPipe, SlicePipe, Loader],
     templateUrl: './approve-deposit-history.html',
     styleUrl: './approve-deposit-history.scss',
 })

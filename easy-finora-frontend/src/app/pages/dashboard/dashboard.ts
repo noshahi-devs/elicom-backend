@@ -6,10 +6,12 @@ import { ToastService } from '../../shared/toast/toast.service';
 import { CardService } from '../../services/card.service';
 import { TransactionService } from '../../services/transaction.service';
 import { forkJoin } from 'rxjs';
+import { Loader } from '../../shared/loader/loader';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [NgFor, NgIf, CurrencyPipe, DatePipe, RouterLink],
+  standalone: true,
+  imports: [NgFor, NgIf, CurrencyPipe, DatePipe, RouterLink, Loader],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
@@ -86,6 +88,17 @@ export class Dashboard implements OnInit {
         this.isLoading = false;
         this.cdr.detectChanges();
       }
+    });
+  }
+
+  copyWalletId() {
+    if (!this.walletData.walletId || this.walletData.walletId === '---') return;
+
+    navigator.clipboard.writeText(this.walletData.walletId).then(() => {
+      this.toastService.showSuccess('Wallet ID copied to clipboard!');
+    }).catch(err => {
+      console.error('Could not copy text: ', err);
+      this.toastService.showError('Failed to copy Wallet ID');
     });
   }
 

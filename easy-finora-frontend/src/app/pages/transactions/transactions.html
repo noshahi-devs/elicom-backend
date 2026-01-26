@@ -24,12 +24,7 @@
             <div class="col">Date</div>
         </div>
 
-        @if (isLoading) {
-        <div class="loading-spinner-container">
-            <div class="spinner"></div> <!-- Ensure this has CSS in global or component styles -->
-            <p>Loading transactions...</p>
-        </div>
-        }
+        <app-loader *ngIf="isLoading" message="Retrieving your complete transaction history..."></app-loader>
 
         @for (txn of filteredTransactions; track txn.id) {
         <div class="table-row">

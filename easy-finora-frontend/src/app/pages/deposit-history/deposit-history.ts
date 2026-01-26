@@ -2,11 +2,12 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { NgFor, DatePipe, CurrencyPipe, NgIf, SlicePipe, CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DepositService } from '../../services/deposit.service';
+import { Loader } from '../../shared/loader/loader';
 
 @Component({
     selector: 'app-deposit-history',
     standalone: true,
-    imports: [CommonModule, RouterLink], // CommonModule includes DatePipe, CurrencyPipe, NgIf, NgFor, SlicePipe
+    imports: [CommonModule, RouterLink, Loader], // CommonModule includes DatePipe, CurrencyPipe, NgIf, NgFor, SlicePipe
     templateUrl: './deposit-history.html',
     styleUrl: './deposit-history.scss',
 })

@@ -3,11 +3,12 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../services/user.service';
 import { ToastService } from '../../shared/toast/toast.service';
+import { Loader } from '../../shared/loader/loader';
 
 @Component({
     selector: 'app-user-management',
     standalone: true,
-    imports: [CommonModule, DatePipe, FormsModule],
+    imports: [CommonModule, DatePipe, FormsModule, Loader],
     templateUrl: './user-management.html',
     styleUrl: './user-management.scss',
 })

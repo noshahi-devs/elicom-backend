@@ -76,6 +76,8 @@ app-sidebar {
   padding: 30px;
   overflow-x: hidden;
   overflow-y: auto;
+  position: relative;
+  /* Added to contain absolute loaders */
 
   @media (max-width: 1024px) {
     padding: 24px;

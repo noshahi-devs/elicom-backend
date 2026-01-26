@@ -35,13 +35,6 @@
         }
         }
 
-        @if (isLoading) {
-        <div class="table-row">
-            <div class="col" style="width: 100%; text-align: center;">
-                <div class="loading-spinner"></div>
-                Loading...
-            </div>
-        </div>
-        }
+        <app-loader *ngIf="isLoading" message="Fetching your secure deposit history..."></app-loader>
     </div>
 </div>

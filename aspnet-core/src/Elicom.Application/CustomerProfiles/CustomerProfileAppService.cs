@@ -7,6 +7,7 @@ using Elicom.Entities;
 using System;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Abp.Runtime.Session;
 
 namespace Elicom.CustomerProfiles
 {

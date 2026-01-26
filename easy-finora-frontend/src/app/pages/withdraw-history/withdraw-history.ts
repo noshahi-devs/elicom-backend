@@ -2,10 +2,12 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { NgFor, DatePipe, CurrencyPipe, CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { WithdrawService } from '../../services/withdraw.service';
+import { Loader } from '../../shared/loader/loader';
 
 @Component({
     selector: 'app-withdraw-history',
-    imports: [CommonModule, RouterLink],
+    standalone: true,
+    imports: [CommonModule, RouterLink, Loader],
     templateUrl: './withdraw-history.html',
     styleUrl: './withdraw-history.scss',
 })

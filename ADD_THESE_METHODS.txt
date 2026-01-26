@@ -1,0 +1,15 @@
+// Add these methods to categories.component.ts before the closing }
+
+removeToast(id: number): void {
+  this.toasts = this.toasts.filter(t => t.id !== id);
+}
+
+getToastIcon(type: string): string {
+  const icons: any = {
+    success: 'pi-check-circle',
+    error: 'pi-times-circle',
+    warning: 'pi-exclamation-triangle',
+    info: 'pi-info-circle'
+  };
+  return icons[type] || 'pi-info-circle';
+}

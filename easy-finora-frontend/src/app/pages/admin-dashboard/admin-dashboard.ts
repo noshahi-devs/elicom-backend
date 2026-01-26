@@ -1,15 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
+import { forkJoin } from 'rxjs';
 import { TransactionService } from '../../services/transaction.service';
 import { UserService } from '../../services/user.service';
 import { DepositService } from '../../services/deposit.service';
 import { WithdrawService } from '../../services/withdraw.service';
 import { SupportService } from '../../services/support.service';
+import { Loader } from '../../shared/loader/loader';
 
 @Component({
     selector: 'app-admin-dashboard',
     standalone: true,
-    imports: [CommonModule, CurrencyPipe],
+    imports: [CommonModule, CurrencyPipe, Loader],
     templateUrl: './admin-dashboard.html',
     styleUrl: './admin-dashboard.scss',
 })
@@ -40,34 +42,35 @@ export class AdminDashboard implements OnInit {
     loadStats() {
         this.isLoading = true;
 
-        // Fetch users count
-        this.userService.getAllUsers(0, 1).subscribe(res => {
-            this.stats.totalUsers = res?.result?.totalCount ?? 0;
-        });
+        forkJoin({
+            users: this.userService.getAllUsers(0, 1),
+            deposits: this.depositService.getAllDepositRequests(0, 100),
+            withdrawals: this.withdrawService.getAllWithdrawRequests(0, 100),
+            tickets: this.supportService.getAllTickets(0, 100),
+            transactions: this.transactionService.getAllTransactions(0, 100)
+        }).subscribe({
+            next: (res: any) => {
+                this.stats.totalUsers = res.users?.result?.totalCount ?? 0;
 
-        // Fetch pending deposits
-        this.depositService.getAllDepositRequests(0, 100).subscribe(res => {
-            const items = res?.result?.items ?? [];
-            this.stats.pendingDeposits = items.filter((i: any) => i.status === 'Pending').length;
-        });
+                const dItems = res.deposits?.result?.items ?? [];
+                this.stats.pendingDeposits = dItems.filter((i: any) => i.status === 'Pending').length;
 
-        // Fetch pending withdrawals
-        this.withdrawService.getAllWithdrawRequests(0, 100).subscribe(res => {
-            const items = res?.result?.items ?? [];
-            this.stats.pendingWithdrawals = items.filter((i: any) => i.status === 'Pending').length;
-        });
+                const wItems = res.withdrawals?.result?.items ?? [];
+                this.stats.pendingWithdrawals = wItems.filter((i: any) => i.status === 'Pending').length;
 
-        // Fetch open tickets
-        this.supportService.getAllTickets(0, 100).subscribe(res => {
-            const items = res?.result?.items ?? [];
-            this.stats.openTickets = items.filter((i: any) => i.status === 'Open').length;
-        });
+                const tItems = res.tickets?.result?.items ?? [];
+                this.stats.openTickets = tItems.filter((i: any) => i.status === 'Open').length;
 
-        // Fetch volume
-        this.transactionService.getAllTransactions(0, 100).subscribe(res => {
-            const items = res?.result?.items ?? [];
-            this.stats.totalTransactionVolume = items.reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0);
-            this.isLoading = false;
+                const txItems = res.transactions?.result?.items ?? [];
+                this.stats.totalTransactionVolume = txItems.reduce((sum: number, tx: any) => sum + (tx.amount || 0), 0);
+
+                this.isLoading = false;
+            },
+            error: (err: any) => {
+                console.error('AdminDashboard: Load Error', err);
+                this.isLoading = false;
+                // Optionally show a toast error
+            }
         });
     }
 }

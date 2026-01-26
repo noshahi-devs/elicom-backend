@@ -45,8 +45,6 @@
             <div class="col" style="width: 100%; text-align: center;">No withdraw requests found.</div>
         </div>
 
-        <div *ngIf="isLoading" class="table-row">
-            <div class="col" style="width: 100%; text-align: center;">Loading requests...</div>
-        </div>
+        <app-loader *ngIf="isLoading" message="Processing global withdrawal requests..."></app-loader>
     </div>
 </div>

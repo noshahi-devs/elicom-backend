@@ -4,7 +4,10 @@
         <p>Manage your account settings</p>
     </div>
 
-    <div class="profile-card">
+    <!-- Premium Loader -->
+    <app-loader *ngIf="isLoading && !isEditing" message="Securely accessing your identity vault..."></app-loader>
+
+    <div class="profile-card" *ngIf="!isLoading || isEditing">
         <div class="user-info">
             <div class="avatar">
                 <i class="fas fa-user"></i>

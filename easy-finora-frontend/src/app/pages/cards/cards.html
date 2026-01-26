@@ -6,6 +6,9 @@
         </button>
     </div>
 
+    <!-- Premium Loader -->
+    <app-loader *ngIf="isLoading" message="Fetching your secure virtual cards..."></app-loader>
+
     <!-- Total Balance Summary -->
     <div class="balance-summary-3d" *ngIf="!isLoading">
         <div class="summary-item">

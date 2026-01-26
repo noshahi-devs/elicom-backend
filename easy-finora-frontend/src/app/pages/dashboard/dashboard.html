@@ -11,11 +11,8 @@
         </button>
     </div>
 
-    <!-- Loading Spinner Overlay -->
-    <div *ngIf="isLoading" class="loading-spinner-container">
-        <div class="spinner"></div>
-        <p>Syncing your financial data...</p>
-    </div>
+    <!-- Premium Loader -->
+    <app-loader *ngIf="isLoading" message="Syncing your financial ecosystem..."></app-loader>
 
     <ng-container *ngIf="!isLoading">
         <!-- Main Balance Card -->
@@ -30,7 +27,12 @@
                 </div>
             </div>
             <div class="wallet-info">
-                <span class="wallet-id">Wallet ID: {{ walletData.walletId }}</span>
+                <div class="id-row">
+                    <span class="wallet-id">Wallet ID: {{ walletData.walletId }}</span>
+                    <button class="copy-btn" (click)="copyWalletId()" title="Copy ID">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
                 <button class="btn-3d btn-sm" [routerLink]="['/transactions']">View Details</button>
             </div>
         </div>

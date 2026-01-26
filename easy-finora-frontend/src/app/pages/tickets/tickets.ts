@@ -3,11 +3,12 @@ import { NgFor, NgIf, DatePipe, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SupportService } from '../../services/support.service';
 import { ToastService } from '../../shared/toast/toast.service';
+import { Loader } from '../../shared/loader/loader';
 
 @Component({
     selector: 'app-tickets',
     standalone: true,
-    imports: [CommonModule, NgFor, NgIf, DatePipe, FormsModule],
+    imports: [CommonModule, NgFor, NgIf, DatePipe, FormsModule, Loader],
     templateUrl: './tickets.html',
     styleUrl: './tickets.scss',
 })

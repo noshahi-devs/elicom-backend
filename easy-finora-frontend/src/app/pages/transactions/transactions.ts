@@ -1,11 +1,12 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TransactionService } from '../../services/transaction.service';
+import { Loader } from '../../shared/loader/loader';
 
 @Component({
     selector: 'app-transactions',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, Loader],
     templateUrl: './transactions.html',
     styleUrl: './transactions.scss',
 })

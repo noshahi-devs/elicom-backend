@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms'; // Import FormsModule for ngModel
 import { ToastService } from '../../shared/toast/toast.service';
 import { SessionService } from '../../services/session.service';
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Loader } from '../../shared/loader/loader';
 
 @Component({
     selector: 'app-profile',
     standalone: true,
-    imports: [CommonModule, FormsModule], // Add to imports
+    imports: [CommonModule, FormsModule, Loader], // Add to imports
     templateUrl: './profile.html',
     styleUrl: './profile.scss'
 })

@@ -78,11 +78,12 @@ export class Sidebar {
       expanded: true,
       items: [
         { label: 'Admin Dashboard', icon: '🏛️', route: '/admin-dashboard' },
-        { label: 'User Management', icon: '👥', route: '/user-management' },
         { label: 'Approve Deposit', icon: '✅', route: '/approve-deposits' },
         { label: 'Approve Withdraw', icon: '🏧', route: '/approve-withdrawals' },
+        { label: 'Global Transaction', icon: '📈', route: '/approve-transactions' },
+        { label: 'User Management', icon: '👥', route: '/user-management' },
         { label: 'Support Management', icon: '🛠️', route: '/approve-support' },
-        { label: 'Global Transactions', icon: '📈', route: '/approve-transactions' }
+        { label: 'Logout', icon: '🚪', route: '/auth' }
       ],
       isAdminOnly: true
     },
@@ -91,7 +92,8 @@ export class Sidebar {
       expanded: false,
       items: [
         { label: 'Logout', icon: '🚪', route: '/auth' }
-      ]
+      ],
+      isAdminOnly: false // keep it for normal users too
     }
   ];
 
@@ -101,7 +103,12 @@ export class Sidebar {
   }
 
   get filteredMenuSections() {
-    return this.menuSections.filter(section => !section['isAdminOnly'] || this.isAdmin);
+    if (this.isAdmin) {
+      // Admins only see the Admin Management section
+      return this.menuSections.filter(section => section['isAdminOnly'] === true);
+    }
+    // Users see everything except Admin sections
+    return this.menuSections.filter(section => !section['isAdminOnly']);
   }
 
   toggleSection(index: number) {

@@ -1,11 +1,12 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { WithdrawService } from '../../services/withdraw.service';
+import { Loader } from '../../shared/loader/loader';
 
 @Component({
     selector: 'app-approve-withdraw-history',
     standalone: true,
-    imports: [CommonModule, DatePipe, CurrencyPipe],
+    imports: [CommonModule, DatePipe, CurrencyPipe, Loader],
     templateUrl: './approve-withdraw-history.html',
     styleUrl: './approve-withdraw-history.scss',
 })

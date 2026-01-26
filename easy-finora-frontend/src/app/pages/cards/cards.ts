@@ -4,10 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ToastService } from '../../shared/toast/toast.service';
 import { CardService } from '../../services/card.service';
+import { Loader } from '../../shared/loader/loader';
 
 @Component({
     selector: 'app-cards',
-    imports: [NgFor, NgIf, CurrencyPipe, DatePipe, FormsModule, SlicePipe],
+    standalone: true,
+    imports: [NgFor, NgIf, CurrencyPipe, DatePipe, FormsModule, SlicePipe, Loader],
     templateUrl: './cards.html',
     styleUrl: './cards.scss',
 })

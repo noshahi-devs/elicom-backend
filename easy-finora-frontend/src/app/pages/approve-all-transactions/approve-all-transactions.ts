@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { TransactionService } from '../../services/transaction.service';
+import { Loader } from '../../shared/loader/loader';
 
 @Component({
     selector: 'app-approve-all-transactions',
     standalone: true,
-    imports: [CommonModule, DatePipe, CurrencyPipe],
+    imports: [CommonModule, DatePipe, CurrencyPipe, Loader],
     templateUrl: './approve-all-transactions.html',
     styleUrl: './approve-all-transactions.scss',
 })
