@@ -1,0 +1,222 @@
+<div class="home-view animate-fade">
+
+    <!-- 1. Stunning Hero Section -->
+    <section class="hero-wrapper">
+        <div class="container">
+            <div class="hero-glass-card shadow-premium">
+                <div class="hero-inner">
+                    <span class="badge-new animate-up">SEASONAL COLLECTION 2026</span>
+                    <h1 class="animate-up delay-100">The Future of <span>Luxury Commerce</span></h1>
+                    <p class="animate-up delay-200">Experience a curated marketplace where high-precision logistics
+                        meets world-class design. Global brands delivered in 24 hours.</p>
+                    <div class="hero-actions animate-up delay-300">
+                        <button class="btn-premium">Explore Collection <i class="pi pi-arrow-right"></i></button>
+                        <button class="glass-btn-alt">View Flash Deals</button>
+                    </div>
+                </div>
+
+                <div class="floating-elements d-none d-lg-flex">
+                    <div class="glow-circle"></div>
+                    <div class="mockup-item">
+                        <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&h=600&fit=crop"
+                            alt="Premium Watch">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. Trust & Features Bar -->
+    <section class="trust-bar">
+        <div class="container">
+            <div class="trust-content">
+                <div class="trust-item animate-up delay-100">
+                    <div class="icon-wrap"><i class="pi pi-bolt"></i></div>
+                    <div class="text">
+                        <h5>Ultra-Fast Delivery</h5>
+                        <p>Ships within 12 hours globally.</p>
+                    </div>
+                </div>
+                <div class="trust-item animate-up delay-200">
+                    <div class="icon-wrap"><i class="pi pi-shield"></i></div>
+                    <div class="text">
+                        <h5>Diamond Protection</h5>
+                        <p>100% money-back safe guarantee.</p>
+                    </div>
+                </div>
+                <div class="trust-item animate-up delay-200">
+                    <div class="icon-wrap"><i class="pi pi-verified"></i></div>
+                    <div class="text">
+                        <h5>Authentic Brands</h5>
+                        <p>Direct from official manufacturers.</p>
+                    </div>
+                </div>
+                <div class="trust-item animate-up delay-300">
+                    <div class="icon-wrap"><i class="pi pi-headphones"></i></div>
+                    <div class="text">
+                        <h5>VIP Concierge</h5>
+                        <p>24/7 priority customer support.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. Luxury Category Navigation -->
+    <section class="section-premium pt-0">
+        <div class="container">
+            <div class="section-head">
+                <div class="title-block">
+                    <h2>Luxury <span>Categories</span></h2>
+                    <p class="subtitle">Handpicked selections by our global style experts</p>
+                </div>
+                <a routerLink="/categories" class="view-more-btn">All Categories <i class="pi pi-chevron-right"></i></a>
+            </div>
+
+            <div class="luxury-categories">
+                <div class="luxury-cat-card" *ngFor="let cat of categories" (click)="onCategorySelected(cat)">
+                    <div class="circle-wrap">
+                        <div class="img-inner">
+                            <img [src]="cat.image" [alt]="cat.name">
+                        </div>
+                    </div>
+                    <h4>{{ cat.name }}</h4>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. Flash Sales (The "Wow" Grid) -->
+    <section class="section-premium bg-white">
+        <div class="container">
+            <div class="section-head">
+                <div class="title-block">
+                    <div class="d-flex align-items-center gap-3">
+                        <h2 class="mb-0">Flash <span>Sales</span></h2>
+                        <div class="countdown-modern" *ngIf="flashSaleTime">
+                            <span class="dot-blink"></span>
+                            Ending: {{ flashSaleTime.hours | number:'2.0' }}:{{ flashSaleTime.minutes | number:'2.0'
+                            }}:{{ flashSaleTime.seconds | number:'2.0' }}
+                        </div>
+                    </div>
+                    <p class="subtitle">Limited time offers on top-tier global brands</p>
+                </div>
+                <a routerLink="/shop" class="view-more-btn">View All Deals</a>
+            </div>
+
+            <div class="products-grid-3d">
+                <div class="pro-card-premium" *ngFor="let product of visibleFeaturedProducts" (click)="onProductSelected(product)">
+                    <div class="pro-img-box">
+                        <img [src]="product.image" [alt]="product.name">
+                        <span class="badge-tag">-{{ product.discount }}% OFF</span>
+
+                        <div class="pro-actions-overlay">
+                            <button class="btn-circle" title="Add to Wishlist" (click)="$event.stopPropagation()"><i class="pi pi-heart"></i></button>
+                            <button class="btn-circle" title="Add to Cart" (click)="$event.stopPropagation()"><i class="pi pi-shopping-bag"></i></button>
+                            <button class="btn-circle" title="Quick View" (click)="$event.stopPropagation()"><i class="pi pi-eye"></i></button>
+                        </div>
+                    </div>
+                    <div class="pro-info">
+                        <span class="category-label">{{ product.category }}</span>
+                        <h3>{{ product.name }}</h3>
+                        <div class="price-row">
+                            <div class="prices">
+                                <span class="current">${{ product.price }}</span>
+                                <span class="old">${{ product.originalPrice }}</span>
+                            </div>
+                        </div>
+                        <div class="rating-block">
+                            <div class="stars">★★★★★</div>
+                            <span class="count">{{ product.reviewCount }} reviews</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Show More Button for Featured Products -->
+            <div class="text-center mt-5" *ngIf="canLoadMoreFeatured">
+                <button class="btn-show-more" (click)="loadMoreFeatured()">
+                    <span>Show More Products</span>
+                    <i class="pi pi-chevron-down"></i>
+                </button>
+                <p class="text-muted mt-3 small">Showing {{ visibleFeaturedCount }} of {{ featuredProducts.length }}
+                    products</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. Promo Banner (Amazon Inspired) -->
+    <section class="section-premium pt-0">
+        <div class="container">
+            <div class="promo-banner-luxury"
+                style="background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('assets/images/81OT48ieUNL._AC_SL1500_.jpg') center/cover;">
+                <div class="promo-content">
+                    <span class="p-badge mb-3">EXCLUSIVE OFFER</span>
+                    <h2>Luxury Redefined. <br>Up to <span>50% OFF</span> on Premium Watches.</h2>
+                    <p>Join our Prime membership to unlock early access and free worldwide shipping.</p>
+                    <button class="btn-premium">Shop The Collection</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. Featured Carousel / CTA Section -->
+    <section class="section-premium">
+        <div class="container">
+            <div
+                class="banner-cta-premium glass-effect p-5 rounded-4 d-flex align-items-center justify-content-between">
+                <div class="cta-text">
+                    <h2 class="text-dark">Become a Prime Member</h2>
+                    <p class="text-muted mb-0">Get unlimited free shipping and exclusive early access to New York
+                        Fashion Week collections.</p>
+                </div>
+                <button class="btn-premium">Join Now <i class="pi pi-user-plus"></i></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. Recommended For You -->
+    <section class="section-premium pt-0">
+        <div class="container">
+            <div class="section-head">
+                <div class="title-block">
+                    <h2>Just <span>For You</span></h2>
+                    <p class="subtitle">Based on your sophisticated taste and recent browsing</p>
+                </div>
+            </div>
+
+            <div class="products-grid-3d">
+                <div class="pro-card-premium" *ngFor="let product of visibleLatestProducts" (click)="onProductSelected(product)">
+                    <div class="pro-img-box">
+                        <img [src]="product.image" [alt]="product.name">
+                        <div class="pro-actions-overlay">
+                            <button class="btn-circle" (click)="$event.stopPropagation()"><i class="pi pi-shopping-bag"></i></button>
+                        </div>
+                    </div>
+                    <div class="pro-info">
+                        <span class="category-label">PRIME SELECTION</span>
+                        <h3>{{ product.name }}</h3>
+                        <div class="price-row">
+                            <span class="current">${{ product.price }}</span>
+                        </div>
+                        <div class="rating-block">
+                            <div class="stars">★★★★☆</div>
+                            <span class="count">{{ product.reviewCount }} reviews</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Show More Button for Latest Products -->
+            <div class="text-center mt-5" *ngIf="canLoadMoreLatest">
+                <button class="btn-show-more" (click)="loadMoreLatest()">
+                    <span>Show More Products</span>
+                    <i class="pi pi-chevron-down"></i>
+                </button>
+                <p class="text-muted mt-3 small">Showing {{ visibleLatestCount }} of {{ latestProducts.length }}
+                    products</p>
+            </div>
+        </div>
+    </section>
+
+</div>

@@ -1,0 +1,155 @@
+<div class="dashboard-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">Admin Dashboard</h1>
+    <p class="page-subtitle">Welcome back! Here's what's happening with your store today.</p>
+  </div>
+
+  
+  <!-- Stats Cards Grid -->
+  <div class="stats-grid">
+    <div class="stat-card-3d" 
+         *ngFor="let card of statsCards"
+         [style.background]="card.gradient">
+      <div class="stat-card-content">
+        <div class="stat-icon-wrapper">
+          <span class="stat-icon">{{ card.icon }}</span>
+        </div>
+
+        <div class="stat-info">
+          <h3 class="stat-value">{{ card.value }}</h3>
+          <p class="stat-title">{{ card.title }}</p>
+          <div class="stat-change" [class.positive]="card.trend === 'up'" [class.negative]="card.trend === 'down'">
+            <span class="trend-icon">{{ getTrendIcon(card.trend) }}</span>
+            <span class="change-value">{{ card.change }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="stat-card-decoration"></div>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="content-grid">
+    <!-- Left Column -->
+    <div class="left-column">
+      <!-- Quick Actions -->
+      <div class="card-3d quick-actions-card">
+        <div class="card-header">
+          <h3>Quick Actions</h3>
+        </div>
+        <div class="card-content">
+          <div class="actions-grid">
+            <button class="action-card" 
+                    *ngFor="let action of quickActions"
+                    (click)="onQuickAction(action)"
+                    [class.color-primary]="action.color === 'primary'"
+                    [class.color-info]="action.color === 'info'"
+                    [class.color-success]="action.color === 'success'"
+                    [class.color-warning]="action.color === 'warning'">
+              <span class="action-icon">{{ action.icon }}</span>
+              <span class="action-title">{{ action.title }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sales Chart -->
+      <div class="card-3d sales-chart-card">
+        <div class="card-header">
+          <h3>Sales Overview</h3>
+          <select class="chart-period">
+            <option>Last 6 months</option>
+            <option>Last year</option>
+            <option>All time</option>
+          </select>
+        </div>
+        <div class="card-content">
+          <div class="chart-container">
+            <div class="chart-bars">
+              <div class="chart-bar" 
+                   *ngFor="let data of salesChartData"
+                   [style.height.%]="(data.sales / 70000) * 100">
+                <div class="bar-tooltip">
+                  <span class="tooltip-month">{{ data.month }}</span>
+                  <span class="tooltip-value">${{ data.sales.toLocaleString() }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="chart-labels">
+              <span *ngFor="let data of salesChartData">{{ data.month }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="right-column">
+      <!-- Recent Orders -->
+      <div class="card-3d recent-orders-card">
+        <div class="card-header">
+          <h3>Recent Orders</h3>
+          <a href="/admin/orders" class="view-all-link">View all</a>
+        </div>
+        <div class="card-content">
+          <div class="orders-list">
+            <div class="order-item" 
+                 *ngFor="let order of recentOrders"
+                 (click)="viewOrderDetails(order.id)">
+              <div class="order-customer">
+                <img [src]="order.avatar" [alt]="order.customer" class="customer-avatar">
+                <div class="customer-info">
+                  <p class="customer-name">{{ order.customer }}</p>
+                  <p class="order-id">{{ order.id }}</p>
+                </div>
+              </div>
+              <div class="order-details">
+                <p class="order-product">{{ order.product }}</p>
+                <p class="order-amount">{{ order.amount }}</p>
+              </div>
+              <div class="order-status">
+                <span class="status-badge" [class]="'status-' + getStatusColor(order.status)">
+                  {{ order.status }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Products -->
+      <div class="card-3d top-products-card">
+        <div class="card-header">
+          <h3>Top Products</h3>
+          <a href="/admin/products" class="view-all-link">View all</a>
+        </div>
+        <div class="card-content">
+          <div class="products-list">
+            <div class="product-item" 
+                 *ngFor="let product of topProducts"
+                 (click)="viewProductDetails(product.name)">
+              <div class="product-image">
+                <img [src]="product.image" [alt]="product.name">
+              </div>
+              <div class="product-info">
+                <h4 class="product-name">{{ product.name }}</h4>
+                <div class="product-stats">
+                  <span class="sales-count">{{ product.sales }} sold</span>
+                  <span class="revenue">{{ product.revenue }}</span>
+                </div>
+                <div class="product-stock">
+                  <span class="stock-label">Stock:</span>
+                  <span class="stock-value" [class.low-stock]="product.stock < 50">
+                    {{ product.stock }}
+                  </span>
+                  <span class="trend-indicator">{{ getTrendIcon(product.trend) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

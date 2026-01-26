@@ -1,0 +1,93 @@
+<div class="auth-container">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6 col-lg-5">
+        <div class="auth-card">
+          <div class="auth-header">
+            <h2>Create Account</h2>
+            <p>Join us today! Create your account to get started.</p>
+          </div>
+
+          <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+            <div class="form-group">
+              <label for="name">Full Name</label>
+              <input type="text" id="name" class="form-control" formControlName="name"
+                placeholder="Enter your full name">
+              <div class="error-message" *ngIf="registerForm.get('name')?.invalid && registerForm.get('name')?.touched">
+                Name is required (minimum 2 characters)
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="email">Email Address</label>
+              <input type="email" id="email" class="form-control" formControlName="email"
+                placeholder="Enter your email">
+              <div class="error-message"
+                *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
+                Valid email is required
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="phone">Phone Number</label>
+              <input type="tel" id="phone" class="form-control" formControlName="phone"
+                placeholder="Enter your phone number">
+              <div class="error-message"
+                *ngIf="registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched">
+                Phone number is required
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="country">Country</label>
+              <select id="country" class="form-control" formControlName="country">
+                <option value="" disabled selected>Select your country</option>
+                <option *ngFor="let country of countries" [value]="country">{{ country }}</option>
+              </select>
+              <div class="error-message"
+                *ngIf="registerForm.get('country')?.invalid && registerForm.get('country')?.touched">
+                Please select your country
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="password">Password</label>
+              <input type="password" id="password" class="form-control" formControlName="password"
+                placeholder="Create a password">
+              <div class="error-message"
+                *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
+                Password must be at least 6 characters
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="confirmPassword">Confirm Password</label>
+              <input type="password" id="confirmPassword" class="form-control" formControlName="confirmPassword"
+                placeholder="Confirm your password">
+              <div class="error-message"
+                *ngIf="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched">
+                Passwords must match
+              </div>
+            </div>
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="agreeTerms" formControlName="agreeTerms">
+              <label class="form-check-label" for="agreeTerms">
+                I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg w-100" [disabled]="registerForm.invalid || isLoading">
+              <span *ngIf="!isLoading">Create Account</span>
+              <span *ngIf="isLoading">Creating Account...</span>
+            </button>
+          </form>
+
+          <div class="auth-footer">
+            <p>Already have an account? <a routerLink="/auth/login">Login here</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

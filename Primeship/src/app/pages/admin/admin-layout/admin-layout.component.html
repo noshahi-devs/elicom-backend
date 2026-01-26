@@ -1,0 +1,225 @@
+<div class="app-container">
+
+  <!-- 3D Sidebar -->
+  <div class="sidebar-3d" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-section">
+        <div class="logo-3d">🛍️</div>
+        <div class="brand-info">
+          <h3>Prime Ship</h3>
+          <p>ERP Dashboard</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Profile -->
+    <div class="user-profile">
+      <div class="user-avatar">
+        <div class="avatar-icon">👤</div>
+        <div class="status-indicator online"></div>
+      </div>
+      <div class="user-info">
+        <h4>Admin User</h4>
+        <p>Super Admin</p>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      <div class="menu-section">
+        <h5 class="menu-title">Admin Panel</h5>
+        <ul class="nav-list">
+          <li class="nav-item" routerLinkActive="active">
+            <a routerLink="/admin/dashboard" class="nav-link">
+              <i class="fas fa-chart-line nav-icon"></i>
+              <span class="nav-text">Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item" routerLinkActive="active">
+            <a routerLink="/admin/products" class="nav-link">
+              <i class="fas fa-box nav-icon"></i>
+              <span class="nav-text">Products</span>
+            </a>
+          </li>
+          <li class="nav-item" routerLinkActive="active">
+            <a routerLink="/admin/categories" class="nav-link">
+              <i class="fas fa-tags nav-icon"></i>
+              <span class="nav-text">Categories</span>
+            </a>
+          </li>
+       
+          <li class="nav-item" routerLinkActive="active">
+            <a routerLink="/admin/orders" class="nav-link">
+              <i class="fas fa-shopping-cart nav-icon"></i>
+              <span class="nav-text">Orders</span>
+            </a>
+          </li>
+          <li class="nav-item" routerLinkActive="active">
+            <a routerLink="/admin/threepl-partners" class="nav-link">
+              <i class="fas fa-truck-loading nav-icon"></i>
+              <span class="nav-text">3PL Partners</span>
+            </a>
+          </li>
+             <li class="nav-item" routerLinkActive="active">
+            <a routerLink="/admin/inventory" class="nav-link">
+              <i class="fas fa-warehouse nav-icon"></i>
+              <span class="nav-text">Inventory</span>
+            </a>
+          </li>
+          <li class="nav-item" routerLinkActive="active">
+            <a routerLink="/admin/customers" class="nav-link">
+              <i class="fas fa-users nav-icon"></i>
+              <span class="nav-text">Customers</span>
+            </a>
+          </li>
+          <li class="nav-item" routerLinkActive="active">
+            <a routerLink="/admin/sellers" class="nav-link">
+              <i class="fas fa-store nav-icon"></i>
+              <span class="nav-text">Sellers</span>
+            </a>
+          </li>
+          <li class="nav-item" routerLinkActive="active">
+            <a routerLink="/admin/finance" class="nav-link">
+              <i class="fas fa-dollar-sign nav-icon"></i>
+              <span class="nav-text">Finance</span>
+            </a>
+          </li>
+          <li class="nav-item" routerLinkActive="active">
+            <a routerLink="/admin/reports" class="nav-link">
+              <i class="fas fa-chart-bar nav-icon"></i>
+              <span class="nav-text">Reports</span>
+            </a>
+          </li>
+          <li class="nav-item" routerLinkActive="active">
+            <a routerLink="/admin/users" class="nav-link">
+              <i class="fas fa-user-cog nav-icon"></i>
+              <span class="nav-text">Users & Roles</span>
+            </a>
+          </li>
+          <li class="nav-item" routerLinkActive="active">
+            <a routerLink="/admin/settings" class="nav-link">
+              <i class="fas fa-cog nav-icon"></i>
+              <span class="nav-text">Settings</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="menu-section">
+        <h5 class="menu-title">Seller Panel</h5>
+        <ul class="nav-list">
+          <li class="nav-item" routerLinkActive="active">
+            <a routerLink="/seller/dashboard" class="nav-link">
+              <i class="fas fa-chart-line nav-icon"></i>
+              <span class="nav-text">Seller Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item" routerLinkActive="active">
+            <a routerLink="/seller/products" class="nav-link">
+              <i class="fas fa-box nav-icon"></i>
+              <span class="nav-text">My Products</span>
+            </a>
+          </li>
+          <li class="nav-item" routerLinkActive="active">
+            <a routerLink="/seller/orders" class="nav-link">
+              <i class="fas fa-shopping-cart nav-icon"></i>
+              <span class="nav-text">Orders</span>
+            </a>
+          </li>
+          <li class="nav-item" routerLinkActive="active">
+            <a routerLink="/seller/earnings" class="nav-link">
+              <i class="fas fa-dollar-sign nav-icon"></i>
+              <span class="nav-text">Earnings</span>
+            </a>
+          </li>
+          <li class="nav-item" routerLinkActive="active">
+            <a routerLink="/seller/profile" class="nav-link">
+              <i class="fas fa-user nav-icon"></i>
+              <span class="nav-text">Profile</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="main-content">
+
+    <!-- 3D Header -->
+    <header class="header-3d">
+      <div class="header-content">
+        <div class="header-left">
+          <button class="sidebar-toggle-btn" id="sidebarToggle">
+            <i class="fas fa-bars toggle-icon"></i>
+          </button>
+          <div class="search-container">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" placeholder="Search products, orders, customers...">
+          </div>
+        </div>
+
+        <div class="header-right">
+          <button class="notification-btn">
+            <i class="fas fa-bell notification-icon"></i>
+            <span class="notification-badge">3</span>
+          </button>
+
+          <div class="user-menu-dropdown">
+            <div class="user-menu-btn" id="userMenuBtn">
+              <div class="user-avatar-small">
+                <i class="fas fa-user"></i>
+              </div>
+              <span class="user-name">Admin User</span>
+              <i class="fas fa-chevron-down user-menu-arrow"></i>
+            </div>
+
+            <!-- Dropdown Menu -->
+            <div class="user-dropdown-menu" id="userDropdown">
+              <div class="dropdown-header">
+                <div class="dropdown-avatar">
+                  <i class="fas fa-user"></i>
+                </div>
+                <div class="dropdown-user-info">
+                  <h4>Admin User</h4>
+                  <p>admin@noshahimart.com</p>
+                </div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <a href="#" class="dropdown-item">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+              </a>
+              <a href="#" class="dropdown-item">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+              </a>
+              <a href="#" class="dropdown-item">
+                <i class="fas fa-bell"></i>
+                <span>Notifications</span>
+              </a>
+              <div class="dropdown-divider"></div>
+              <a href="#" class="dropdown-item logout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+    <!-- Page Content -->
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-3d">
+      <div class="footer-content">
+        <div class="footer-copyright">
+          &copy; 2026 Prime Ship - All Rights Reserved
+        </div>
+      </div>
+    </footer>
+  </div>
+</div>

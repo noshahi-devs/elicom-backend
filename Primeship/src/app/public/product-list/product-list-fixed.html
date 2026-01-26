@@ -1,0 +1,270 @@
+<div class="product-list-container">
+  <div class="container">
+    <!-- Beautiful Category Header -->
+    <div class="category-header" *ngIf="categoryTitle">
+      <div class="category-hero">
+        <div class="category-image-overlay"></div>
+        <img [src]="categoryImage" [alt]="categoryTitle" class="category-bg-image">
+        <div class="category-content">
+          <div class="category-breadcrumb">
+            <a href="/home" class="breadcrumb-link">Home</a>
+            <span class="breadcrumb-separator">›</span>
+            <span class="breadcrumb-current">{{ categoryTitle }}</span>
+          </div>
+          <h1 class="category-title">{{ categoryTitle }}</h1>
+          <p class="category-description">{{ categoryDescription }}</p>
+          <div class="category-stats">
+            <div class="stat-item">
+              <span class="stat-number">{{ filteredProducts.length }}</span>
+              <span class="stat-label">Products</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">5★</span>
+              <span class="stat-label">Premium Quality</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">24h</span>
+              <span class="stat-label">Fast Shipping</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section">
+      <div class="filters-row">
+        <div class="filter-item">
+          <select class="form-select" formControlName="sortBy">
+            <option value="featured">Sort by: Featured</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+            <option value="newest">Newest First</option>
+            <option value="rating">Best Rating</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <select class="form-select" formControlName="category">
+            <option value="">All Categories</option>
+            <option value="electronics">Electronics</option>
+            <option value="fashion">Fashion</option>
+            <option value="home-living">Home & Living</option>
+            <option value="beauty">Beauty</option>
+            <option value="sports">Sports</option>
+            <option value="accessories">Accessories</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <div class="price-range">
+            <input type="number" class="form-control" placeholder="Min Price" formControlName="minPrice">
+          </div>
+        </div>
+        <div class="filter-item">
+          <div class="price-range">
+            <input type="number" class="form-control" placeholder="Max Price" formControlName="maxPrice">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Layout -->
+    <div class="main-content-layout">
+      <!-- Left Sidebar -->
+      <div class="left-sidebar">
+        <div class="sidebar-filters">
+          <!-- Categories Section -->
+          <h5>Categories</h5>
+          <div class="category-list">
+            <div class="form-check">
+              <input type="checkbox" id="cat1" class="form-check-input">
+              <label for="cat1" class="form-check-label">
+                Electronics
+                <span class="category-count">245</span>
+              </label>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" id="cat2" class="form-check-input">
+              <label for="cat2" class="form-check-label">
+                Fashion
+                <span class="category-count">189</span>
+              </label>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" id="cat3" class="form-check-input">
+              <label for="cat3" class="form-check-label">
+                Home & Living
+                <span class="category-count">156</span>
+              </label>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" id="cat4" class="form-check-input">
+              <label for="cat4" class="form-check-label">
+                Beauty
+                <span class="category-count">234</span>
+              </label>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" id="cat5" class="form-check-input">
+              <label for="cat5" class="form-check-label">
+                Sports
+                <span class="category-count">178</span>
+              </label>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" id="cat6" class="form-check-input">
+              <label for="cat6" class="form-check-label">
+                Accessories
+                <span class="category-count">201</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Price Range Section -->
+          <div class="price-filter">
+            <h5>Price Range</h5>
+            <div class="price-range-container">
+              <div class="price-display">
+                <span>Min: $<input type="number" class="min-price" value="0"></span>
+                <span>Max: $<input type="number" class="max-price" value="1000"></span>
+              </div>
+              <input type="range" min="0" max="1000" class="form-range">
+              <div class="price-labels">
+                <span class="min-label">$0</span>
+                <span class="max-label">$1000</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Featured Categories Section -->
+          <div class="featured-categories">
+            <h5>Featured</h5>
+            <div class="featured-grid">
+              <div class="featured-item">
+                <img src="/assets/images/61+DG4Np+zL._AC_SX425_.jpg" alt="Electronics">
+                <span>Electronics</span>
+              </div>
+              <div class="featured-item">
+                <img src="/assets/images/71NpF4JP7HL._AC_SY879_.jpg" alt="Fashion">
+                <span>Fashion</span>
+              </div>
+              <div class="featured-item">
+                <img src="/assets/images/81BrD6Y4ieL._AC_SX425_.jpg" alt="Beauty">
+                <span>Beauty</span>
+              </div>
+              <div class="featured-item">
+                <img src="/assets/images/81ec6uY7eML._AC_SX425_.jpg" alt="Sports">
+                <span>Sports</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sidebar Images Section -->
+          <div class="sidebar-images">
+            <h5>Trending</h5>
+            <div class="image-gallery">
+              <div class="gallery-item">
+                <img src="/assets/images/81OT48ieUNL._AC_SL1500_.jpg" alt="Trending 1">
+                <div class="overlay">
+                  <span>Hot Deal</span>
+                </div>
+              </div>
+              <div class="gallery-item">
+                <img src="/assets/images/81eUg-ixCSL._AC_SX679_.jpg" alt="Trending 2">
+                <div class="overlay">
+                  <span>New</span>
+                </div>
+              </div>
+              <div class="gallery-item">
+                <img src="/assets/images/81ViBxtYFoL._AC_SX569_.jpg" alt="Trending 3">
+                <div class="overlay">
+                  <span>Popular</span>
+                </div>
+              </div>
+              <div class="gallery-item">
+                <img src="/assets/images/81j8RchuiLL._AC_SX679_.jpg" alt="Trending 4">
+                <div class="overlay">
+                  <span>Top Rated</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Body - Category Related Products -->
+      <div class="main-content">
+        <!-- Category Title Section -->
+        <div class="category-title-section" *ngIf="categoryTitle">
+          <div class="category-header-content">
+            <h2 class="category-display-title">{{ categoryTitle }}</h2>
+            <p class="category-display-description">{{ categoryDescription }}</p>
+            <div class="category-stats-display">
+              <span class="product-count">{{ filteredProducts.length }} Products</span>
+              <span class="category-badge">Premium Quality</span>
+              <span class="shipping-badge">Fast Shipping</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="products-grid">
+          <div class="row">
+            <div class="col-md-4 col-sm-6 mb-4" *ngFor="let product of filteredProducts">
+              <div class="product-card" (click)="onProductClick(product)">
+                <div class="product-image">
+                  <img [src]="product.image" [alt]="product.name">
+                  <div class="product-actions">
+                    <button class="btn btn-sm btn-outline-primary">Quick View</button>
+                    <button class="btn btn-sm btn-outline-danger">Wishlist</button>
+                  </div>
+                  <div class="discount-badge" *ngIf="product.discount">
+                    {{ product.discount }}% OFF
+                  </div>
+                </div>
+                <div class="product-info">
+                  <h6 class="product-name">{{ product.name }}</h6>
+                  <div class="product-price">
+                    <span class="current-price">${{ product.price }}</span>
+                    <span class="original-price" *ngIf="product.originalPrice">${{ product.originalPrice }}</span>
+                  </div>
+                  <div class="product-rating">
+                    <span class="stars">★★★★★</span>
+                    <span class="rating-count">({{ product.reviewCount }})</span>
+                  </div>
+                  <button class="btn btn-primary btn-sm w-100">Add to Cart</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination Info -->
+        <div class="pagination-info">
+          <span class="page-info">Page 1 of 3</span>
+          <span class="total-items">24 Products</span>
+        </div>
+
+        <!-- Pagination -->
+        <nav class="pagination-nav">
+          <ul class="pagination">
+            <li class="page-item disabled">
+              <a href="#" class="page-link">Previous</a>
+            </li>
+            <li class="page-item active">
+              <a href="#" class="page-link">1</a>
+            </li>
+            <li class="page-item">
+              <a href="#" class="page-link">2</a>
+            </li>
+            <li class="page-item">
+              <a href="#" class="page-link">3</a>
+            </li>
+            <li class="page-item">
+              <a href="#" class="page-link">Next</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>

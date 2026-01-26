@@ -1,0 +1,326 @@
+<div class="product-detail-container">
+  <div class="container">
+    <!-- Breadcrumb Navigation -->
+    <nav class="breadcrumb-nav">
+      <div class="breadcrumb-wrapper">
+        <a class="breadcrumb-item" href="#">Home</a>
+        <i class="pi pi-chevron-right breadcrumb-separator"></i>
+        <a class="breadcrumb-item" href="#">Products</a>
+        <i class="pi pi-chevron-right breadcrumb-separator"></i>
+        <span class="breadcrumb-item active">{{ product?.name }}</span>
+      </div>
+    </nav>
+    
+    <!-- Main Product Section -->
+    <div class="product-main-section">
+      <div class="product-visual-section">
+        <!-- Product Images/3D Viewer -->
+        <div class="product-visual-container">
+          <!-- Tab Navigation for Visual Content -->
+          <div class="visual-tabs">
+            <button class="visual-tab active" (click)="activeVisualTab = 'images'">
+              <i class="pi pi-image"></i>
+              <span>Images</span>
+            </button>
+            <button class="visual-tab" (click)="activeVisualTab = '3d'">
+              <i class="pi pi-cube"></i>
+              <span>3D View</span>
+            </button>
+          </div>
+          
+          <!-- Images View -->
+          <div class="images-view" *ngIf="activeVisualTab === 'images'">
+            <div class="main-image-container">
+              <img [src]="product?.images?.[0] || product?.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop&crop=center'" [alt]="product?.name || 'Product'" class="main-product-image">
+              <div class="image-overlay">
+                <button class="overlay-btn"><i class="pi pi-search-plus"></i></button>
+                <button class="overlay-btn"><i class="pi pi-expand"></i></button>
+              </div>
+            </div>
+            <div class="thumbnail-strip">
+              <div class="thumbnail active" *ngFor="let thumb of [1,2,3,4]">
+                <img [src]="product?.image" [alt]="product?.name || 'Product thumbnail'">
+              </div>
+            </div>
+          </div>
+          
+          <!-- 3D View -->
+          <div class="three-d-view" *ngIf="activeVisualTab === '3d'">
+            <app-product-3d-viewer [productImage]="product?.image || ''"></app-product-3d-viewer>
+          </div>
+        </div>
+      </div>
+      
+      <div class="product-info-section">
+        <!-- Product Header -->
+        <div class="product-header">
+          <div class="product-meta">
+            <span class="brand-badge">PREMIUM COLLECTION</span>
+            <div class="product-rating">
+              <div class="stars">★★★★★</div>
+              <span class="rating-text">{{ product?.reviewCount || 128 }} Reviews</span>
+              <a href="#" class="write-review">Write a review</a>
+            </div>
+          </div>
+          
+          <h1 class="product-title">{{ product?.name }}</h1>
+          
+          <div class="price-section">
+            <div class="price-row">
+              <span class="current-price">${{ product?.price }}</span>
+              <span class="original-price" *ngIf="product?.originalPrice">${{ product?.originalPrice }}</span>
+              <span class="discount-badge" *ngIf="product?.discount">{{ product?.discount }}% OFF</span>
+            </div>
+            <div class="savings-info" *ngIf="product?.discount">
+              <span class="savings-text">You save ${{ calculateSavings() }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Product Description -->
+        <div class="product-description">
+          <p>{{ product?.description }}</p>
+        </div>
+        
+        <!-- Product Options -->
+        <div class="product-options">
+          <div class="option-group">
+            <label class="option-label">Size:</label>
+            <div class="size-options">
+              <button class="size-btn" *ngFor="let size of sizes" 
+                      [class.active]="selectedSize === size" 
+                      (click)="selectedSize = size">{{ size }}</button>
+            </div>
+          </div>
+          
+          <div class="option-group">
+            <label class="option-label">Color:</label>
+            <div class="color-options">
+              <div class="color-option" *ngFor="let color of colors" 
+                   [style.backgroundColor]="color"
+                   [class.active]="selectedColor === color"
+                   (click)="selectedColor = color"></div>
+            </div>
+          </div>
+          
+          <div class="option-group quantity-group">
+            <label class="option-label">Quantity:</label>
+            <div class="quantity-selector">
+              <button class="quantity-btn" (click)="decreaseQuantity()">
+                <i class="pi pi-minus"></i>
+              </button>
+              <input type="number" class="quantity-input" [(ngModel)]="quantity" min="1" max="10">
+              <button class="quantity-btn" (click)="increaseQuantity()">
+                <i class="pi pi-plus"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="product-actions">
+          <button class="btn-primary-action" (click)="buyNow()">
+            <i class="pi pi-bolt"></i>
+            <span>Buy Now</span>
+          </button>
+          <button class="btn-secondary-action" (click)="addToCart()">
+            <i class="pi pi-shopping-cart"></i>
+            <span>Add to Cart</span>
+          </button>
+          <button class="btn-wishlist" (click)="addToWishlist()">
+            <i class="pi pi-heart"></i>
+          </button>
+        </div>
+        
+        <!-- Product Features -->
+        <div class="product-features">
+          <div class="feature-item">
+            <i class="pi pi-truck feature-icon"></i>
+            <div class="feature-content">
+              <span class="feature-title">Free Shipping</span>
+              <span class="feature-desc">On orders over $50</span>
+            </div>
+          </div>
+          <div class="feature-item">
+            <i class="pi pi-refresh feature-icon"></i>
+            <div class="feature-content">
+              <span class="feature-title">30-Day Returns</span>
+              <span class="feature-desc">Easy returns policy</span>
+            </div>
+          </div>
+          <div class="feature-item">
+            <i class="pi pi-shield feature-icon"></i>
+            <div class="feature-content">
+              <span class="feature-title">1-Year Warranty</span>
+              <span class="feature-desc">Full coverage included</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Product Details Tabs -->
+    <div class="product-details-section">
+      <div class="details-tabs">
+        <button class="details-tab active" (click)="activeTab = 'description'">
+          <i class="pi pi-info-circle"></i>
+          <span>Product Details</span>
+        </button>
+        <button class="details-tab" (click)="activeTab = 'specifications'">
+          <i class="pi pi-list"></i>
+          <span>Specifications</span>
+        </button>
+        <button class="details-tab" (click)="activeTab = 'reviews'">
+          <i class="pi pi-star"></i>
+          <span>Reviews ({{ product?.reviewCount || 128 }})</span>
+        </button>
+      </div>
+      
+      <div class="details-content">
+        <!-- Product Details Tab -->
+        <div class="tab-pane" *ngIf="activeTab === 'description'">
+          <div class="product-details-content">
+            <div class="details-header">
+              <h3>Product Description</h3>
+              <p>{{ product?.fullDescription || product?.description }}</p>
+            </div>
+            
+            <!-- Product Gallery -->
+            <div class="product-gallery">
+              <h4>Product Gallery</h4>
+              <div class="gallery-grid">
+                <div class="gallery-item" *ngFor="let item of galleryItems">
+                  <img [src]="item.image" [alt]="item.title">
+                  <div class="gallery-overlay">
+                    <span>{{ item.title }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Key Features -->
+            <div class="key-features">
+              <h4>Key Features</h4>
+              <div class="features-grid">
+                <div class="feature-card" *ngFor="let feature of keyFeatures">
+                  <i class="pi" [class]="feature.icon"></i>
+                  <span>{{ feature.text }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Specifications Tab -->
+        <div class="tab-pane" *ngIf="activeTab === 'specifications'">
+          <div class="specifications-content">
+            <h3>Technical Specifications</h3>
+            <div class="spec-grid">
+              <div class="spec-item" *ngFor="let spec of product?.specifications || defaultSpecs">
+                <div class="spec-label">{{ spec.key }}</div>
+                <div class="spec-value">{{ spec.value }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Reviews Tab -->
+        <div class="tab-pane" *ngIf="activeTab === 'reviews'">
+          <div class="reviews-content">
+            <div class="reviews-header">
+              <h3>Customer Reviews</h3>
+              <div class="reviews-summary">
+                <div class="average-rating">
+                  <span class="rating-number">4.5</span>
+                  <div class="stars">★★★★★</div>
+                  <span class="total-reviews">Based on {{ product?.reviewCount || 128 }} reviews</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="reviews-list">
+              <div class="review-card" *ngFor="let review of reviews">
+                <div class="review-header">
+                  <div class="reviewer-info">
+                    <div class="reviewer-avatar">
+                      <i class="pi pi-user"></i>
+                    </div>
+                    <div class="reviewer-details">
+                      <strong>{{ review.author }}</strong>
+                      <div class="review-rating">★★★★☆</div>
+                    </div>
+                  </div>
+                  <span class="review-date">{{ review.date }}</span>
+                </div>
+                <p class="review-content">{{ review.content }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Related Products Section -->
+    <div class="related-products-section">
+      <div class="section-header">
+        <h3>You Might Also Like</h3>
+        <a href="#" class="view-all-btn" 
+           [class.loading]="isLoadingMore"
+           (click)="toggleViewAll(); $event.preventDefault()">
+          <span *ngIf="!showAllProducts">View All Products</span>
+          <span *ngIf="showAllProducts">Show Less</span>
+        </a>
+      </div>
+      
+      <div class="related-products-grid">
+        <div class="related-product-card" *ngFor="let product of relatedProducts" (click)="onRelatedProductClick(product)">
+          <div class="related-product-image">
+            <!-- Image Carousel -->
+            <div class="image-carousel">
+              <div class="carousel-container">
+                <img [src]="product?.images?.[0] || product?.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop&crop=center'" [alt]="product?.name || 'Product'" class="main-carousel-image">
+                <div class="carousel-thumbnails">
+                  <div class="thumbnail-dot" 
+                       *ngFor="let img of product?.images || []; let i = index"
+                       [class.active]="i === 0"
+                       (click)="selectImage(product, i)">
+                    <img [src]="img" [alt]="'Thumbnail ' + (i + 1)">
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Overlay Actions -->
+            <div class="related-product-actions">
+              <button class="action-btn"><i class="pi pi-heart"></i></button>
+              <button class="action-btn"><i class="pi pi-shopping-cart"></i></button>
+            </div>
+            <div class="discount-badge" *ngIf="product.discount">{{ product.discount }}% OFF</div>
+          </div>
+          
+          <div class="related-product-info">
+            <h6 class="related-product-name">{{ product.name }}</h6>
+            <div class="related-product-price">
+              <span class="current-price">${{ product.price }}</span>
+              <span class="original-price" *ngIf="product.originalPrice">${{ product.originalPrice }}</span>
+            </div>
+            <div class="related-product-rating">
+              <div class="stars">★★★★☆</div>
+              <span class="rating-count">({{ product.reviewCount }})</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Show More/Less Section -->
+      <div class="text-center" *ngIf="!showAllProducts && relatedProducts.length >= maxProductsToShow">
+        <button class="btn-show-more" (click)="loadAllRelatedProducts()">
+          <span *ngIf="!isLoadingMore">Show More Products</span>
+          <span *ngIf="isLoadingMore">Loading...</span>
+          <i class="pi pi-chevron-down" *ngIf="!isLoadingMore"></i>
+          <i class="pi pi-spin pi-spinner" *ngIf="isLoadingMore"></i>
+        </button>
+        <p class="text-muted mt-3 small">Showing {{ relatedProducts.length }} of {{ allRelatedProducts.length || 120 }} products</p>
+      </div>
+    </div>
+  </div>
+</div>

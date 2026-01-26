@@ -1,0 +1,208 @@
+<div class="checkout-container">
+  <div class="container">
+    <h1 class="page-title">Checkout</h1>
+    
+    <div class="checkout-progress">
+      <div class="progress-steps">
+        <div class="step active">
+          <span class="step-number">1</span>
+          <span class="step-label">Shipping</span>
+        </div>
+        <div class="step">
+          <span class="step-number">2</span>
+          <span class="step-label">Payment</span>
+        </div>
+        <div class="step">
+          <span class="step-number">3</span>
+          <span class="step-label">Review</span>
+        </div>
+      </div>
+    </div>
+    
+    <form [formGroup]="checkoutForm" (ngSubmit)="onSubmit()">
+      <div class="row">
+        <div class="col-md-8">
+          <!-- Shipping Information -->
+          <div class="checkout-section">
+            <h3>Shipping Information</h3>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="firstName">First Name</label>
+                  <input type="text" id="firstName" class="form-control" formControlName="firstName">
+                  <div class="error-message" *ngIf="checkoutForm.get('firstName')?.invalid && checkoutForm.get('firstName')?.touched">
+                    First name is required
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="lastName">Last Name</label>
+                  <input type="text" id="lastName" class="form-control" formControlName="lastName">
+                  <div class="error-message" *ngIf="checkoutForm.get('lastName')?.invalid && checkoutForm.get('lastName')?.touched">
+                    Last name is required
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="email">Email Address</label>
+              <input type="email" id="email" class="form-control" formControlName="email">
+              <div class="error-message" *ngIf="checkoutForm.get('email')?.invalid && checkoutForm.get('email')?.touched">
+                Valid email is required
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="phone">Phone Number</label>
+              <input type="tel" id="phone" class="form-control" formControlName="phone">
+              <div class="error-message" *ngIf="checkoutForm.get('phone')?.invalid && checkoutForm.get('phone')?.touched">
+                Phone number is required
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="address">Street Address</label>
+              <input type="text" id="address" class="form-control" formControlName="address">
+              <div class="error-message" *ngIf="checkoutForm.get('address')?.invalid && checkoutForm.get('address')?.touched">
+                Address is required
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="city">City</label>
+                  <input type="text" id="city" class="form-control" formControlName="city">
+                  <div class="error-message" *ngIf="checkoutForm.get('city')?.invalid && checkoutForm.get('city')?.touched">
+                    City is required
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-group">
+                  <label for="state">State</label>
+                  <select id="state" class="form-select" formControlName="state">
+                    <option value="">Select State</option>
+                    <option value="CA">California</option>
+                    <option value="NY">New York</option>
+                    <option value="TX">Texas</option>
+                    <option value="FL">Florida</option>
+                  </select>
+                  <div class="error-message" *ngIf="checkoutForm.get('state')?.invalid && checkoutForm.get('state')?.touched">
+                    State is required
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <div class="form-group">
+                  <label for="zipCode">ZIP Code</label>
+                  <input type="text" id="zipCode" class="form-control" formControlName="zipCode">
+                  <div class="error-message" *ngIf="checkoutForm.get('zipCode')?.invalid && checkoutForm.get('zipCode')?.touched">
+                    ZIP code is required
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Payment Information -->
+          <div class="checkout-section">
+            <h3>Payment Information</h3>
+            <div class="payment-methods">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="paymentMethod" id="creditCard" value="credit" formControlName="paymentMethod">
+                <label class="form-check-label" for="creditCard">
+                  Credit Card
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="paymentMethod" id="debitCard" value="debit" formControlName="paymentMethod">
+                <label class="form-check-label" for="debitCard">
+                  Debit Card
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="paymentMethod" id="paypal" value="paypal" formControlName="paymentMethod">
+                <label class="form-check-label" for="paypal">
+                  PayPal
+                </label>
+              </div>
+            </div>
+            
+            <div class="card-details" *ngIf="checkoutForm.get('paymentMethod')?.value !== 'paypal'">
+              <div class="form-group">
+                <label for="cardNumber">Card Number</label>
+                <input type="text" id="cardNumber" class="form-control" placeholder="1234 5678 9012 3456" formControlName="cardNumber">
+              </div>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="expiryDate">Expiry Date</label>
+                    <input type="text" id="expiryDate" class="form-control" placeholder="MM/YY" formControlName="expiryDate">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label for="cvv">CVV</label>
+                    <input type="text" id="cvv" class="form-control" placeholder="123" formControlName="cvv">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-4">
+          <!-- Order Summary -->
+          <div class="order-summary">
+            <h5>Order Summary</h5>
+            
+            <div class="summary-items">
+              <div class="summary-item" *ngFor="let item of cartItems">
+                <div class="item-info">
+                  <span class="item-name">{{ item.product.name }}</span>
+                  <span class="item-quantity">x{{ item.quantity }}</span>
+                </div>
+                <span class="item-price">${{ item.product.price * item.quantity }}</span>
+              </div>
+            </div>
+            
+            <div class="summary-row">
+              <span>Subtotal:</span>
+              <span>${{ subtotal }}</span>
+            </div>
+            
+            <div class="summary-row">
+              <span>Shipping:</span>
+              <span>${{ shipping }}</span>
+            </div>
+            
+            <div class="summary-row">
+              <span>Tax:</span>
+              <span>${{ tax }}</span>
+            </div>
+            
+            <hr>
+            
+            <div class="summary-row total">
+              <span>Total:</span>
+              <span>${{ total }}</span>
+            </div>
+          </div>
+          
+          <div class="checkout-actions">
+            <button type="button" class="btn btn-outline-secondary btn-lg w-100" routerLink="/cart">
+              Back to Cart
+            </button>
+            <button type="submit" class="btn btn-primary btn-lg w-100" [disabled]="checkoutForm.invalid">
+              Place Order
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
