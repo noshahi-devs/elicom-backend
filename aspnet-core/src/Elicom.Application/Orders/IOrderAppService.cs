@@ -14,6 +14,8 @@ namespace Elicom.Orders
 
         Task<OrderDto> MarkAsProcessing(MarkOrderProcessingDto input);
         Task<OrderDto> LinkWholesaleOrder(LinkWholesaleOrderDto input);
+        Task<Elicom.SupplierOrders.Dto.SupplierOrderDto> MarkAsVerified(Abp.Application.Services.Dto.EntityDto<Guid> input);
         Task<OrderDto> MarkAsDelivered(MarkOrderDeliveredDto input);
+        Task<List<Elicom.SupplierOrders.Dto.SupplierOrderDto>> GetAllForSupplier();
     }
 }

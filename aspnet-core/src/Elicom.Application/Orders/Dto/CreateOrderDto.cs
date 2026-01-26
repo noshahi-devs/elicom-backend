@@ -16,5 +16,6 @@ namespace Elicom.Orders.Dto
 
         public decimal ShippingCost { get; set; }
         public decimal Discount { get; set; }
+        public string SourcePlatform { get; set; }
     }
 }

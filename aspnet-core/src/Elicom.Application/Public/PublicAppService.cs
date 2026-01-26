@@ -57,6 +57,29 @@ namespace Elicom.Public
 
             return ObjectMapper.Map<ProductDto>(product);
         }
+
+        public async Task<ProductDto> GetProductBySku(string sku)
+        {
+            var product = await _productRepository.GetAll()
+                .Include(p => p.Category)
+                .FirstOrDefaultAsync(p => p.SKU == sku || p.Name.Contains(sku));
+
+            if (product == null)
+                throw new UserFriendlyException("Product not found");
+
+            return ObjectMapper.Map<ProductDto>(product);
+        }
+
+        public async Task<List<ProductDto>> GetProductsBySearch(string term)
+        {
+            var products = await _productRepository.GetAll()
+                .Include(p => p.Category)
+                .Where(p => p.Name.Contains(term) || p.SKU.Contains(term))
+                .Take(10)
+                .ToListAsync();
+
+            return ObjectMapper.Map<List<ProductDto>>(products);
+        }
     }
 
     public interface IPublicAppService : IApplicationService
@@ -64,5 +87,7 @@ namespace Elicom.Public
         Task<ListResultDto<CategoryDto>> GetCategories();
         Task<ListResultDto<ProductDto>> GetProducts();
         Task<ProductDto> GetProductBySlug(string slug);
+        Task<ProductDto> GetProductBySku(string sku);
+        Task<List<ProductDto>> GetProductsBySearch(string term);
     }
 }

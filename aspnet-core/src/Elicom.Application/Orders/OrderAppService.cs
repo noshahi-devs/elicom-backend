@@ -4,6 +4,7 @@ using Abp.UI;
 using Elicom.Entities;
 using Elicom.Wallets;
 using Elicom.Orders.Dto;
+using Elicom.SupplierOrders.Dto;
 using Abp.Net.Mail;
 using Abp.Authorization;
 using Elicom.Authorization;
@@ -20,19 +21,24 @@ namespace Elicom.Orders
         private readonly IRepository<Order, Guid> _orderRepository;
         private readonly IRepository<CartItem, Guid> _cartItemRepository;
         private readonly IRepository<SupplierOrder, Guid> _supplierOrderRepository;
+        private readonly IRepository<StoreProduct, Guid> _storeProductRepository;
         private readonly IWalletManager _walletManager;
         private readonly IEmailSender _emailSender;
+
+        private const long PlatformAdminId = 1; // The system account that holds Escrow funds
 
         public OrderAppService(
             IRepository<Order, Guid> orderRepository,
             IRepository<CartItem, Guid> cartItemRepository,
             IRepository<SupplierOrder, Guid> supplierOrderRepository,
+            IRepository<StoreProduct, Guid> storeProductRepository,
             IWalletManager walletManager,
             IEmailSender emailSender)
         {
             _orderRepository = orderRepository;
             _cartItemRepository = cartItemRepository;
             _supplierOrderRepository = supplierOrderRepository;
+            _storeProductRepository = storeProductRepository;
             _walletManager = walletManager;
             _emailSender = emailSender;
         }
@@ -74,28 +80,36 @@ namespace Elicom.Orders
 
                 Status = "Pending",
                 PaymentStatus = "Pending",
-                SourcePlatform = "SmartStore",
+                SourcePlatform = input.SourcePlatform ?? "SmartStore",
                 OrderItems = new List<OrderItem>()
             };
 
-            // ESCROW TRANSACTION: Try to debit the wallet
-            // We use the User associated with the CustomerProfile
-            // Note: In a real app, we should fetch the User ID from the Customer Profile or Current User
             var user = await GetCurrentUserAsync(); 
-            
-            bool debitSuccess = await _walletManager.TryDebitAsync(
-                user.Id, 
-                order.TotalAmount, 
-                order.OrderNumber, 
-                "Order Placement (Escrow Hold)"
-            );
 
-            if (!debitSuccess)
+            // ESCROW TRANSACTION: Move money from Buyer to Platform Admin (Escrow Hold)
+            if (input.PaymentMethod == "Wallet" || order.SourcePlatform == "SmartStore")
             {
-                throw new UserFriendlyException("Insufficient funds in Wallet to place this order.");
-            }
+                var balance = await _walletManager.GetBalanceAsync(user.Id);
+                if (balance < order.TotalAmount)
+                {
+                    throw new UserFriendlyException("Insufficient funds in Wallet to place this order.");
+                }
 
-            order.PaymentStatus = "Paid (Escrow)";
+                await _walletManager.TransferAsync(
+                    user.Id, 
+                    PlatformAdminId, 
+                    order.TotalAmount, 
+                    $"Escrow Hold for Order {order.OrderNumber}"
+                );
+
+                order.PaymentStatus = "Held in Escrow";
+            }
+            else
+            {
+                // External Payment (Card, Crypto, etc.)
+                // In a real app, verify with gateway here
+                order.PaymentStatus = "Paid (External)";
+            }
 
             foreach (var ci in cartItems)
             {
@@ -125,12 +139,12 @@ namespace Elicom.Orders
                 var supplierOrder = new SupplierOrder
                 {
                     ReferenceCode = $"SUP-{order.OrderNumber}-{supplierId}",
-                    ResellerId = user.Id, // The person who owns the store (the reseller)
+                    ResellerId = user.Id, 
                     SupplierId = supplierId.Value,
                     OrderId = order.Id,
-                    Status = "Purchased",
+                    Status = "Pending", // Sourcing Purchase starts as Pending
                     TotalPurchaseAmount = group.Sum(gi => gi.StoreProduct.Product.SupplierPrice * gi.Quantity),
-                    SourcePlatform = "SmartStore",
+                    SourcePlatform = "Primeship",
                     Items = new List<SupplierOrderItem>()
                 };
 
@@ -228,6 +242,31 @@ namespace Elicom.Orders
             return ObjectMapper.Map<OrderDto>(retailOrder);
         }
 
+        public async Task<Elicom.SupplierOrders.Dto.SupplierOrderDto> MarkAsVerified(Abp.Application.Services.Dto.EntityDto<Guid> input)
+        {
+            var order = await _supplierOrderRepository.GetAll()
+                .Include(so => so.Items)
+                .FirstOrDefaultAsync(so => so.Id == input.Id);
+                
+            if (order == null) throw new UserFriendlyException("Order not found");
+
+            order.Status = "Verified";
+            await _supplierOrderRepository.UpdateAsync(order);
+            await CurrentUnitOfWork.SaveChangesAsync();
+
+            return ObjectMapper.Map<Elicom.SupplierOrders.Dto.SupplierOrderDto>(order);
+        }
+
+        public async Task<List<Elicom.SupplierOrders.Dto.SupplierOrderDto>> GetAllForSupplier()
+        {
+            var orders = await _supplierOrderRepository.GetAll()
+                .Include(so => so.Items)
+                .OrderByDescending(so => so.CreationTime)
+                .ToListAsync();
+
+            return ObjectMapper.Map<List<Elicom.SupplierOrders.Dto.SupplierOrderDto>>(orders);
+        }
+
         // Store/Admin marks order as delivered
         public async Task<OrderDto> MarkAsDelivered(MarkOrderDeliveredDto input)
         {
@@ -245,7 +284,51 @@ namespace Elicom.Orders
             order.Status = "Delivered";
             order.PaymentStatus = "Completed";
 
-            // --- AUTOMATION: Profit Distribution ---
+            // --- ESCROW RELEASE: Release funds from Admin to Seller ---
+            // 1. Group items by their Store Owner
+            var itemsWithStore = await _orderRepository.GetAll()
+                .Where(o => o.Id == order.Id)
+                .SelectMany(o => o.OrderItems)
+                .Select(oi => new 
+                {
+                    oi.PriceAtPurchase,
+                    oi.Quantity,
+                    oi.StoreProductId
+                })
+                .ToListAsync();
+
+            // We need to fetch the Store owners for these items
+            var sellerPayments = new Dictionary<long, decimal>();
+            foreach (var item in itemsWithStore)
+            {
+                var storeProduct = await _storeProductRepository.GetAll()
+                    .Include(sp => sp.Store)
+                    .FirstOrDefaultAsync(sp => sp.Id == item.StoreProductId);
+                
+                if (storeProduct != null && storeProduct.Store != null)
+                {
+                    var ownerId = storeProduct.Store.OwnerId;
+                    var amount = item.PriceAtPurchase * item.Quantity;
+                    
+                    if (sellerPayments.ContainsKey(ownerId))
+                        sellerPayments[ownerId] += amount;
+                    else
+                        sellerPayments[ownerId] = amount;
+                }
+            }
+
+            // 2. Transfer from Admin to each Seller
+            foreach (var sellerPay in sellerPayments)
+            {
+                await _walletManager.TransferAsync(
+                    PlatformAdminId,
+                    sellerPay.Key,
+                    sellerPay.Value,
+                    $"Escrow Release (Retail Sale): {order.OrderNumber}"
+                );
+            }
+
+            // --- SUPPLEIR SETTLEMENT (Internal Sync) ---
             var supplierOrders = await _supplierOrderRepository.GetAll()
                 .Include(so => so.Items)
                 .Where(so => so.OrderId == order.Id)
@@ -253,41 +336,12 @@ namespace Elicom.Orders
 
             foreach (var so in supplierOrders)
             {
-                // 1. Pay Supplier (Wholesale Price)
-                await _walletManager.DepositAsync(
-                    so.SupplierId,
-                    so.TotalPurchaseAmount,
-                    so.ReferenceCode,
-                    $"Sale settlement for {order.OrderNumber}"
-                );
-
-                // 2. Pay Reseller (Retail - Wholesale Profit)
-                // Calculate profit for items in THIS supplier order
-                decimal resellerProfit = 0;
-                foreach (var item in so.Items)
-                {
-                    // Find corresponding buyer order item to get retail price paid
-                    var buyerItem = order.OrderItems.FirstOrDefault(oi => oi.ProductId == item.ProductId);
-                    if (buyerItem != null)
-                    {
-                        resellerProfit += (buyerItem.PriceAtPurchase - item.PurchasePrice) * item.Quantity;
-                    }
-                }
-
-                if (resellerProfit > 0)
-                {
-                    await _walletManager.DepositAsync(
-                        so.ResellerId,
-                        resellerProfit,
-                        order.OrderNumber,
-                        $"Profit from Sale {order.OrderNumber}"
-                    );
-                }
-
+                // In the Manual Bridge model, the Seller already purchased/paid the Supplier in PrimeShip.
+                // We just mark this record as Settled to close the sync loop.
                 so.Status = "Settled";
                 await _supplierOrderRepository.UpdateAsync(so);
 
-                // Notify PrimeShip Admin/Supplier
+                // Notify Admin
                 try
                 {
                     var mail = new System.Net.Mail.MailMessage(
@@ -295,8 +349,8 @@ namespace Elicom.Orders
                         "noshahidevelopersinc@gmail.com"
                     )
                     {
-                        Subject = $"[PrimeShip] Order Settled: {so.ReferenceCode}",
-                        Body = $"Wholesale order {so.ReferenceCode} has been SETTLED and payments distributed.\n\nTotal Paid to Supplier: {so.TotalPurchaseAmount}",
+                        Subject = $"[SmartStore] Order Finalized: {order.OrderNumber}",
+                        Body = $"Retail order {order.OrderNumber} has been delivered and funds released to Seller(s).",
                         IsBodyHtml = false
                     };
                     await _emailSender.SendAsync(mail);

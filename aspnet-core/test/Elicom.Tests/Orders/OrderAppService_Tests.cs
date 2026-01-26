@@ -230,5 +230,80 @@ namespace Elicom.Tests.Orders
                 await uow.CompleteAsync();
             }
         }
+        [Fact]
+        public async Task Should_Create_Order_For_Primeship_With_External_Payment()
+        {
+            var uowManager = Resolve<Abp.Domain.Uow.IUnitOfWorkManager>();
+            using (var uow = uowManager.Begin())
+            {
+                LoginAsDefaultTenantAdmin();
+                var user = await GetCurrentUserAsync();
+
+                // Setup Category and Product
+                var category = UsingDbContext(context => {
+                    var c = new Category { Name = "Fashion", Slug = "fashion", Status = true };
+                    context.Categories.Add(c);
+                    context.SaveChanges();
+                    return c;
+                });
+
+                var store = UsingDbContext(context => {
+                    var s = new Store { Name = "Prime Ship Warehouse", OwnerId = user.Id, Status = true, Slug = "ps-warehouse" };
+                    context.Stores.Add(s);
+                    context.SaveChanges();
+                    return s;
+                });
+
+                var product = UsingDbContext(context => {
+                    var p = new Product { 
+                        Name = "T-Shirt", CategoryId = category.Id, SupplierId = user.Id, 
+                        SupplierPrice = 10, ResellerMaxPrice = 50, StockQuantity = 100, Status = true 
+                    };
+                    context.Products.Add(p);
+                    context.SaveChanges();
+                    return p;
+                });
+
+                var storeProduct = UsingDbContext(context => {
+                    var sp = new StoreProduct { 
+                        StoreId = store.Id, ProductId = product.Id, ResellerPrice = 40, Status = true, StockQuantity = 100 
+                    };
+                    context.StoreProducts.Add(sp);
+                    context.SaveChanges();
+                    return sp;
+                });
+
+                // Add to Cart
+                var customerProfileId = Guid.NewGuid();
+                UsingDbContext(context => {
+                    context.CartItems.Add(new CartItem { 
+                        CustomerProfileId = customerProfileId, StoreProductId = storeProduct.Id, Price = 40, Quantity = 1, Status = "Active" 
+                    });
+                    context.SaveChanges();
+                });
+
+                // Act: Create Order for PrimeShip
+                await _orderAppService.Create(new CreateOrderDto {
+                    CustomerProfileId = customerProfileId,
+                    PaymentMethod = "MasterCard",
+                    ShippingCost = 5,
+                    ShippingAddress = "456 Fashion Blvd",
+                    City = "London",
+                    Country = "UK",
+                    SourcePlatform = "PrimeShip"
+                });
+
+                await uowManager.Current.SaveChangesAsync();
+
+                // Assert: Order exists and source is PrimeShip
+                var order = UsingDbContext(context => context.Orders.First(o => o.CustomerProfileId == customerProfileId));
+                order.SourcePlatform.ShouldBe("PrimeShip");
+                order.PaymentMethod.ShouldBe("MasterCard");
+                order.PaymentStatus.ShouldBe("Paid (External)");
+                order.TotalAmount.ShouldBe(45); // 40 + 5
+
+                await uow.CompleteAsync();
+            }
+        }
     }
 }
