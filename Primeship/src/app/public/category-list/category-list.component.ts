@@ -1,8 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { PublicService } from '../../core/services/public.service';
 import { CategoryDto } from '../../core/services/category.service';
+
+interface CategoryWithCount extends CategoryDto {
+  productCount: number;
+}
 
 @Component({
   selector: 'app-category-list',
@@ -26,7 +31,9 @@ import { CategoryDto } from '../../core/services/category.service';
         <div class="categories-grid" *ngIf="!isLoading; else loader">
           <div class="category-card shadow-premium" *ngFor="let cat of categories" (click)="onCategoryClick(cat)">
             <div class="category-image">
-              <img [src]="cat.imageUrl || getDefaultImage(cat.name)" [alt]="cat.name">
+              <img [src]="cat.imageUrl || getDefaultImage(cat.name)" 
+                   [alt]="cat.name"
+                   (error)="handleImageError($event, cat.name)">
               <div class="category-overlay">
                 <span class="view-btn">Browse Collection</span>
               </div>
@@ -34,7 +41,7 @@ import { CategoryDto } from '../../core/services/category.service';
             <div class="category-info">
               <h3>{{ cat.name }}</h3>
               <div class="category-meta">
-                <span class="count">{{ getRandomCount() }} Products</span>
+                <span class="count">{{ cat.productCount }} Products</span>
                 <i class="pi pi-arrow-right"></i>
               </div>
             </div>
@@ -140,6 +147,7 @@ import { CategoryDto } from '../../core/services/category.service';
       height: 240px;
       position: relative;
       overflow: hidden;
+      background: #f1f5f9;
     }
 
     .category-image img {
@@ -233,7 +241,7 @@ import { CategoryDto } from '../../core/services/category.service';
   `]
 })
 export class CategoryListComponent implements OnInit {
-  categories: CategoryDto[] = [];
+  categories: CategoryWithCount[] = [];
   isLoading = true;
 
   constructor(
@@ -243,13 +251,22 @@ export class CategoryListComponent implements OnInit {
 
   ngOnInit(): void {
     this.isLoading = true;
-    this.publicService.getCategories().subscribe({
-      next: (data) => {
-        this.categories = data || [];
+    forkJoin({
+      categories: this.publicService.getCategories(),
+      products: this.publicService.getProducts()
+    }).subscribe({
+      next: ({ categories, products }) => {
+        this.categories = (categories || []).map(cat => ({
+          ...cat,
+          productCount: (products || []).filter(p =>
+            p.categoryId === cat.id ||
+            (p.categoryName && cat.name && p.categoryName.toLowerCase() === cat.name.toLowerCase())
+          ).length
+        }));
         this.isLoading = false;
       },
       error: (err) => {
-        console.error('CategoryListComponent: Error fetching categories', err);
+        console.error('CategoryListComponent: Error fetching data', err);
         this.isLoading = false;
       }
     });
@@ -259,8 +276,11 @@ export class CategoryListComponent implements OnInit {
     this.router.navigate(['/category', cat.slug]);
   }
 
-  getRandomCount(): number {
-    return Math.floor(Math.random() * 200) + 12;
+  handleImageError(event: any, name: string): void {
+    const img = event.target;
+    img.src = `https://placehold.co/600x400/f85606/ffffff?text=${encodeURIComponent(name)}`;
+    // Prevent infinite loop if placeholder also fails
+    img.onerror = null;
   }
 
   getDefaultImage(name: string): string {
@@ -274,8 +294,8 @@ export class CategoryListComponent implements OnInit {
     };
 
     for (const key in defaults) {
-      if (name.toLowerCase().includes(key.toLowerCase())) return defaults[key];
+      if (name && name.toLowerCase().includes(key.toLowerCase())) return defaults[key];
     }
-    return 'https://via.placeholder.com/400x400?text=' + encodeURIComponent(name);
+    return `https://placehold.co/600x400/f85606/ffffff?text=${encodeURIComponent(name || 'Category')}`;
   }
 }

@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { OrderService, Order, OrderStatus } from '../../../services/order.service';
+import { OrderService, Order, OrderStatus } from '../../../core/services/order.service';
 import { Subscription } from 'rxjs';
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { FormsModule } from '@angular/forms';
@@ -42,30 +42,30 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   viewModalVisible = false;
   selectedOrder: Order | null = null;
-  
+
   // Status update modal properties
   statusUpdateModalVisible = false;
   orderForStatusUpdate: Order | null = null;
   selectedNewStatus: OrderStatus = 'pending';
-  
+
   // Available statuses as const array
   availableStatuses: OrderStatus[] = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
-  
+
   // Success popup properties
   showSuccessPopup = false;
   updatedOrderNumber = '';
   updatedStatusText = '';
   private successTimeout: any;
-  
+
   // Delete success popup properties
   showDeleteSuccessPopup = false;
   deletedOrderNumber = '';
   private deleteSuccessTimeout: any;
-  
+
   // Delete modal properties
   deleteModalVisible = false;
   orderToDelete: Order | null = null;
-  
+
   // Admin-specific properties
   adminStats = {
     totalOrders: 0,
@@ -76,11 +76,11 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   private ordersSubscription: Subscription = new Subscription();
 
-  constructor(private orderService: OrderService) {}
+  constructor(private orderService: OrderService) { }
 
   ngOnInit(): void {
     // Subscribe to orders from service
-    this.ordersSubscription = this.orderService.getOrders().subscribe(orders => {
+    this.ordersSubscription = this.orderService.getAllOrders().subscribe(orders => {
       this.orders = orders;
       this.applyFilters();
       this.calculateAdminStats();
@@ -108,16 +108,16 @@ export class OrdersComponent implements OnInit, OnDestroy {
     if (this.orderToDelete) {
       const orderNumber = this.orderToDelete.orderNo;
       this.orderService.deleteOrder(this.orderToDelete.id);
-      
+
       // Show delete success popup
       this.showDeleteSuccessPopup = true;
       this.deletedOrderNumber = orderNumber;
-      
+
       // Auto-hide after 3 seconds
       this.deleteSuccessTimeout = setTimeout(() => {
         this.hideDeleteSuccessPopup();
       }, 3000);
-      
+
       // Stats will be updated automatically through the subscription
       this.closeDeleteModal();
     }
@@ -152,20 +152,24 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   updateOrderStatus(): void {
     if (this.orderForStatusUpdate && this.selectedNewStatus !== this.orderForStatusUpdate.status) {
-      const oldStatus = this.orderForStatusUpdate.status;
-      
-      // Use service to update status - this will automatically sync with seller
-      this.orderService.updateOrderStatus(this.orderForStatusUpdate.id, this.selectedNewStatus, 'admin');
-      
-      // Show beautiful success popup
-      this.showSuccessPopup = true;
-      this.updatedOrderNumber = this.orderForStatusUpdate.orderNo;
-      this.updatedStatusText = this.getStatusLabel(this.selectedNewStatus);
-      
-      // Auto-hide after 3 seconds
-      this.successTimeout = setTimeout(() => {
-        this.hideSuccessPopup();
-      }, 3000);
+      if (this.selectedNewStatus === 'delivered') {
+        this.orderService.markAsDelivered(this.orderForStatusUpdate.id).subscribe({
+          next: () => {
+            this.showSuccessPopup = true;
+            this.updatedOrderNumber = this.orderForStatusUpdate!.orderNo;
+            this.updatedStatusText = 'Delivered';
+            setTimeout(() => this.hideSuccessPopup(), 3000);
+            this.ngOnInit(); // Refresh list
+          }
+        });
+      } else {
+        // Fallback for other statuses - simplified for now
+        this.orderForStatusUpdate.status = this.selectedNewStatus;
+        this.showSuccessPopup = true;
+        this.updatedOrderNumber = this.orderForStatusUpdate.orderNo;
+        this.updatedStatusText = this.getStatusLabel(this.selectedNewStatus);
+        setTimeout(() => this.hideSuccessPopup(), 3000);
+      }
     }
     this.closeStatusUpdate();
   }

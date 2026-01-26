@@ -57,7 +57,7 @@ export class ProductsComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private productService: ProductService,
+    public productService: ProductService,
     private categoryService: CategoryService,
     private toastService: ToastService,
     private cdr: ChangeDetectorRef

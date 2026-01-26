@@ -3,13 +3,8 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { CartService, CartItem } from '../../core/services/cart.service';
 
-export interface CartItem {
-  product: any;
-  quantity: number;
-  size: string;
-  color: string;
-}
 
 @Component({
   selector: 'app-cart',
@@ -29,12 +24,15 @@ export class CartComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private router: Router
-  ) {}
+    private router: Router,
+    private cartService: CartService
+  ) { }
 
   ngOnInit(): void {
-    this.loadCartItems();
-    this.calculateTotals();
+    this.cartService.cartItems$.subscribe(items => {
+      this.cartItems = items;
+      this.calculateTotals();
+    });
   }
 
   private loadCartItems(): void {
@@ -91,24 +89,16 @@ export class CartComponent implements OnInit {
     ];
   }
 
-  updateQuantity(item: CartItem, newQuantity: number): void {
-    if (newQuantity > 0 && newQuantity <= 10) {
-      item.quantity = newQuantity;
-      this.calculateTotals();
-    }
+  updateQuantity(index: number, newQuantity: number): void {
+    this.cartService.updateQuantity(index, newQuantity);
   }
 
-  removeFromCart(item: CartItem): void {
-    const index = this.cartItems.indexOf(item);
-    if (index > -1) {
-      this.cartItems.splice(index, 1);
-      this.calculateTotals();
-    }
+  removeFromCart(index: number): void {
+    this.cartService.removeFromCart(index);
   }
 
   clearCart(): void {
-    this.cartItems = [];
-    this.calculateTotals();
+    this.cartService.clearCart();
   }
 
   applyPromoCode(): void {
@@ -131,7 +121,7 @@ export class CartComponent implements OnInit {
       discount: this.discount,
       total: this.total
     }));
-    
+
     // Navigate to checkout page
     this.router.navigate(['/checkout']);
   }

@@ -1,8 +1,11 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild, Input, AfterViewInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import * as THREE from 'three';
 
 @Component({
   selector: 'app-product-3d-viewer',
+  standalone: true,
+  imports: [CommonModule],
   templateUrl: './product-3d-viewer.component.html',
   styleUrls: ['./product-3d-viewer.component.scss']
 })
@@ -50,7 +53,7 @@ export class Product3DViewerComponent implements OnInit, OnDestroy, AfterViewIni
     const container = this.canvasContainer.nativeElement;
     const width = container.clientWidth;
     const height = container.clientHeight;
-    
+
     this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
     this.camera.position.z = 5;
 
@@ -60,7 +63,7 @@ export class Product3DViewerComponent implements OnInit, OnDestroy, AfterViewIni
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    
+
     container.appendChild(this.renderer.domElement);
 
     // Event listeners
@@ -205,7 +208,7 @@ export class Product3DViewerComponent implements OnInit, OnDestroy, AfterViewIni
     event.preventDefault();
     const zoomSpeed = 0.1;
     const delta = event.deltaY > 0 ? zoomSpeed : -zoomSpeed;
-    
+
     this.camera.position.z = Math.max(2, Math.min(10, this.camera.position.z + delta));
   }
 
@@ -242,7 +245,7 @@ export class Product3DViewerComponent implements OnInit, OnDestroy, AfterViewIni
 
   private dispose(): void {
     window.removeEventListener('resize', this.handleResize.bind(this));
-    
+
     if (this.renderer) {
       this.renderer.dispose();
       const container = this.canvasContainer.nativeElement;

@@ -66,7 +66,7 @@
         <tr *ngFor="let product of paginatedProducts">
           <td>{{ product.id }}</td>
           <td class="product-info">
-            <img [src]="product.images[0]" [alt]="product.name" class="product-thumb" />
+            <img [src]="getFirstImage(product)" [alt]="product.name" class="product-thumb" />
             <div class="product-details">
               <strong>{{ product.name }}</strong>
             </div>
@@ -74,19 +74,21 @@
           <td>{{ product.sku }}</td>
           <td>{{ product.category }}</td>
           <td class="price-info">
-            <div class="current-price">{{ formatPrice(product.discountPrice || product.price) }}</div>
-            <div *ngIf="product.discountPrice" class="original-price">
-              {{ formatPrice(product.price) }}
-              <span class="discount-badge">{{ getDiscountPercentage(product.price, product.discountPrice) }}</span>
+            <div class="current-price">{{ safeFormatPrice(getProductDiscountPrice(product) || getProductPrice(product))
+              }}</div>
+            <div *ngIf="getProductDiscountPrice(product)" class="original-price">
+              {{ safeFormatPrice(getProductPrice(product)) }}
+              <span class="discount-badge">{{ safeGetDiscountPercentage(getProductPrice(product),
+                getProductDiscountPrice(product)) }}</span>
             </div>
           </td>
           <td>
             <span class="stock-badge" [ngClass]="{
-              'low': product.stock <= 10,
-              'medium': product.stock > 10 && product.stock <= 50,
-              'high': product.stock > 50
+              'low': getProductStock(product) <= 10,
+              'medium': getProductStock(product) > 10 && getProductStock(product) <= 50,
+              'high': getProductStock(product) > 50
             }">
-              {{ product.stock }}
+              {{ getProductStock(product) }}
             </span>
           </td>
           <td>
@@ -411,10 +413,10 @@
       <div class="product-details-view" *ngIf="selectedProduct">
         <div class="product-images">
           <div class="main-image">
-            <img [src]="selectedProduct.images[0]" [alt]="selectedProduct.name" />
+            <img [src]="getFirstImage(selectedProduct)" [alt]="selectedProduct.name" />
           </div>
           <div class="thumbnail-images">
-            <div class="thumbnail" *ngFor="let image of selectedProduct.images">
+            <div class="thumbnail" *ngFor="let image of productService.parseImages(selectedProduct.images)">
               <img [src]="image" [alt]="selectedProduct.name" />
             </div>
           </div>
@@ -458,23 +460,24 @@
             <div class="info-grid">
               <div class="info-item">
                 <label>Price:</label>
-                <span class="price">{{ formatPrice(selectedProduct.price) }}</span>
+                <span class="price">{{ safeFormatPrice(getProductPrice(selectedProduct)) }}</span>
               </div>
-              <div class="info-item" *ngIf="selectedProduct.discountPrice">
+              <div class="info-item" *ngIf="getProductDiscountPrice(selectedProduct)">
                 <label>Discount Price:</label>
-                <span class="discount-price">{{ formatPrice(selectedProduct.discountPrice) }}</span>
+                <span class="discount-price">{{ safeFormatPrice(getProductDiscountPrice(selectedProduct)) }}</span>
                 <span class="discount-percentage">
-                  {{ getDiscountPercentage(selectedProduct.price, selectedProduct.discountPrice) }}
+                  {{ safeGetDiscountPercentage(getProductPrice(selectedProduct),
+                  getProductDiscountPrice(selectedProduct)) }}
                 </span>
               </div>
               <div class="info-item">
                 <label>Stock:</label>
                 <span class="stock-badge" [ngClass]="{
-                  'low': selectedProduct.stock <= 10,
-                  'medium': selectedProduct.stock > 10 && selectedProduct.stock <= 50,
-                  'high': selectedProduct.stock > 50
+                  'low': getProductStock(selectedProduct) <= 10,
+                  'medium': getProductStock(selectedProduct) > 10 && getProductStock(selectedProduct) <= 50,
+                  'high': getProductStock(selectedProduct) > 50
                 }">
-                  {{ selectedProduct.stock }} units
+                  {{ getProductStock(selectedProduct) }} units
                 </span>
               </div>
             </div>
@@ -523,14 +526,12 @@
       </div>
 
       <div class="confirm-body">
-        <div class="product-preview">
-          <!-- Fixed: Check if productToDelete exists and has images -->
-          <img *ngIf="productToDelete && productToDelete.images && productToDelete.images.length > 0"
-            [src]="productToDelete.images[0]" [alt]="productToDelete.name" />
+        <div class="product-preview" *ngIf="productToDelete">
+          <img [src]="getFirstImage(productToDelete)" [alt]="productToDelete.name" />
           <div class="product-info">
-            <h4>{{ productToDelete?.name }}</h4>
-            <p>{{ productToDelete?.sku }} • {{ productToDelete?.category }}</p>
-            <p class="price">{{ formatPrice(productToDelete?.price || 0) }}</p>
+            <h4>{{ productToDelete.name }}</h4>
+            <p>{{ productToDelete.sku }} • {{ productToDelete.category }}</p>
+            <p class="price">{{ safeFormatPrice(getProductPrice(productToDelete)) }}</p>
           </div>
         </div>
 

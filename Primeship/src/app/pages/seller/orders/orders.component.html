@@ -89,12 +89,14 @@
   <div class="filters">
     <div class="search-box">
       <i class="pi pi-search"></i>
-      <input type="text" placeholder="Search my orders by number, customer or phone..." [(ngModel)]="searchTerm" (input)="applyFilters()" />
+      <input type="text" placeholder="Search my orders by number, customer or phone..." [(ngModel)]="searchTerm"
+        (input)="applyFilters()" />
     </div>
 
     <select [(ngModel)]="selectedStatus" (change)="applyFilters()">
       <option value="all">All Status</option>
       <option value="pending">Pending</option>
+      <option value="verified">Verified</option>
       <option value="processing">Processing</option>
       <option value="shipped">Shipped</option>
       <option value="delivered">Delivered</option>
@@ -147,7 +149,8 @@
             {{ formatPrice(getOrderTotal(order)) }}
           </td>
           <td class="earnings-cell">
-            <span class="earnings-amount" [ngClass]="order.sellerEarnings && order.sellerEarnings > 0 ? 'positive' : 'zero'">
+            <span class="earnings-amount"
+              [ngClass]="order.sellerEarnings && order.sellerEarnings > 0 ? 'positive' : 'zero'">
               {{ formatPrice(order.sellerEarnings || 0) }}
             </span>
           </td>
@@ -156,7 +159,8 @@
               <i class="pi pi-eye"></i>
               View
             </button>
-            <button type="button" class="btn small danger" *ngIf="order.status === 'pending'" (click)="openDeleteConfirm(order)">
+            <button type="button" class="btn small danger" *ngIf="order.status === 'pending'"
+              (click)="openDeleteConfirm(order)">
               <i class="pi pi-trash"></i>
             </button>
           </td>
@@ -247,81 +251,106 @@
         </button>
       </div>
 
-      <div class="modal-body">
-        <div class="summary">
-          <div>
-            <div class="muted">Order</div>
-            <div class="value">{{ selectedOrder.orderNo }}</div>
+      <div class="modal-body custom-scrollbar">
+        <!-- High-End Stepper -->
+        <div class="order-stepper-3d">
+          <div class="stepper-item" [ngClass]="{'active': true, 'completed': selectedOrder.status !== 'pending'}">
+            <div class="step-dot"><i class="pi pi-shopping-cart"></i></div>
+            <div class="step-label">Ordered</div>
           </div>
-          <div>
-            <div class="muted">Customer</div>
-            <div class="value">{{ selectedOrder.customerName }}</div>
+          <div class="step-line"
+            [ngClass]="{'active': ['verified', 'processing', 'shipped', 'delivered'].includes(selectedOrder.status.toLowerCase())}">
           </div>
-          <div>
-            <div class="muted">Status</div>
-            <div class="value">
-              <span class="status-badge" [ngClass]="selectedOrder.status">{{ getStatusLabel(selectedOrder.status) }}</span>
+          <div class="stepper-item"
+            [ngClass]="{'active': selectedOrder.status.toLowerCase() === 'verified', 'completed': ['processing', 'shipped', 'delivered'].includes(selectedOrder.status.toLowerCase())}">
+            <div class="step-dot"><i class="pi pi-verified"></i></div>
+            <div class="step-label">Verified</div>
+          </div>
+          <div class="step-line"
+            [ngClass]="{'active': ['processing', 'shipped', 'delivered'].includes(selectedOrder.status.toLowerCase())}">
+          </div>
+          <div class="stepper-item"
+            [ngClass]="{'active': selectedOrder.status.toLowerCase() === 'processing', 'completed': ['shipped', 'delivered'].includes(selectedOrder.status.toLowerCase())}">
+            <div class="step-dot"><i class="pi pi-cog"></i></div>
+            <div class="step-label">Processing</div>
+          </div>
+          <div class="step-line"
+            [ngClass]="{'active': ['shipped', 'delivered'].includes(selectedOrder.status.toLowerCase())}"></div>
+          <div class="stepper-item"
+            [ngClass]="{'active': selectedOrder.status.toLowerCase() === 'shipped', 'completed': selectedOrder.status.toLowerCase() === 'delivered'}">
+            <div class="step-dot"><i class="pi pi-truck"></i></div>
+            <div class="step-label">Shipped</div>
+          </div>
+          <div class="step-line" [ngClass]="{'active': selectedOrder.status.toLowerCase() === 'delivered'}"></div>
+          <div class="stepper-item"
+            [ngClass]="{'active': selectedOrder.status.toLowerCase() === 'delivered', 'completed': selectedOrder.status.toLowerCase() === 'delivered'}">
+            <div class="step-dot"><i class="pi pi-check-circle"></i></div>
+            <div class="step-label">Delivered</div>
+          </div>
+        </div>
+
+        <div class="invoice-container-3d">
+          <div class="invoice-header">
+            <div class="invoice-logo">🛍️ Prime Ship</div>
+            <div class="invoice-meta">
+              <h3>INVOICE</h3>
+              <p>#{{ selectedOrder.orderNo }}</p>
+              <p>{{ selectedOrder.createdAt | date:'mediumDate' }}</p>
             </div>
           </div>
-          <div>
-            <div class="muted">Total</div>
-            <div class="value">{{ formatPrice(getOrderTotal(selectedOrder)) }}</div>
-          </div>
-          <div>
-            <div class="muted">Your Earnings</div>
-            <div class="value earnings-amount" [ngClass]="{ 'positive': selectedOrder.sellerEarnings && selectedOrder.sellerEarnings > 0, 'zero': !selectedOrder.sellerEarnings || selectedOrder.sellerEarnings === 0 }">
-              {{ formatPrice(selectedOrder.sellerEarnings || 0) }}
+
+          <div class="invoice-billing">
+            <div class="billing-col">
+              <label>Sourced By (Seller)</label>
+              <strong>Verified Partner #{{ selectedOrder.sellerId || '---' }}</strong>
+            </div>
+            <div class="billing-col text-right">
+              <label>Destined For (Hub)</label>
+              <strong>Smart Store Admin Central</strong>
+              <p>{{ selectedOrder.address }}</p>
             </div>
           </div>
-        </div>
 
-        <div class="address">
-          <div class="muted">Shipping Address</div>
-          <div class="value">{{ selectedOrder.address }}</div>
-        </div>
-
-        <div class="status-actions" *ngIf="selectedOrder.status !== 'delivered' && selectedOrder.status !== 'cancelled'">
-          <div class="muted">Update Status</div>
-          <div class="status-buttons">
-            <button type="button" class="btn small" *ngIf="selectedOrder.status === 'pending'" (click)="updateOrderStatus(selectedOrder, 'processing')">
-              <i class="pi pi-play"></i>
-              Start Processing
-            </button>
-            <button type="button" class="btn small" *ngIf="selectedOrder.status === 'processing'" (click)="updateOrderStatus(selectedOrder, 'shipped')">
-              <i class="pi pi-truck"></i>
-              Mark as Shipped
-            </button>
-            <button type="button" class="btn small" *ngIf="selectedOrder.status === 'shipped'" (click)="updateOrderStatus(selectedOrder, 'delivered')">
-              <i class="pi pi-check"></i>
-              Mark as Delivered
-            </button>
-            <button type="button" class="btn secondary small" (click)="updateOrderStatus(selectedOrder, 'cancelled')">
-              <i class="pi pi-times"></i>
-              Cancel Order
-            </button>
+          <div class="invoice-items">
+            <table>
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th class="text-center">Qty</th>
+                  <th class="text-right">Price</th>
+                  <th class="text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let it of selectedOrder.items">
+                  <td>
+                    <div class="item-name-3d">{{ it.name }}</div>
+                  </td>
+                  <td class="text-center">{{ it.qty }}</td>
+                  <td class="text-right">{{ formatPrice(it.price) }}</td>
+                  <td class="text-right">{{ formatPrice(it.qty * it.price) }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-        </div>
 
-        <div class="items">
-          <h4>Items</h4>
-          <table class="items-table">
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Qty</th>
-                <th>Price</th>
-                <th>Line Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let it of selectedOrder.items">
-                <td>{{ it.name }}</td>
-                <td>{{ it.qty }}</td>
-                <td>{{ formatPrice(it.price) }}</td>
-                <td>{{ formatPrice(it.qty * it.price) }}</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="invoice-footer">
+            <div class="footer-note">
+              <span class="status-tag pulse" [ngClass]="selectedOrder.status">
+                Current Phase: {{ getStatusLabel(selectedOrder.status) }}
+              </span>
+            </div>
+            <div class="footer-totals">
+              <div class="total-row">
+                <label>Subtotal</label>
+                <span>{{ formatPrice(getOrderTotal(selectedOrder)) }}</span>
+              </div>
+              <div class="total-row grand-total">
+                <label>Grand Total</label>
+                <span>{{ formatPrice(getOrderTotal(selectedOrder)) }}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -368,6 +397,27 @@
 
         <div class="form-section">
           <h4>Order Items</h4>
+
+          <div class="sku-search-box">
+            <label>Add by SKU</label>
+            <div class="search-input-group">
+              <input type="text" [(ngModel)]="skuSearchTerm" placeholder="Enter SKU (e.g. SHO-001)"
+                (keyup.enter)="searchProduct()">
+              <button type="button" class="btn primary" (click)="searchProduct()">
+                <i class="pi pi-search"></i>
+              </button>
+            </div>
+            <div class="found-product-preview" *ngIf="foundProduct">
+              <div class="product-info">
+                <strong>{{ foundProduct.name }}</strong>
+                <span>Price: {{ formatPrice(foundProduct.resellerPrice || foundProduct.price) }}</span>
+              </div>
+              <button type="button" class="btn small primary" (click)="addProductToOrder()">
+                <i class="pi pi-plus"></i> Add to Order
+              </button>
+            </div>
+          </div>
+
           <div class="items-list">
             <div class="item-row" *ngFor="let item of newOrder.items; let i = index">
               <div class="item-inputs">
@@ -376,7 +426,8 @@
                 <input type="number" [(ngModel)]="item.price" min="0" step="0.01" placeholder="Price" />
                 <span class="item-total">{{ formatPrice(item.qty * item.price) }}</span>
               </div>
-              <button type="button" class="btn icon danger" (click)="removeOrderItem(i)" *ngIf="newOrder.items.length > 1" title="Remove item">
+              <button type="button" class="btn icon danger" (click)="removeOrderItem(i)"
+                *ngIf="newOrder.items.length > 1" title="Remove item">
                 <i class="pi pi-trash"></i>
               </button>
             </div>
@@ -399,6 +450,10 @@
         <button type="button" class="btn secondary" (click)="closeAddOrder()">
           <i class="pi pi-times"></i>
           Cancel
+        </button>
+        <button type="button" class="btn" (click)="checkoutWithCart()">
+          <i class="pi pi-shopping-cart"></i>
+          Go to Checkout
         </button>
         <button type="button" class="btn primary" (click)="openCreateConfirm()">
           <i class="pi pi-check"></i>

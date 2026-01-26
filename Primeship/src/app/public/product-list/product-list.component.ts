@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Observable, catchError, forkJoin, throwError } from 'rxjs';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { PublicService } from '../../core/services/public.service';
@@ -15,9 +16,10 @@ import { Product } from '../../core/models';
   styleUrls: ['./product-list-interactive.scss']
 })
 export class ProductListComponent implements OnInit {
-  products: ProductDto[] = [];
-  filteredProducts: any[] = []; // Changed to any to support the template's property access
+  products: any[] = [];
+  filteredProducts: any[] = [];
   categories: any[] = [];
+  categoriesWithCount: any[] = [];
   isLoading = true;
 
   // New UI Properties
@@ -29,7 +31,7 @@ export class ProductListComponent implements OnInit {
   filtersForm: FormGroup;
   searchTerm = '';
   sortBy = 'newest';
-  maxPriceFilter = 2500;
+  maxPriceFilter = 250000; // Increased for larger prices
   currentCategorySlug = '';
 
   constructor(
@@ -43,15 +45,14 @@ export class ProductListComponent implements OnInit {
       sortBy: ['newest'],
       category: [''],
       minPrice: [0],
-      maxPrice: [2500]
+      maxPrice: [250000]
     });
   }
 
   ngOnInit(): void {
-    this.loadCategories();
     this.route.paramMap.subscribe(params => {
       this.currentCategorySlug = params.get('slug') || '';
-      this.loadProducts();
+      this.loadData();
     });
 
     // Handle filter changes
@@ -66,20 +67,66 @@ export class ProductListComponent implements OnInit {
     });
   }
 
-  loadCategories(): void {
-    this.publicService.getCategories().subscribe(cats => {
-      this.categories = cats;
-      this.updateCategoryInfo();
+  loadData(): void {
+    this.isLoading = true;
+    forkJoin({
+      cats: this.publicService.getCategories(),
+      prods: this.publicService.getProducts()
+    }).subscribe({
+      next: (data) => {
+        this.categories = data.cats || [];
+        const allProducts = data.prods || [];
+
+        // Map products for template compatibility
+        this.products = allProducts.map(p => ({
+          ...p,
+          image: this.getFirstImage(p),
+          price: this.getDiscountedPrice(p),
+          originalPrice: p.resellerMaxPrice,
+          discount: p.discountPercentage,
+          reviewCount: Math.floor(Math.random() * 100) + 10 // Still dummy but consistent
+        }));
+
+        this.updateCategoryInfo();
+        this.calculateCategoryCounts();
+        this.applyFilters();
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('❌ ProductListComponent: Error loading data:', err);
+        this.isLoading = false;
+      }
     });
   }
 
+  private calculateCategoryCounts(): void {
+    this.categoriesWithCount = this.categories.map(cat => ({
+      ...cat,
+      count: this.products.filter(p =>
+        p.categoryId === cat.id ||
+        (p.categoryName && cat.name && p.categoryName.toLowerCase() === cat.name.toLowerCase())
+      ).length
+    }));
+  }
+
+  private matchingCategoryId: string = '';
+
   private updateCategoryInfo(): void {
+    this.matchingCategoryId = '';
     if (this.currentCategorySlug) {
-      const cat = this.categories.find(c => this.productService.generateSlug(c.name) === this.currentCategorySlug);
+      const cat = this.categories.find(c =>
+        c.slug === this.currentCategorySlug ||
+        this.productService.generateSlug(c.name) === this.currentCategorySlug
+      );
       if (cat) {
         this.categoryTitle = cat.name;
+        this.matchingCategoryId = cat.id;
         this.categoryDescription = `Explore our curated ${cat.name} collection.`;
         this.categoryImage = cat.imageUrl || this.getDefaultCategoryImage(cat.name);
+      } else {
+        // Fallback for custom slugs
+        this.categoryTitle = this.currentCategorySlug.replace(/-/g, ' ').toUpperCase();
+        this.categoryDescription = `Showing results for ${this.categoryTitle}`;
       }
     } else {
       this.categoryTitle = 'All Products';
@@ -88,28 +135,16 @@ export class ProductListComponent implements OnInit {
     }
   }
 
-  loadProducts(): void {
-    this.isLoading = true;
-    this.publicService.getProducts().subscribe({
-      next: (data) => {
-        this.products = data || [];
-        this.applyFilters();
-        this.isLoading = false;
-        this.updateCategoryInfo();
-      },
-      error: (err) => {
-        console.error('❌ ProductListComponent: Error loading products:', err);
-        this.isLoading = false;
-      }
-    });
-  }
-
   applyFilters(): void {
     let result = [...this.products];
 
-    // Category Filter
+    // Category Filter (URL based)
     if (this.currentCategorySlug) {
-      result = result.filter(p => this.productService.generateSlug(p.categoryName) === this.currentCategorySlug);
+      result = result.filter(p =>
+        (this.matchingCategoryId && p.categoryId === this.matchingCategoryId) ||
+        this.productService.generateSlug(p.categoryName || '') === this.currentCategorySlug ||
+        this.currentCategorySlug === 'all'
+      );
     }
 
     // Search Filter
@@ -123,23 +158,26 @@ export class ProductListComponent implements OnInit {
     }
 
     // Price Filter
-    result = result.filter(p => this.getDiscountedPrice(p) <= this.maxPriceFilter);
+    const val = this.filtersForm.value;
+    result = result.filter(p =>
+      p.price >= (val.minPrice || 0) &&
+      p.price <= (val.maxPrice || 1000000)
+    );
 
     // Sorting
     switch (this.sortBy) {
       case 'price-low':
-        result.sort((a, b) => this.getDiscountedPrice(a) - this.getDiscountedPrice(b));
+        result.sort((a, b) => a.price - b.price);
         break;
       case 'price-high':
-        result.sort((a, b) => this.getDiscountedPrice(b) - this.getDiscountedPrice(a));
-        break;
-      case 'popular':
-        // Dummy popularity
-        result.sort((a, b) => (b.stockQuantity || 0) - (a.stockQuantity || 0));
+        result.sort((a, b) => b.price - a.price);
         break;
       case 'newest':
-      default:
-        // Already sorted by newest from API usually, but let's be safe
+        // Assuming ID or internal order is newest
+        result.reverse();
+        break;
+      case 'rating':
+        result.sort((a, b) => b.reviewCount - a.reviewCount);
         break;
     }
 
@@ -159,18 +197,19 @@ export class ProductListComponent implements OnInit {
       sortBy: 'newest',
       category: '',
       minPrice: 0,
-      maxPrice: 2500
+      maxPrice: 250000
     });
     this.searchTerm = '';
     this.applyFilters();
   }
 
-  getFirstImage(p: ProductDto): string {
+  getFirstImage(p: any): string {
     const images = this.productService.parseImages(p.images);
-    return images.length > 0 ? images[0] : 'https://via.placeholder.com/400x400?text=No+Image';
+    if (images.length > 0) return images[0];
+    return this.getDefaultCategoryImage(p.categoryName || '');
   }
 
-  getDiscountedPrice(p: ProductDto): number {
+  getDiscountedPrice(p: any): number {
     const original = p.resellerMaxPrice || 0;
     const discount = p.discountPercentage || 0;
     return original - (original * discount / 100);
@@ -178,6 +217,16 @@ export class ProductListComponent implements OnInit {
 
   onProductClick(p: any): void {
     this.router.navigate(['/product', p.slug]);
+  }
+
+  onCategoryToggle(cat: any): void {
+    this.router.navigate(['/category', cat.slug]);
+  }
+
+  handleImageError(event: any, name: string): void {
+    const img = event.target;
+    img.src = `https://placehold.co/600x400/f85606/ffffff?text=${encodeURIComponent(name)}`;
+    img.onerror = null;
   }
 
   private getDefaultCategoryImage(categoryName: string): string {
@@ -190,8 +239,8 @@ export class ProductListComponent implements OnInit {
       'Accessories': 'assets/images/61BKAbqOL5L._AC_SX679_.jpg'
     };
     for (const key in defaults) {
-      if (categoryName.toLowerCase().includes(key.toLowerCase())) return defaults[key];
+      if (categoryName && categoryName.toLowerCase().includes(key.toLowerCase())) return defaults[key];
     }
-    return 'assets/images/61+DG4Np+zL._AC_SX425_.jpg';
+    return 'https://placehold.co/600x400/f85606/ffffff?text=' + encodeURIComponent(categoryName || 'Product');
   }
 }

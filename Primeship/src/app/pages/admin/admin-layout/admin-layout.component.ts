@@ -1,6 +1,7 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'app-admin-layout',
@@ -11,6 +12,23 @@ import { CommonModule } from '@angular/common';
 })
 export class AdminLayoutComponent implements OnInit, AfterViewInit {
     sidebarCollapsed = false;
+    isAdminView = false;
+    isSellerView = false;
+
+    constructor(private router: Router) {
+        this.updateViewMode();
+        this.router.events.pipe(
+            filter(event => event instanceof NavigationEnd)
+        ).subscribe(() => {
+            this.updateViewMode();
+        });
+    }
+
+    private updateViewMode() {
+        const url = this.router.url;
+        this.isAdminView = url.includes('/admin');
+        this.isSellerView = url.includes('/seller');
+    }
 
     ngOnInit() {
     }

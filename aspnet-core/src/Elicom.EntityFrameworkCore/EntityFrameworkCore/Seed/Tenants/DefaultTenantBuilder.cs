@@ -56,6 +56,17 @@ public class DefaultTenantBuilder
         }
 
         _context.Tenants.Add(tenant);
-        _context.SaveChanges();
+        
+        _context.Database.OpenConnection();
+        try
+        {
+            _context.Database.ExecuteSqlRaw("SET IDENTITY_INSERT AbpTenants ON");
+            _context.SaveChanges();
+            _context.Database.ExecuteSqlRaw("SET IDENTITY_INSERT AbpTenants OFF");
+        }
+        finally
+        {
+            _context.Database.CloseConnection();
+        }
     }
 }

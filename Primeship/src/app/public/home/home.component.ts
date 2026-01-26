@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -53,7 +53,9 @@ export class HomeComponent implements OnInit {
   constructor(
     private publicService: PublicService,
     private productService: ProductService,
-    private router: Router
+    private router: Router,
+    private ngZone: NgZone,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
@@ -64,21 +66,25 @@ export class HomeComponent implements OnInit {
   }
 
   private startCountdown() {
-    setInterval(() => {
-      if (this.flashSaleTime.seconds > 0) {
-        this.flashSaleTime.seconds--;
-      } else {
-        this.flashSaleTime.seconds = 59;
-        if (this.flashSaleTime.minutes > 0) {
-          this.flashSaleTime.minutes--;
+    this.ngZone.runOutsideAngular(() => {
+      setInterval(() => {
+        if (this.flashSaleTime.seconds > 0) {
+          this.flashSaleTime.seconds--;
         } else {
-          this.flashSaleTime.minutes = 59;
-          if (this.flashSaleTime.hours > 0) {
-            this.flashSaleTime.hours--;
+          this.flashSaleTime.seconds = 59;
+          if (this.flashSaleTime.minutes > 0) {
+            this.flashSaleTime.minutes--;
+          } else {
+            this.flashSaleTime.minutes = 59;
+            if (this.flashSaleTime.hours > 0) {
+              this.flashSaleTime.hours--;
+            }
           }
         }
-      }
-    }, 1000);
+        // Force change detection since we are outside the zone
+        this.cdr.detectChanges();
+      }, 1000);
+    });
   }
 
   private loadCategories(): void {

@@ -1,11 +1,13 @@
 import { Component, HostListener, OnInit } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, CurrencyPipe } from '@angular/common';
+import { CartService } from '../../core/services/cart.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-public-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, CurrencyPipe],
   template: `
     <div class="storefront-shell">
       <!-- Premium Top Bar -->
@@ -31,7 +33,7 @@ import { CommonModule } from '@angular/common';
               <span>EN / USD</span>
               <i class="pi pi-chevron-down"></i>
             </div>
-            <div class="auth-links">
+            <div class="auth-links" *ngIf="!authService.isAuthenticated()">
               <a routerLink="/auth/login" class="auth-link">
                 <i class="pi pi-sign-in"></i>
                 Login
@@ -40,6 +42,12 @@ import { CommonModule } from '@angular/common';
               <a routerLink="/auth/register" class="auth-link register">
                 <i class="pi pi-user-plus"></i>
                 Register
+              </a>
+            </div>
+            <div class="auth-links" *ngIf="authService.isAuthenticated()">
+              <a (click)="logout()" class="auth-link cursor-pointer">
+                <i class="pi pi-sign-out"></i>
+                Logout
               </a>
             </div>
           </div>
@@ -91,7 +99,7 @@ import { CommonModule } from '@angular/common';
                   <i class="pi pi-user"></i>
                 </div>
                 <div class="action-text">
-                  <span class="action-label">Hello, Guest</span>
+                  <span class="action-label">Hello, {{ userName }}</span>
                   <span class="action-title">Account</span>
                 </div>
               </a>
@@ -109,11 +117,11 @@ import { CommonModule } from '@angular/common';
               <a routerLink="/cart" class="action-btn cart-btn">
                 <div class="action-icon">
                   <i class="pi pi-shopping-cart"></i>
-                  <span class="action-badge pulse">3</span>
+                  <span class="action-badge pulse" *ngIf="cartCount > 0">{{ cartCount }}</span>
                 </div>
                 <div class="action-text">
-                  <span class="action-label">Your Cart</span>
-                  <span class="action-title">$245.00</span>
+                  <span class="action-label">{{ authService.isAuthenticated() ? 'Welcome' : 'Your Cart' }}</span>
+                  <span class="action-title">{{ cartTotal | currency }}</span>
                 </div>
               </a>
 
@@ -1175,11 +1183,30 @@ export class PublicLayoutComponent implements OnInit {
   isScrolled = false;
   selectedCategory = 'All';
   showCategoryDropdown = false;
+  cartCount = 0;
+  cartTotal = 0;
+  userName = 'Guest';
 
   private lastScrollTop = 0;
 
+  constructor(
+    public cartService: CartService,
+    public authService: AuthService
+  ) { }
+
   ngOnInit(): void {
-    // Component initialization
+    this.cartService.cartItems$.subscribe(items => {
+      this.cartCount = this.cartService.getCartCount();
+      this.cartTotal = this.cartService.getCartTotal();
+    });
+
+    this.authService.currentUser$.subscribe(user => {
+      this.userName = user ? (user.email || 'User') : 'Guest';
+    });
+  }
+
+  logout(): void {
+    this.authService.logout();
   }
 
   @HostListener('window:scroll', [])

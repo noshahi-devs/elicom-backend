@@ -1,27 +1,25 @@
 <div class="seller-dashboard-container">
-  <!-- Enhanced Page Header with Background -->
+  <!-- Simplified Page Header -->
   <div class="page-header-enhanced">
     <div class="header-background">
-      <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1600&h=400&fit=crop" alt="Dashboard Background" class="header-image">
+      <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1600&h=400&fit=crop"
+        alt="Dashboard Background" class="header-image">
       <div class="header-overlay"></div>
     </div>
     <div class="header-content">
       <div class="seller-info">
         <div class="seller-avatar">
-          <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face" alt="Seller Avatar">
+          <div class="avatar-icon-3d">💼</div>
         </div>
         <div class="seller-details">
-          <h1 class="page-title">Welcome back, Seller!</h1>
-          <p class="page-subtitle">Manage your products and track your sales performance</p>
+          <h1 class="page-title">Sourcing Dashboard</h1>
+          <p class="page-subtitle">Manage your inventory sourcing and track supplier shipments</p>
           <div class="seller-stats-summary">
             <span class="stat-summary-item">
-              <i class="pi pi-star"></i> 4.8 Rating
+              <i class="pi pi-verified"></i> Verified Partner
             </span>
             <span class="stat-summary-item">
-              <i class="pi pi-shopping-bag"></i> 23 Products
-            </span>
-            <span class="stat-summary-item">
-              <i class="pi pi-clock"></i> Member since 2023
+              <i class="pi pi-calendar"></i> {{ statsCards[2].value }} Active Sourcing Orders
             </span>
           </div>
         </div>
@@ -31,9 +29,7 @@
 
   <!-- Stats Cards Grid -->
   <div class="stats-grid">
-    <div class="stat-card-3d" 
-         *ngFor="let card of sellerStats"
-         [style.background]="card.gradient">
+    <div class="stat-card-3d" *ngFor="let card of statsCards" [style.background]="card.gradient">
       <div class="stat-card-content">
         <div class="stat-icon-wrapper">
           <span class="stat-icon">{{ card.icon }}</span>
@@ -41,10 +37,6 @@
         <div class="stat-info">
           <h3 class="stat-value">{{ card.value }}</h3>
           <p class="stat-title">{{ card.title }}</p>
-          <div class="stat-change" [class.positive]="card.trend === 'up'" [class.negative]="card.trend === 'down'">
-            <span class="trend-icon">{{ getTrendIcon(card.trend) }}</span>
-            <span class="change-value">{{ card.change }}</span>
-          </div>
         </div>
       </div>
       <div class="stat-card-decoration"></div>
@@ -58,117 +50,46 @@
       <!-- Quick Actions -->
       <div class="card-3d quick-actions-card">
         <div class="card-header">
-          <h3>Quick Actions</h3>
+          <h3>Quick Access</h3>
         </div>
         <div class="card-content">
           <div class="actions-grid">
-            <button class="action-card" 
-                    *ngFor="let action of quickActions"
-                    (click)="onQuickAction(action)">
-              <span class="action-image" *ngIf="action.image">
-                <img [src]="action.image" [alt]="action.title">
-              </span>
-              <span class="action-icon">{{ action.icon }}</span>
-              <span class="action-title">{{ action.title }}</span>
+            <button class="action-card" (click)="router.navigate(['/shop'])">
+              <span class="action-icon">🔍</span>
+              <span class="action-title">Browse Shop</span>
+            </button>
+            <button class="action-card" (click)="navigateToOrders()">
+              <span class="action-icon">📋</span>
+              <span class="action-title">My Purchases</span>
+            </button>
+            <button class="action-card" (click)="router.navigate(['/seller/profile'])">
+              <span class="action-icon">👤</span>
+              <span class="action-title">Profile</span>
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Inventory Alerts (New Section) -->
-      <div class="card-3d inventory-alerts-card">
+      <!-- Verified Partners Info -->
+      <div class="card-3d info-card-gradient">
         <div class="card-header">
-          <h3><i class="pi pi-exclamation-triangle"></i> Inventory Alerts</h3>
-          <a href="/seller/inventory" class="view-all-link">View all</a>
+          <h3><i class="pi pi-info-circle"></i> Sourcing Hub</h3>
         </div>
         <div class="card-content">
-          <div class="alerts-list">
-            <div class="alert-item" *ngFor="let alert of inventoryAlerts" [class]="'severity-' + alert.severity">
-              <div class="alert-thumb">
-                <img [src]="alert.image" [alt]="alert.name">
-              </div>
-              <div class="alert-info">
-                <div class="alert-name">{{ alert.name }}</div>
-                <div class="alert-meta">
-                  Stock: <strong>{{ alert.stock }}</strong> / Threshold: {{ alert.threshold }}
-                </div>
-              </div>
-              <div class="alert-badge">{{ alert.severity }}</div>
+          <p>This is your central hub for sourcing products at wholesale prices. All orders here are purchase orders
+            from your suppliers.</p>
+          <div class="info-list">
+            <div class="info-item">
+              <i class="pi pi-check"></i>
+              <span>Select products from the shop</span>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Performance Analytics -->
-      <div class="card-3d performance-card">
-        <div class="card-header">
-          <h3><i class="pi pi-chart-line"></i> Performance Analytics</h3>
-          <select class="analytics-period">
-            <option>Last 7 days</option>
-            <option>Last 30 days</option>
-            <option>Last 3 months</option>
-          </select>
-        </div>
-        <div class="card-content">
-          <div class="analytics-grid">
-            <div class="analytics-item">
-              <div class="analytics-icon">
-                <i class="pi pi-eye"></i>
-              </div>
-              <div class="analytics-info">
-                <h4>12,456</h4>
-                <p>Product Views</p>
-                <span class="analytics-change positive">+23%</span>
-              </div>
+            <div class="info-item">
+              <i class="pi pi-check"></i>
+              <span>Buy at <strong>Reseller Price</strong></span>
             </div>
-            <div class="analytics-item">
-              <div class="analytics-icon">
-                <i class="pi pi-shopping-cart"></i>
-              </div>
-              <div class="analytics-info">
-                <h4>342</h4>
-                <p>Conversions</p>
-                <span class="analytics-change positive">+15%</span>
-              </div>
-            </div>
-            <div class="analytics-item">
-              <div class="analytics-icon">
-                <i class="pi pi-users"></i>
-              </div>
-              <div class="analytics-info">
-                <h4>89%</h4>
-                <p>Customer Satisfaction</p>
-                <span class="analytics-change positive">+5%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Earnings Chart -->
-      <div class="card-3d earnings-chart-card">
-        <div class="card-header">
-          <h3>Earnings Overview</h3>
-          <select class="chart-period">
-            <option>Last 6 months</option>
-            <option>Last year</option>
-            <option>All time</option>
-          </select>
-        </div>
-        <div class="card-content">
-          <div class="chart-container">
-            <div class="chart-bars">
-              <div class="chart-bar" 
-                   *ngFor="let data of earningsData"
-                   [style.height.%]="(data.earnings / 5000) * 100">
-                <div class="bar-tooltip">
-                  <span class="tooltip-month">{{ data.month }}</span>
-                  <span class="tooltip-value">${{ data.earnings.toLocaleString() }}</span>
-                </div>
-              </div>
-            </div>
-            <div class="chart-labels">
-              <span *ngFor="let data of earningsData">{{ data.month }}</span>
+            <div class="info-item">
+              <i class="pi pi-check"></i>
+              <span>Track shipment to Hub warehouse</span>
             </div>
           </div>
         </div>
@@ -177,100 +98,31 @@
 
     <!-- Right Column -->
     <div class="right-column">
-      <!-- Recent Orders -->
+      <!-- Recent Purchases -->
       <div class="card-3d recent-orders-card">
         <div class="card-header">
-          <h3>Recent Orders</h3>
-          <a href="/seller/orders" class="view-all-link">View all</a>
+          <h3>Recent Purchases</h3>
+          <a (click)="navigateToOrders()" class="view-all-link">View all</a>
         </div>
         <div class="card-content">
           <div class="orders-list">
-            <div class="order-item" 
-                 *ngFor="let order of recentOrders"
-                 (click)="viewOrderDetails(order.id)">
-              <div class="order-thumb">
-                <img [src]="order.image" [alt]="order.product">
-              </div>
+            <div class="order-item" *ngFor="let order of recentOrders">
               <div class="order-info">
                 <div class="order-header">
-                  <p class="order-id">{{ order.id }}</p>
+                  <p class="order-id">{{ order.referenceCode || order.orderNo }}</p>
                   <span class="status-badge" [class]="'status-' + getStatusColor(order.status)">
-                    {{ order.status }}
+                    {{ getStatusLabel(order.status) }}
                   </span>
                 </div>
-                <p class="customer-name">{{ order.customer }}</p>
-                <p class="product-name">{{ order.product }}</p>
-                <p class="order-amount">{{ order.amount }}</p>
-              </div>
-              <div class="order-rating" *ngIf="order.rating">
-                <span class="rating-stars">{{ getRatingStars(order.rating) }}</span>
-                <span class="rating-value">{{ order.rating }}</span>
+                <p class="product-name" *ngIf="order.items?.[0]">{{ order.items[0].name }} <span
+                    *ngIf="order.items.length > 1">+{{ order.items.length - 1 }} more</span></p>
+                <p class="order-amount">${{ (order.totalPurchaseAmount || 0).toFixed(2) }}</p>
+                <p class="order-date">{{ order.creationTime | date:'mediumDate' }}</p>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- My Products -->
-      <div class="card-3d my-products-card">
-        <div class="card-header">
-          <h3>My Products</h3>
-          <a href="/seller/products" class="view-all-link">View all</a>
-        </div>
-        <div class="card-content">
-          <div class="products-list">
-            <div class="product-item" 
-                 *ngFor="let product of myProducts"
-                 (click)="viewProductDetails(product.name)">
-              <div class="product-image">
-                <img [src]="product.image" [alt]="product.name">
-              </div>
-              <div class="product-info">
-                <h4 class="product-name">{{ product.name }}</h4>
-                <div class="product-stats">
-                  <span class="sales-count">{{ product.sales }} sold</span>
-                  <span class="revenue">{{ product.revenue }}</span>
-                </div>
-                <div class="product-rating">
-                  <span class="rating-stars">{{ getRatingStars(product.rating) }}</span>
-                  <span class="rating-value">{{ product.rating }}</span>
-                </div>
-                <div class="product-stock">
-                  <span class="stock-label">Stock:</span>
-                  <span class="stock-value">{{ product.stock }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Customer Reviews -->
-      <div class="card-3d customer-reviews-card">
-        <div class="card-header">
-          <h3><i class="pi pi-star"></i> Customer Reviews</h3>
-          <a href="/seller/reviews" class="view-all-link">View all</a>
-        </div>
-        <div class="card-content">
-          <div class="reviews-list">
-            <div class="review-item" *ngFor="let review of customerReviews">
-              <div class="review-avatar">
-                <img [src]="review.avatar" [alt]="review.customer">
-              </div>
-              <div class="review-content">
-                <div class="review-header">
-                  <h4 class="reviewer-name">{{ review.customer }}</h4>
-                  <span class="review-date">{{ review.date }}</span>
-                </div>
-                <div class="review-rating">
-                  <span class="rating-stars">{{ getRatingStars(review.rating) }}</span>
-                </div>
-                <p class="review-text">{{ review.comment }}</p>
-                <div class="review-product">
-                  <i class="pi pi-box"></i>
-                  {{ review.product }}
-                </div>
-              </div>
+            <div class="no-data" *ngIf="recentOrders.length === 0">
+              <i class="pi pi-inbox"></i>
+              <p>No recent purchases found</p>
             </div>
           </div>
         </div>

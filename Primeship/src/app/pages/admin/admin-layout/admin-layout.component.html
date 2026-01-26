@@ -7,7 +7,7 @@
         <div class="logo-3d">🛍️</div>
         <div class="brand-info">
           <h3>Prime Ship</h3>
-          <p>ERP Dashboard</p>
+          <p>{{ isAdminView ? 'Admin Port' : 'Seller Port' }}</p>
         </div>
       </div>
     </div>
@@ -19,15 +19,17 @@
         <div class="status-indicator online"></div>
       </div>
       <div class="user-info">
-        <h4>Admin User</h4>
-        <p>Super Admin</p>
+        <h4>{{ isAdminView ? 'Admin' : 'Seller' }}</h4>
+        <p>{{ isAdminView ? 'Platform Owner' : 'Verified Partner' }}</p>
       </div>
     </div>
 
     <!-- Navigation -->
     <nav class="sidebar-nav">
-      <div class="menu-section">
-        <h5 class="menu-title">Admin Panel</h5>
+
+      <!-- Admin Section -->
+      <div class="menu-section" *ngIf="isAdminView">
+        <h5 class="menu-title">Control Center</h5>
         <ul class="nav-list">
           <li class="nav-item" routerLinkActive="active">
             <a routerLink="/admin/dashboard" class="nav-link">
@@ -38,7 +40,7 @@
           <li class="nav-item" routerLinkActive="active">
             <a routerLink="/admin/products" class="nav-link">
               <i class="fas fa-box nav-icon"></i>
-              <span class="nav-text">Products</span>
+              <span class="nav-text">Catalog</span>
             </a>
           </li>
           <li class="nav-item" routerLinkActive="active">
@@ -47,23 +49,16 @@
               <span class="nav-text">Categories</span>
             </a>
           </li>
-       
+          <li class="nav-item" routerLinkActive="active">
+            <a routerLink="/admin/inventory" class="nav-link">
+              <i class="fas fa-warehouse nav-icon"></i>
+              <span class="nav-text">Warehouse</span>
+            </a>
+          </li>
           <li class="nav-item" routerLinkActive="active">
             <a routerLink="/admin/orders" class="nav-link">
               <i class="fas fa-shopping-cart nav-icon"></i>
-              <span class="nav-text">Orders</span>
-            </a>
-          </li>
-          <li class="nav-item" routerLinkActive="active">
-            <a routerLink="/admin/threepl-partners" class="nav-link">
-              <i class="fas fa-truck-loading nav-icon"></i>
-              <span class="nav-text">3PL Partners</span>
-            </a>
-          </li>
-             <li class="nav-item" routerLinkActive="active">
-            <a routerLink="/admin/inventory" class="nav-link">
-              <i class="fas fa-warehouse nav-icon"></i>
-              <span class="nav-text">Inventory</span>
+              <span class="nav-text">All Orders</span>
             </a>
           </li>
           <li class="nav-item" routerLinkActive="active">
@@ -79,21 +74,9 @@
             </a>
           </li>
           <li class="nav-item" routerLinkActive="active">
-            <a routerLink="/admin/finance" class="nav-link">
-              <i class="fas fa-dollar-sign nav-icon"></i>
-              <span class="nav-text">Finance</span>
-            </a>
-          </li>
-          <li class="nav-item" routerLinkActive="active">
-            <a routerLink="/admin/reports" class="nav-link">
-              <i class="fas fa-chart-bar nav-icon"></i>
-              <span class="nav-text">Reports</span>
-            </a>
-          </li>
-          <li class="nav-item" routerLinkActive="active">
             <a routerLink="/admin/users" class="nav-link">
               <i class="fas fa-user-cog nav-icon"></i>
-              <span class="nav-text">Users & Roles</span>
+              <span class="nav-text">System Users</span>
             </a>
           </li>
           <li class="nav-item" routerLinkActive="active">
@@ -105,37 +88,26 @@
         </ul>
       </div>
 
-      <div class="menu-section">
-        <h5 class="menu-title">Seller Panel</h5>
+      <!-- Seller Section -->
+      <div class="menu-section" *ngIf="isSellerView">
+        <h5 class="menu-title">Sourcing Hub</h5>
         <ul class="nav-list">
           <li class="nav-item" routerLinkActive="active">
             <a routerLink="/seller/dashboard" class="nav-link">
               <i class="fas fa-chart-line nav-icon"></i>
-              <span class="nav-text">Seller Dashboard</span>
+              <span class="nav-text">Dashboard</span>
             </a>
           </li>
-          <li class="nav-item" routerLinkActive="active">
-            <a routerLink="/seller/products" class="nav-link">
-              <i class="fas fa-box nav-icon"></i>
-              <span class="nav-text">My Products</span>
+          <li class="nav-item">
+            <a routerLink="/shop" class="nav-link">
+              <i class="fas fa-search nav-icon"></i>
+              <span class="nav-text">Browse Products</span>
             </a>
           </li>
           <li class="nav-item" routerLinkActive="active">
             <a routerLink="/seller/orders" class="nav-link">
-              <i class="fas fa-shopping-cart nav-icon"></i>
-              <span class="nav-text">Orders</span>
-            </a>
-          </li>
-          <li class="nav-item" routerLinkActive="active">
-            <a routerLink="/seller/earnings" class="nav-link">
-              <i class="fas fa-dollar-sign nav-icon"></i>
-              <span class="nav-text">Earnings</span>
-            </a>
-          </li>
-          <li class="nav-item" routerLinkActive="active">
-            <a routerLink="/seller/profile" class="nav-link">
-              <i class="fas fa-user nav-icon"></i>
-              <span class="nav-text">Profile</span>
+              <i class="fas fa-shopping-bag nav-icon"></i>
+              <span class="nav-text">My Purchases</span>
             </a>
           </li>
         </ul>
@@ -153,7 +125,7 @@
           <button class="sidebar-toggle-btn" id="sidebarToggle">
             <i class="fas fa-bars toggle-icon"></i>
           </button>
-          <div class="search-container">
+          <div class="search-container" *ngIf="isAdminView">
             <i class="fas fa-search search-icon"></i>
             <input type="text" class="search-input" placeholder="Search products, orders, customers...">
           </div>
@@ -170,7 +142,7 @@
               <div class="user-avatar-small">
                 <i class="fas fa-user"></i>
               </div>
-              <span class="user-name">Admin User</span>
+              <span class="user-name">User Profile</span>
               <i class="fas fa-chevron-down user-menu-arrow"></i>
             </div>
 
@@ -181,22 +153,14 @@
                   <i class="fas fa-user"></i>
                 </div>
                 <div class="dropdown-user-info">
-                  <h4>Admin User</h4>
-                  <p>admin@noshahimart.com</p>
+                  <h4>{{ isAdminView ? 'Admin' : 'Seller' }}</h4>
+                  <p>portal@primeship.com</p>
                 </div>
               </div>
               <div class="dropdown-divider"></div>
               <a href="#" class="dropdown-item">
                 <i class="fas fa-user"></i>
                 <span>Profile</span>
-              </a>
-              <a href="#" class="dropdown-item">
-                <i class="fas fa-cog"></i>
-                <span>Settings</span>
-              </a>
-              <a href="#" class="dropdown-item">
-                <i class="fas fa-bell"></i>
-                <span>Notifications</span>
               </a>
               <div class="dropdown-divider"></div>
               <a href="#" class="dropdown-item logout">
@@ -217,7 +181,7 @@
     <footer class="footer-3d">
       <div class="footer-content">
         <div class="footer-copyright">
-          &copy; 2026 Prime Ship - All Rights Reserved
+          &copy; 2026 Prime Ship - Sourcing Excellence
         </div>
       </div>
     </footer>

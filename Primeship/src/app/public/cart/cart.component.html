@@ -1,11 +1,11 @@
 <div class="cart-container">
   <div class="container">
     <h1 class="page-title">Shopping Cart</h1>
-    
+
     <div class="row">
       <div class="col-md-8">
         <div class="cart-items">
-          <div class="cart-item" *ngFor="let item of cartItems">
+          <div class="cart-item" *ngFor="let item of cartItems; let i = index">
             <div class="row align-items-center">
               <div class="col-md-2">
                 <img [src]="item.product.image" [alt]="item.product.name" class="cart-item-image">
@@ -18,9 +18,11 @@
               </div>
               <div class="col-md-2">
                 <div class="quantity-selector">
-                  <button class="btn btn-sm btn-outline-secondary" (click)="updateQuantity(item, item.quantity - 1)">-</button>
+                  <button class="btn btn-sm btn-outline-secondary"
+                    (click)="updateQuantity(i, item.quantity - 1)">-</button>
                   <span class="quantity">{{ item.quantity }}</span>
-                  <button class="btn btn-sm btn-outline-secondary" (click)="updateQuantity(item, item.quantity + 1)">+</button>
+                  <button class="btn btn-sm btn-outline-secondary"
+                    (click)="updateQuantity(i, item.quantity + 1)">+</button>
                 </div>
               </div>
               <div class="col-md-2">
@@ -32,72 +34,74 @@
                 </div>
               </div>
               <div class="col-md-2">
-                <button class="btn btn-sm btn-outline-danger" (click)="removeFromCart(item)">
+                <button class="btn btn-sm btn-outline-danger" (click)="removeFromCart(i)">
                   <i class="fas fa-trash"></i> Remove
                 </button>
               </div>
             </div>
           </div>
-          
+
           <div class="cart-empty" *ngIf="cartItems.length === 0">
             <div class="text-center">
               <i class="fas fa-shopping-cart fa-3x mb-3"></i>
               <h4>Your cart is empty</h4>
               <p>Add some products to get started!</p>
-              <button class="btn btn-primary" routerLink="/home" routerLinkActive="active" style="padding: 8x 12px;">Continue Shopping</button>
+              <button class="btn btn-primary" routerLink="/home" routerLinkActive="active"
+                style="padding: 8x 12px;">Continue Shopping</button>
             </div>
           </div>
         </div>
-        
+
         <div class="cart-actions" *ngIf="cartItems.length > 0">
-          <button class="btn btn-outline-secondary" routerLink="/home" routerLinkActive="active">Continue Shopping</button>
+          <button class="btn btn-outline-secondary" routerLink="/home" routerLinkActive="active">Continue
+            Shopping</button>
           <button class="btn btn-outline-danger" (click)="clearCart()">Clear Cart</button>
         </div>
       </div>
-      
+
       <div class="col-md-4">
         <div class="cart-summary">
           <h5>Order Summary</h5>
-          
+
           <div class="summary-row">
             <span>Subtotal:</span>
             <span>${{ subtotal }}</span>
           </div>
-          
+
           <div class="summary-row">
             <span>Shipping:</span>
             <span>${{ shipping }}</span>
           </div>
-          
+
           <div class="summary-row">
             <span>Tax:</span>
             <span>${{ tax }}</span>
           </div>
-          
+
           <div class="summary-row discount" *ngIf="discount > 0">
             <span>Discount:</span>
             <span>-${{ discount }}</span>
           </div>
-          
+
           <hr>
-          
+
           <div class="summary-row total">
             <span>Total:</span>
             <span>${{ total }}</span>
           </div>
-          
+
           <div class="promo-code">
             <div class="input-group">
               <input type="text" class="form-control" placeholder="Enter promo code" [(ngModel)]="promoCode">
               <button class="btn btn-outline-primary" (click)="applyPromoCode()">Apply</button>
             </div>
           </div>
-          
+
           <button class="btn btn-primary btn-lg w-100" (click)="proceedToCheckout()">
             Proceed to Checkout
           </button>
         </div>
-        
+
         <div class="shipping-info">
           <h6>Shipping Information</h6>
           <ul>

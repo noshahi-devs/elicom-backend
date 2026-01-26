@@ -7,6 +7,9 @@ import { PublicService } from '../../core/services/public.service';
 import { ProductService, ProductDto } from '../../core/services/product.service';
 import { Product3DViewerComponent } from '../../shared/components/product-3d-viewer/product-3d-viewer.component';
 import { Product } from '../../core/models';
+import { AuthService } from '../../core/services/auth.service';
+import { CartService } from '../../core/services/cart.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-product-detail',
@@ -86,6 +89,9 @@ export class ProductDetailComponent implements OnInit {
     private router: Router,
     private publicService: PublicService,
     private productService: ProductService,
+    private authService: AuthService,
+    private cartService: CartService,
+    private toastService: ToastService,
     private fb: FormBuilder
   ) { }
 
@@ -198,14 +204,15 @@ export class ProductDetailComponent implements OnInit {
   }
 
   addToCart(): void {
+    if (!this.authService.isAuthenticated()) {
+      this.toastService.showInfo('Please login to add items to cart');
+      this.router.navigate(['/auth/login'], { queryParams: { returnUrl: this.router.url } });
+      return;
+    }
+
     if (this.product) {
-      console.log('Adding to cart:', {
-        product: this.product,
-        quantity: this.quantity,
-        size: this.selectedSize,
-        color: this.selectedColor
-      });
-      alert('Product added to cart!');
+      this.cartService.addToCart(this.product, this.quantity, this.selectedSize, this.selectedColor);
+      this.toastService.showSuccess(`${this.product.name} added to cart!`);
     }
   }
 
@@ -248,21 +255,24 @@ export class ProductDetailComponent implements OnInit {
 
   buyNow(): void {
     if (this.product) {
-      console.log('⚡ Buy Now clicked for:', this.product.name);
-      // For now, same logic as addToCart but could redirect to checkout
+      console.log('Buying now:', {
+        product: this.product,
+        quantity: this.quantity,
+        size: this.selectedSize,
+        color: this.selectedColor
+      });
+
+      // Implement buy now logic - usually adds to cart and redirects to checkout
       this.addToCart();
-      // Implementation placeholder for direct checkout navigation:
-      // this.router.navigate(['/checkout'], { queryParams: { id: this.product.id, qty: this.quantity } });
+      this.router.navigate(['/checkout']);
     }
   }
 
   onRelatedProductClick(product: any): void {
     if (product && product.slug) {
-      console.log('🔗 Navigating to related product:', product.name);
-      this.router.navigate(['/product', product.slug]).then(() => {
-        window.scrollTo(0, 0);
-        this.loadProduct(); // Reload data for the new slug
-      });
+      this.router.navigate(['/product', product.slug]);
+      // Scroll to top when navigating to a new product
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 }
