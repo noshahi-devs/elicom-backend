@@ -14,6 +14,7 @@
     color: var(--text-main);
     background: var(--grad-premium);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
@@ -256,12 +257,16 @@
     }
 }
 
+.sticky-column {
+    position: sticky;
+    top: 100px;
+    z-index: 10;
+}
+
 .order-summary {
     background: var(--bg-card);
     border-radius: var(--radius-md);
     padding: 30px;
-    position: sticky;
-    top: 100px;
     box-shadow: var(--shadow-lg);
     border: 1px solid rgba(0, 0, 0, 0.05);
 
@@ -476,5 +481,263 @@
     .order-summary {
         position: static;
         margin-top: 30px;
+    }
+}
+
+/* Celebration Overlay */
+.celebration-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.98);
+    backdrop-filter: blur(15px);
+    z-index: 10001;
+    /* Above sticky header */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    overflow: hidden;
+
+    .celebration-content {
+        text-align: center;
+        max-width: 600px;
+        padding: 40px;
+        position: relative;
+        z-index: 100;
+        animation: scaleIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Items to Cart Animation */
+    .animation-container {
+        height: 180px;
+        position: relative;
+        margin-bottom: 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        .cart-box {
+            font-size: 5rem;
+            animation: cartPulse 2s infinite ease-in-out;
+            position: relative;
+            z-index: 2;
+
+            &.processing {
+                animation: cartPulse 0.8s infinite ease-in-out;
+            }
+        }
+
+        .success-icon-wrapper {
+            position: relative;
+            z-index: 5;
+            animation: tickPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .success-tick-circle {
+            width: 100px;
+            height: 100px;
+            background: #10B981;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
+
+            i {
+                font-size: 3.5rem;
+                color: white;
+            }
+        }
+
+        .item-fly {
+            position: absolute;
+            font-size: 2.2rem;
+            opacity: 0;
+            animation: itemFlyIntoCart 1.5s infinite ease-in;
+
+            &:nth-child(1) {
+                left: 30%;
+                animation-delay: 0s;
+            }
+
+            &:nth-child(2) {
+                left: 45%;
+                animation-delay: 0.5s;
+            }
+
+            &:nth-child(3) {
+                left: 60%;
+                animation-delay: 1s;
+            }
+
+            &:nth-child(4) {
+                left: 40%;
+                animation-delay: 0.8s;
+            }
+        }
+    }
+
+    .status-box {
+        animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .processing-text h2 {
+        background: linear-gradient(135deg, #fff 0%, #aaa 100%) !important;
+        -webkit-background-clip: text !important;
+        background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+    }
+
+    .success-text h2 {
+        background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%) !important;
+        -webkit-background-clip: text !important;
+        background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+    }
+
+    h2 {
+        font-size: 3.5rem;
+        font-weight: 900;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    p {
+        font-size: 1.4rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 2.5rem;
+        font-weight: 500;
+    }
+
+    .btn-done {
+        background: var(--grad-premium);
+        color: white;
+        padding: 18px 50px;
+        border-radius: 40px;
+        font-weight: 800;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 15px 35px rgba(248, 86, 6, 0.4);
+        border: none;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+
+        &:hover {
+            transform: translateY(-8px) scale(1.05);
+            box-shadow: 0 20px 45px rgba(248, 86, 6, 0.6);
+            background: linear-gradient(135deg, #E64A00 0%, #F85606 100%);
+        }
+    }
+}
+
+.confetti-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.confetti-piece {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    top: -20px;
+    opacity: 0;
+    animation: confettiFall 4s infinite linear;
+
+    @for $i from 1 through 100 {
+        &:nth-child(#{$i}) {
+            left: random(100) * 1%;
+            background-color: hsl(random(360), 80%, 60%);
+            animation-delay: random(5000) * 1ms;
+            animation-duration: (random(2500) + 2000) * 1ms;
+            width: (random(8) + 8) + px;
+            height: (random(8) + 8) + px;
+            border-radius: if(random(2)==1, 50%, 2px);
+        }
+    }
+}
+
+@keyframes cartPulse {
+
+    0%,
+    100% {
+        transform: scale(1) rotate(0);
+    }
+
+    50% {
+        transform: scale(1.1) rotate(5deg);
+    }
+}
+
+@keyframes tickPop {
+    0% {
+        transform: scale(0) rotate(-30deg);
+        opacity: 0;
+    }
+
+    70% {
+        transform: scale(1.2) rotate(10deg);
+    }
+
+    100% {
+        transform: scale(1) rotate(0);
+        opacity: 1;
+    }
+}
+
+@keyframes itemFlyIntoCart {
+    0% {
+        transform: translate(-100px, -200px) rotate(0deg);
+        opacity: 0;
+    }
+
+    30% {
+        opacity: 1;
+    }
+
+    70% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(0, 0) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+@keyframes confettiFall {
+    0% {
+        transform: translateY(0) rotate(0deg) translateX(0);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(105vh) rotate(720deg) translateX(50px);
+        opacity: 0;
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
     }
 }

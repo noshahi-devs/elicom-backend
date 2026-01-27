@@ -77,15 +77,59 @@
               </label>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-lg w-100" [disabled]="registerForm.invalid || isLoading">
-              <span *ngIf="!isLoading">Create Account</span>
-              <span *ngIf="isLoading">Creating Account...</span>
+            <button type="submit" class="btn btn-primary btn-lg w-100"
+              [disabled]="registerForm.invalid || isProcessing">
+              <span *ngIf="!isProcessing">Create Account</span>
+              <span *ngIf="isProcessing">Creating Account...</span>
             </button>
           </form>
 
           <div class="auth-footer">
             <p>Already have an account? <a routerLink="/auth/login">Login here</a></p>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Registration Celebration & Processing Overlay -->
+  <div class="celebration-overlay" *ngIf="showCelebration">
+    <div class="confetti-container" *ngIf="isSuccess">
+      <div *ngFor="let p of confettiPieces" class="confetti-piece"></div>
+    </div>
+
+    <div class="celebration-content">
+      <div class="animation-container">
+        <div class="item-fly">📧</div>
+        <div class="item-fly">🔐</div>
+        <div class="item-fly">📝</div>
+        <div class="item-fly">🚀</div>
+
+        <div class="success-icon-wrapper" *ngIf="isSuccess">
+          <div class="success-tick-circle">
+            <i class="pi pi-check"></i>
+          </div>
+        </div>
+
+        <div class="cart-box processing" *ngIf="isProcessing">👤</div>
+      </div>
+
+      <div *ngIf="isProcessing" class="status-box processing-text">
+        <h2>Registration in progress</h2>
+        <p>We are setting up your secure account. Please wait a moment.</p>
+      </div>
+
+      <div *ngIf="isSuccess" class="status-box success-text">
+        <h2>Account Created!</h2>
+        <p>Your registration was successful. Please check your email to verify your account.</p>
+
+        <div class="action-buttons-grid">
+          <a href="https://mail.google.com" target="_blank" class="btn-gmail">
+            <i class="pi pi-google"></i> Open Gmail
+          </a>
+          <button class="btn-done-modal" (click)="closeModal()">
+            Ok, Got it
+          </button>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CartService, CartItem } from '../../core/services/cart.service';
@@ -9,12 +9,11 @@ import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { WholesaleService, CreateWholesaleOrderInput } from '../../core/services/wholesale.service';
-import { switchMap, forkJoin, of } from 'rxjs';
 
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
   templateUrl: './checkout.component.html',
   styleUrls: ['./checkout.component.scss']
 })
@@ -25,6 +24,14 @@ export class CheckoutComponent implements OnInit {
   shipping = 0;
   tax = 0;
   total = 0;
+
+  // States
+  showCelebration = false;
+  isProcessing = false;
+  isSuccess = false;
+
+  // Confetti
+  confettiPieces = Array(100).fill(0);
 
   paymentMethods = [
     { id: 'mastercard', name: 'Master Card', icon: 'pi pi-credit-card' },
@@ -44,7 +51,8 @@ export class CheckoutComponent implements OnInit {
     private authService: AuthService,
     private toastService: ToastService,
     private profileService: ProfileService,
-    private wholesaleService: WholesaleService
+    private wholesaleService: WholesaleService,
+    private cdr: ChangeDetectorRef
   ) {
     this.checkoutForm = this.fb.group({
       firstName: ['', Validators.required],
@@ -57,20 +65,51 @@ export class CheckoutComponent implements OnInit {
       country: ['United States', Validators.required],
       zipCode: ['', Validators.required],
       paymentMethod: ['mastercard', Validators.required],
-      // Card details (for credit/debit/finora)
       cardNumber: [''],
       expiryDate: [''],
       cvv: [''],
-      // Bank details
       bankAccountName: [''],
       bankAccountNumber: [''],
-      // Crypto details
       cryptoWalletAddress: ['']
     });
 
-    // Dynamic validation based on payment method
     this.checkoutForm.get('paymentMethod')?.valueChanges.subscribe(method => {
       this.updatePaymentValidations(method);
+    });
+
+    this.setupMasking();
+  }
+
+  private setupMasking(): void {
+    this.checkoutForm.get('cardNumber')?.valueChanges.subscribe(val => {
+      if (!val) return;
+      let numeric = val.replace(/\D/g, '');
+      if (numeric.length > 16) numeric = numeric.substring(0, 16);
+      const masked = numeric.match(/.{1,4}/g)?.join(' ') || numeric;
+      if (val !== masked) {
+        this.checkoutForm.get('cardNumber')?.setValue(masked, { emitEvent: false });
+      }
+    });
+
+    this.checkoutForm.get('expiryDate')?.valueChanges.subscribe(val => {
+      if (!val) return;
+      let clean = val.replace(/\D/g, '');
+      if (clean.length >= 1 && !['0', '1'].includes(clean[0])) clean = '';
+      if (clean.length >= 2) {
+        const month = parseInt(clean.substring(0, 2));
+        if (month > 12) clean = clean.substring(0, 1);
+      }
+      if (clean.length > 4) clean = clean.substring(0, 4);
+      let masked = clean;
+      if (clean.length > 2) masked = clean.substring(0, 2) + '/' + clean.substring(2);
+      if (val !== masked) this.checkoutForm.get('expiryDate')?.setValue(masked, { emitEvent: false });
+    });
+
+    this.checkoutForm.get('cvv')?.valueChanges.subscribe(val => {
+      if (!val) return;
+      let numeric = val.replace(/\D/g, '');
+      if (numeric.length > 4) numeric = numeric.substring(0, 4);
+      if (val !== numeric) this.checkoutForm.get('cvv')?.setValue(numeric, { emitEvent: false });
     });
   }
 
@@ -85,7 +124,9 @@ export class CheckoutComponent implements OnInit {
     });
 
     if (['mastercard', 'discover', 'amex', 'finora'].includes(method)) {
-      cardControls.forEach(ctrl => this.checkoutForm.get(ctrl)?.setValidators([Validators.required]));
+      this.checkoutForm.get('cardNumber')?.setValidators([Validators.required, Validators.pattern(/^\d{4} \d{4} \d{4} \d{4}$/)]);
+      this.checkoutForm.get('expiryDate')?.setValidators([Validators.required, Validators.pattern(/^(0[1-9]|1[0-2])\/\d{2}$/)]);
+      this.checkoutForm.get('cvv')?.setValidators([Validators.required, Validators.pattern(/^\d{3,4}$/)]);
     } else if (method === 'bank_transfer') {
       bankControls.forEach(ctrl => this.checkoutForm.get(ctrl)?.setValidators([Validators.required]));
     } else if (method === 'crypto') {
@@ -117,9 +158,13 @@ export class CheckoutComponent implements OnInit {
 
   onSubmit(): void {
     if (this.checkoutForm.valid) {
-      this.toastService.showSuccess('Processing wholesale order...');
-      const val = this.checkoutForm.value;
+      this.isProcessing = true;
+      this.isSuccess = false;
+      this.showCelebration = true;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      this.cdr.detectChanges();
 
+      const val = this.checkoutForm.value;
       const orderInput: CreateWholesaleOrderInput = {
         items: this.cartItems.map(item => ({
           productId: item.product.id,
@@ -131,14 +176,24 @@ export class CheckoutComponent implements OnInit {
 
       this.wholesaleService.placeWholesaleOrder(orderInput).subscribe({
         next: (res) => {
-          this.toastService.showSuccess('Wholesale order placed successfully!');
+          this.isProcessing = false;
+          this.isSuccess = true;
           this.cartService.clearCart();
-          // For sellers, redirection should go to seller orders
-          this.router.navigate(['/seller/orders']);
+          this.cdr.detectChanges();
+
+          setTimeout(() => {
+            if (this.isSuccess) {
+              this.router.navigate(['/seller/orders']);
+            }
+          }, 6000);
         },
         error: (err) => {
+          this.isProcessing = false;
+          this.isSuccess = false;
+          this.showCelebration = false;
+          this.cdr.detectChanges();
           console.error('Wholesale checkout failed:', err);
-          const errorMsg = err.error?.error?.message || 'Failed to place wholesale order. Please ensure you have sufficient balance in your GlobalPayUK wallet.';
+          const errorMsg = err.error?.error?.message || 'Failed to place wholesale order.';
           this.toastService.showError(errorMsg);
         }
       });
@@ -146,9 +201,7 @@ export class CheckoutComponent implements OnInit {
       this.toastService.showError('Please fill in all required fields correctly');
       Object.keys(this.checkoutForm.controls).forEach(key => {
         const control = this.checkoutForm.get(key);
-        if (control?.invalid) {
-          control.markAsTouched();
-        }
+        if (control?.invalid) control.markAsTouched();
       });
     }
   }
