@@ -167,6 +167,39 @@ export class AuthService {
         return localStorage.getItem('userId');
     }
 
+    getUserName(): string | null {
+        const token = this.getToken();
+        if (!token) return null;
+
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+
+            // 1. Try standard 'name' claim (added in TokenAuthController)
+            if (payload['name'] && !payload['name'].includes('@') && !payload['name'].includes('_')) {
+                return payload['name'];
+            }
+
+            // 2. Extract GivenName and Surname
+            const givenName = payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'] || payload['givenname'];
+            const surname = payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'] || payload['surname'];
+
+            if (givenName || surname) {
+                const combined = `${givenName || ''} ${surname || ''}`.trim();
+                // Avoid returning things that look like emails or internal usernames
+                if (combined && !combined.includes('@')) return combined;
+            }
+
+            // Fallback to email
+            return payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] ||
+                payload['email'] ||
+                payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ||
+                payload['name'];
+        } catch (e) {
+            console.error('Error decoding token for name:', e);
+            return null;
+        }
+    }
+
     /**
      * Get user roles from JWT token
      */

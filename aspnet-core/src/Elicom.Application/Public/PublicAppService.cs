@@ -188,6 +188,24 @@ namespace Elicom.Public
             
             return dtos;
         }
+
+        [Authorize]
+        public async Task<object> GetProfile()
+        {
+            var userId = AbpSession.UserId;
+            if (!userId.HasValue)
+                throw new UserFriendlyException("User not found");
+
+            var user = await _userRepository.GetAsync(userId.Value);
+            return new
+            {
+                user.Name,
+                user.Surname,
+                user.EmailAddress,
+                user.UserName,
+                user.Id
+            };
+        }
     }
 
     public interface IPublicAppService : IApplicationService
@@ -198,5 +216,6 @@ namespace Elicom.Public
         Task<ProductDto> GetProductBySku(string sku);
         Task<List<ProductDto>> GetProductsBySearch(string term);
         Task<List<ProductDto>> GetProductsByCategory(string categorySlug, string searchTerm = null, Guid? categoryId = null);
+        Task<object> GetProfile();
     }
 }

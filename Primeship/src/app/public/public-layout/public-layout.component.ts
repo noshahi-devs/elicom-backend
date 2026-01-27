@@ -7,6 +7,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { CategoryService, CategoryLookupDto } from '../../core/services/category.service';
 import { filter } from 'rxjs/operators';
 import { NavigationEnd } from '@angular/router';
+import { PublicService } from '../../core/services/public.service';
 
 @Component({
   selector: 'app-public-layout',
@@ -116,7 +117,7 @@ import { NavigationEnd } from '@angular/router';
 
             <!-- Premium Action Buttons -->
             <div class="header-actions">
-              <a routerLink="/account" class="action-btn account-btn">
+              <a [routerLink]="getPortalUrl()" class="action-btn account-btn">
                 <div class="action-icon">
                   <i class="pi pi-user"></i>
                 </div>
@@ -126,7 +127,7 @@ import { NavigationEnd } from '@angular/router';
                 </div>
               </a>
 
-              <a routerLink="/wishlist" class="action-btn wishlist-btn">
+              <a [routerLink]="authService.isAuthenticated() ? '/wishlist' : '/auth/login'" class="action-btn wishlist-btn">
                 <div class="action-icon">
                   <i class="pi pi-heart"></i>
                   <span class="action-badge">0</span>
@@ -136,7 +137,7 @@ import { NavigationEnd } from '@angular/router';
                 </div>
               </a>
 
-              <a routerLink="/cart" class="action-btn cart-btn">
+              <a [routerLink]="authService.isAuthenticated() ? '/cart' : '/auth/login'" class="action-btn cart-btn">
                 <div class="action-icon">
                   <i class="pi pi-shopping-cart"></i>
                   <span class="action-badge pulse" *ngIf="cartCount > 0">{{ cartCount }}</span>
@@ -189,7 +190,7 @@ import { NavigationEnd } from '@angular/router';
                 
               </ul>
 
-              <a [routerLink]="authService.isAuthenticated() ? '/admin/dashboard' : '/auth/login'" class="merchant-portal">
+              <a [routerLink]="getPortalUrl()" class="merchant-portal">
                 <i class="pi pi-briefcase"></i>
                 <span>Merchant Portal</span>
                 <i class="pi pi-arrow-right"></i>
@@ -1381,7 +1382,8 @@ export class PublicLayoutComponent implements OnInit {
     public authService: AuthService,
     private categoryService: CategoryService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private publicService: PublicService
   ) { }
 
   ngOnInit(): void {
@@ -1391,7 +1393,26 @@ export class PublicLayoutComponent implements OnInit {
     });
 
     this.authService.currentUser$.subscribe(user => {
-      this.userName = user ? (user.email || 'User') : 'Guest';
+      if (user) {
+        // Try getting name from token first for instant UI response
+        const nameFromToken = this.authService.getUserName();
+        this.userName = nameFromToken || 'User';
+
+        // Then fetch full profile for "Real Name" if available
+        this.publicService.getProfile().subscribe({
+          next: (profile: any) => {
+            if (profile && (profile.name || profile.surname)) {
+              this.userName = `${profile.name || ''} ${profile.surname || ''}`.trim();
+              this.cdr.detectChanges();
+            }
+          },
+          error: () => {
+            // Keep token name on error
+          }
+        });
+      } else {
+        this.userName = 'Guest';
+      }
     });
 
     this.loadCategories();
@@ -1485,5 +1506,10 @@ export class PublicLayoutComponent implements OnInit {
     } else {
       this.router.navigate(['/shop'], { queryParams: { q: this.searchTerm } });
     }
+  }
+
+  getPortalUrl(): string {
+    if (!this.authService.isAuthenticated()) return '/auth/login';
+    return this.authService.isSeller() ? '/seller/dashboard' : '/admin/dashboard';
   }
 }

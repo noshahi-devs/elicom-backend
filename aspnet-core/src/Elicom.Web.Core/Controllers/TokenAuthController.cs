@@ -50,7 +50,7 @@ namespace Elicom.Controllers
                 GetTenancyNameOrNull()
             );
 
-            var accessToken = CreateAccessToken(CreateJwtClaims(loginResult.Identity));
+            var accessToken = CreateAccessToken(CreateJwtClaims(loginResult.Identity, loginResult.User));
 
             return new AuthenticateResultModel
             {
@@ -170,10 +170,26 @@ namespace Elicom.Controllers
             return new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
         }
 
-        private static List<Claim> CreateJwtClaims(ClaimsIdentity identity)
+        private static List<Claim> CreateJwtClaims(ClaimsIdentity identity, User user)
         {
             var claims = identity.Claims.ToList();
             var nameIdClaim = claims.First(c => c.Type == ClaimTypes.NameIdentifier);
+
+            // Add profile info to claims
+            string fullName = $"{user.Name} {user.Surname}".Trim();
+            if (!string.IsNullOrEmpty(fullName))
+            {
+                claims.Add(new Claim("name", fullName)); // Standard OIDC name claim
+            }
+            
+            if (!string.IsNullOrEmpty(user.Name))
+            {
+                claims.Add(new Claim(ClaimTypes.GivenName, user.Name));
+            }
+            if (!string.IsNullOrEmpty(user.Surname))
+            {
+                claims.Add(new Claim(ClaimTypes.Surname, user.Surname));
+            }
 
             // Specifically add the jti (random nonce), iat (issued timestamp), and sub (subject/user) claims.
             claims.AddRange(new[]

@@ -91,4 +91,20 @@ export class PublicService {
             })
         );
     }
+
+    getProfile(): Observable<any> {
+        const token = localStorage.getItem('authToken');
+        return this.http.get<any>(`${this.apiUrl}/GetProfile`, {
+            headers: new HttpHeaders({
+                'Authorization': `Bearer ${token}`,
+                'Abp-TenantId': this.tenantId
+            })
+        }).pipe(
+            map(res => res?.result || res),
+            catchError(err => {
+                console.error('PublicService: GetProfile Error', err);
+                return throwError(() => err);
+            })
+        );
+    }
 }
