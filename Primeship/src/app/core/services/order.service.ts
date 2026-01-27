@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
@@ -13,17 +14,21 @@ export interface OrderItem {
 
 export interface Order {
     id: any;
-    orderNo: string;
+    referenceCode: string;
+    orderNo?: string;
     customerName: string;
-    phone: string;
-    address: string;
+    phone?: string;
+    address?: string;
+    shippingAddress?: string;
     status: OrderStatus;
-    createdAt: Date;
+    creationTime: Date;
+    createdAt?: Date; // compatibility
     items: OrderItem[];
+    resellerId?: number;
+    supplierId?: number;
     sellerId?: number;
     sellerName?: string;
     sellerEarnings?: number;
-    referenceCode?: string;
 }
 
 export interface CreateOrderInput {
@@ -57,21 +62,27 @@ export class OrderService {
     }
 
     getOrders(): Observable<Order[]> {
-        return this.http.get<Order[]>(`${this.apiUrl}/GetAllForCustomer`, {
+        return this.http.get<any>(`${this.apiUrl}/GetAllForCustomer`, {
             headers: this.authService.getAuthHeaders()
-        });
+        }).pipe(
+            map(response => response.result || [])
+        );
     }
 
     getAllOrders(): Observable<Order[]> {
-        return this.http.get<Order[]>(`${this.apiUrl}/GetAll`, {
+        return this.http.get<any>(`${this.apiUrl}/GetAll`, {
             headers: this.authService.getAuthHeaders()
-        });
+        }).pipe(
+            map(response => response.result || [])
+        );
     }
 
     getAllForSupplier(): Observable<any[]> {
-        return this.http.get<any[]>(`${this.apiUrl}/GetAllForSupplier`, {
+        return this.http.get<any>(`${this.apiUrl}/GetAllForSupplier`, {
             headers: this.authService.getAuthHeaders()
-        });
+        }).pipe(
+            map(response => response.result || [])
+        );
     }
 
     deleteOrder(id: any): Observable<any> {

@@ -97,12 +97,19 @@ export class AuthService {
                     this.setToken(response.result.accessToken);
                     this.setUserId(response.result.userId.toString());
 
+                    // Decode token to get roles early
+                    const roles = this.getUserRoles();
+                    if (roles) {
+                        localStorage.setItem('userRoles', JSON.stringify(roles));
+                    }
+
                     console.log('✅ Token stored in localStorage');
                     console.log('🔍 Verify token in localStorage:', localStorage.getItem('authToken')?.substring(0, 20) + '...');
 
                     this.currentUserSubject.next({
                         token: response.result.accessToken,
-                        userId: response.result.userId
+                        userId: response.result.userId,
+                        roles: roles
                     });
 
                     console.log('✅ currentUserSubject updated');
@@ -158,6 +165,40 @@ export class AuthService {
      */
     getUserId(): string | null {
         return localStorage.getItem('userId');
+    }
+
+    /**
+     * Get user roles from JWT token
+     */
+    getUserRoles(): string[] {
+        const token = this.getToken();
+        if (!token) return [];
+
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            // ABP roles are usually in 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role' 
+            // or just 'role' depending on configuration
+            const roles = payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || payload['role'] || [];
+            return Array.isArray(roles) ? roles : [roles];
+        } catch (e) {
+            console.error('Error decoding token:', e);
+            return [];
+        }
+    }
+
+    /**
+     * Check if user has a specific role
+     */
+    hasRole(roleName: string): boolean {
+        return this.getUserRoles().includes(roleName);
+    }
+
+    isAdmin(): boolean {
+        return this.hasRole('Admin');
+    }
+
+    isSeller(): boolean {
+        return this.hasRole('Supplier');
     }
 
     /**

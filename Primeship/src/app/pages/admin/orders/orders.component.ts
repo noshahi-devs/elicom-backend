@@ -106,7 +106,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   confirmDelete(): void {
     if (this.orderToDelete) {
-      const orderNumber = this.orderToDelete.orderNo;
+      const orderNumber = this.orderToDelete.orderNo || this.orderToDelete.referenceCode;
       this.orderService.deleteOrder(this.orderToDelete.id);
 
       // Show delete success popup
@@ -156,7 +156,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
         this.orderService.markAsDelivered(this.orderForStatusUpdate.id).subscribe({
           next: () => {
             this.showSuccessPopup = true;
-            this.updatedOrderNumber = this.orderForStatusUpdate!.orderNo;
+            this.updatedOrderNumber = this.orderForStatusUpdate!.orderNo || this.orderForStatusUpdate!.referenceCode;
             this.updatedStatusText = 'Delivered';
             setTimeout(() => this.hideSuccessPopup(), 3000);
             this.ngOnInit(); // Refresh list
@@ -166,7 +166,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
         // Fallback for other statuses - simplified for now
         this.orderForStatusUpdate.status = this.selectedNewStatus;
         this.showSuccessPopup = true;
-        this.updatedOrderNumber = this.orderForStatusUpdate.orderNo;
+        this.updatedOrderNumber = this.orderForStatusUpdate.orderNo || this.orderForStatusUpdate.referenceCode;
         this.updatedStatusText = this.getStatusLabel(this.selectedNewStatus);
         setTimeout(() => this.hideSuccessPopup(), 3000);
       }
@@ -187,9 +187,9 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.filteredOrders = this.orders.filter(o => {
       const matchesSearch =
         !q ||
-        o.orderNo.toLowerCase().includes(q) ||
+        (o.orderNo || o.referenceCode).toLowerCase().includes(q) ||
         o.customerName.toLowerCase().includes(q) ||
-        o.phone.toLowerCase().includes(q) ||
+        (o.phone || '').toLowerCase().includes(q) ||
         (o.sellerName && o.sellerName.toLowerCase().includes(q));
 
       const matchesStatus = this.selectedStatus === 'all' || o.status === this.selectedStatus;

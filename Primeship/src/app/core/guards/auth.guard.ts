@@ -1,38 +1,49 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { AuthService } from '../services/auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthGuard implements CanActivate {
 
-  constructor(private router: Router) { }
+  constructor(
+    private router: Router,
+    private authService: AuthService
+  ) { }
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
-    console.log('🛡️ AuthGuard.canActivate called');
-    console.log('📍 Requested URL:', state.url);
-    console.log('📍 Route config:', route);
+    const url = state.url;
 
-    // Check if user has JWT token in localStorage
-    const token = localStorage.getItem('authToken');
-    console.log('🔑 Token from localStorage:', token ? token.substring(0, 20) + '...' : 'NULL');
-
-    if (token) {
-      // User is authenticated
-      console.log('✅ AuthGuard: User is authenticated, allowing access');
-      return true;
+    if (!this.authService.isAuthenticated()) {
+      this.router.navigate(['/auth/login'], {
+        queryParams: { returnUrl: state.url }
+      });
+      return false;
     }
 
-    // User is not authenticated, redirect to login
-    console.log('❌ AuthGuard: User is NOT authenticated, redirecting to login');
-    console.log('💾 Saving returnUrl:', state.url);
+    // Role-based authorization
+    if (url.startsWith('/admin')) {
+      if (this.authService.isAdmin()) {
+        return true;
+      }
+      // If not admin, try to redirect to seller dashboard if they are a seller
+      if (this.authService.isSeller()) {
+        this.router.navigate(['/seller/dashboard']);
+        return false;
+      }
+      this.router.navigate(['/home']);
+      return false;
+    }
 
-    // Save the attempted URL for redirecting after login
-    this.router.navigate(['/auth/login'], {
-      queryParams: { returnUrl: state.url }
-    });
+    if (url.startsWith('/seller')) {
+      if (this.authService.isSeller() || this.authService.isAdmin()) {
+        return true;
+      }
+      this.router.navigate(['/home']);
+      return false;
+    }
 
-    console.log('🔄 Redirected to login page');
-    return false;
+    return true;
   }
 }

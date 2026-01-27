@@ -12,6 +12,8 @@ namespace Elicom.SupplierOrders.Dto
         public decimal TotalPurchaseAmount { get; set; }
         public DateTime CreationTime { get; set; }
         public string WarehouseAddress { get; set; }
+        public string ShippingAddress { get; set; }
+        public string CustomerName { get; set; }
         public string Status { get; set; }
 
         public Guid? OrderId { get; set; }

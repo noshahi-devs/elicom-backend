@@ -9,5 +9,6 @@ namespace Elicom.SupplierOrders.Dto
         public Guid ProductId { get; set; }
         public int Quantity { get; set; }
         public decimal PurchasePrice { get; set; }
+        public string ProductName { get; set; }
     }
 }

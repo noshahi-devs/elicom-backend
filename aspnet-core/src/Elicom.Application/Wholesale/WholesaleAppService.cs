@@ -61,7 +61,8 @@ namespace Elicom.Wholesale
                 });
             }
 
-            // 2. Pay Upfront (Deduct from GlobalPayUK Card / Wallet)
+            // 2. Pay Upfront (Deduct from GlobalPayUK Card / Wallet) - DISABLED FOR NOW
+            /*
             bool paymentSuccess = await _walletManager.TryDebitAsync(
                 user.Id, 
                 totalAmount, 
@@ -73,6 +74,7 @@ namespace Elicom.Wholesale
             {
                 throw new UserFriendlyException("Insufficient balance in your GlobalPayUK Card to place this wholesale order.");
             }
+            */
 
             // 3. Create the Supplier Order (Directed to Admin - we'll assume AdminId is 1 for now or use Host)
             // In a more robust system, we would have a setting for 'SystemAdminId'

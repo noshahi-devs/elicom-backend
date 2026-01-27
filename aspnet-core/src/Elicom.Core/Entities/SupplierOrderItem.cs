@@ -15,5 +15,6 @@ namespace Elicom.Entities
         public decimal PurchasePrice { get; set; }
 
         public virtual SupplierOrder SupplierOrder { get; set; }
+        public virtual Product Product { get; set; }
     }
 }

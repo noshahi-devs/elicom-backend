@@ -9,7 +9,8 @@ namespace Elicom.SupplierOrders
         public SupplierOrderMapProfile()
         {
             CreateMap<SupplierOrder, SupplierOrderDto>();
-            CreateMap<SupplierOrderItem, SupplierOrderItemDto>();
+            CreateMap<SupplierOrderItem, SupplierOrderItemDto>()
+                .ForMember(dto => dto.ProductName, opt => opt.MapFrom(src => src.Product.Name));
 
             CreateMap<CreateSupplierOrderDto, SupplierOrder>();
             CreateMap<CreateSupplierOrderItemDto, SupplierOrderItem>();

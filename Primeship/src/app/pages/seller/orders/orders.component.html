@@ -127,8 +127,8 @@
         <tr *ngFor="let order of filteredOrders" class="order-row">
           <td class="order-cell">
             <div class="order-number">
-              <span class="order-no">{{ order.orderNo }}</span>
-              <div class="order-date">{{ order.createdAt | date:'MMM dd, yyyy' }}</div>
+              <span class="order-no">{{ order.orderNo || order.referenceCode }}</span>
+              <div class="order-date">{{ (order.creationTime || order.createdAt) | date:'MMM dd, yyyy' }}</div>
             </div>
           </td>
           <td class="customer-cell">
@@ -138,7 +138,7 @@
             </div>
           </td>
           <td class="date-cell">
-            {{ order.createdAt | date:'MMM dd, yyyy' }}
+            {{ (order.creationTime || order.createdAt) | date:'MMM dd, yyyy' }}
           </td>
           <td>
             <span class="status-badge" [ngClass]="order.status">
@@ -217,7 +217,7 @@
         <div class="confirm-order" *ngIf="orderToDelete">
           <div class="confirm-row">
             <span class="label">Order</span>
-            <span class="value">{{ orderToDelete.orderNo }}</span>
+            <span class="value">{{ orderToDelete.orderNo || orderToDelete.referenceCode }}</span>
           </div>
           <div class="confirm-row">
             <span class="label">Customer</span>
@@ -294,8 +294,8 @@
             <div class="invoice-logo">🛍️ Prime Ship</div>
             <div class="invoice-meta">
               <h3>INVOICE</h3>
-              <p>#{{ selectedOrder.orderNo }}</p>
-              <p>{{ selectedOrder.createdAt | date:'mediumDate' }}</p>
+              <p>#{{ selectedOrder.orderNo || selectedOrder.referenceCode }}</p>
+              <p>{{ (selectedOrder.creationTime || selectedOrder.createdAt) | date:'mediumDate' }}</p>
             </div>
           </div>
 
@@ -307,7 +307,7 @@
             <div class="billing-col text-right">
               <label>Destined For (Hub)</label>
               <strong>Smart Store Admin Central</strong>
-              <p>{{ selectedOrder.address }}</p>
+              <p>{{ selectedOrder.shippingAddress || selectedOrder.address }}</p>
             </div>
           </div>
 
@@ -324,11 +324,11 @@
               <tbody>
                 <tr *ngFor="let it of selectedOrder.items">
                   <td>
-                    <div class="item-name-3d">{{ it.name }}</div>
+                    <div class="item-name-3d">{{ it.productName || it.name }}</div>
                   </td>
                   <td class="text-center">{{ it.qty }}</td>
-                  <td class="text-right">{{ formatPrice(it.price) }}</td>
-                  <td class="text-right">{{ formatPrice(it.qty * it.price) }}</td>
+                  <td class="text-right">{{ formatPrice(it.purchasePrice || it.price) }}</td>
+                  <td class="text-right">{{ formatPrice(it.qty * (it.purchasePrice || it.price)) }}</td>
                 </tr>
               </tbody>
             </table>

@@ -91,7 +91,7 @@
       <tbody>
         <tr *ngFor="let order of filteredOrders">
           <td>
-            <div class="order-no">{{ order.orderNo }}</div>
+            <div class="order-no">{{ order.orderNo || order.referenceCode }}</div>
             <div class="muted">#{{ order.id }}</div>
           </td>
           <td>
@@ -106,7 +106,7 @@
               <div class="muted">ID: {{ order.sellerId }}</div>
             </div>
           </td>
-          <td>{{ order.createdAt | date: 'mediumDate' }}</td>
+          <td>{{ (order.creationTime || order.createdAt) | date: 'mediumDate' }}</td>
           <td>
             <span class="status-badge" [ngClass]="order.status">{{ getStatusLabel(order.status) }}</span>
           </td>
@@ -190,8 +190,8 @@
             <div class="invoice-logo">🛍️ Prime Ship</div>
             <div class="invoice-meta">
               <h3>INVOICE</h3>
-              <p>#{{ selectedOrder.orderNo }}</p>
-              <p>{{ selectedOrder.createdAt | date:'mediumDate' }}</p>
+              <p>#{{ selectedOrder.orderNo || selectedOrder.referenceCode }}</p>
+              <p>{{ (selectedOrder.creationTime || selectedOrder.createdAt) | date:'mediumDate' }}</p>
             </div>
           </div>
 
@@ -284,7 +284,7 @@
           <div class="order-header">
             <div class="order-number">
               <span class="label">Order #</span>
-              <span class="value">{{ orderToDelete.orderNo }}</span>
+              <span class="value">{{ orderToDelete.orderNo || orderToDelete.referenceCode }}</span>
             </div>
             <span class="status-badge" [ngClass]="orderToDelete.status">
               {{ getStatusLabel(orderToDelete.status) }}
@@ -397,7 +397,7 @@
           <div class="order-header">
             <div class="order-number">
               <span class="label">Order #</span>
-              <span class="value">{{ orderForStatusUpdate.orderNo }}</span>
+              <span class="value">{{ orderForStatusUpdate.orderNo || orderForStatusUpdate.referenceCode }}</span>
             </div>
             <span class="status-badge current" [ngClass]="orderForStatusUpdate.status">
               {{ getStatusLabel(orderForStatusUpdate.status) }}

@@ -2,6 +2,7 @@ import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
     selector: 'app-admin-layout',
@@ -15,7 +16,10 @@ export class AdminLayoutComponent implements OnInit, AfterViewInit {
     isAdminView = false;
     isSellerView = false;
 
-    constructor(private router: Router) {
+    constructor(
+        private router: Router,
+        private authService: AuthService
+    ) {
         this.updateViewMode();
         this.router.events.pipe(
             filter(event => event instanceof NavigationEnd)
@@ -26,8 +30,18 @@ export class AdminLayoutComponent implements OnInit, AfterViewInit {
 
     private updateViewMode() {
         const url = this.router.url;
-        this.isAdminView = url.includes('/admin');
-        this.isSellerView = url.includes('/seller');
+        const isAdmin = this.authService.isAdmin();
+
+        // Only show Admin view if user HAS Admin role AND is on an admin route
+        this.isAdminView = url.includes('/admin') && isAdmin;
+
+        // Show Seller view if on a seller route OR if they are a seller trying to access layout
+        this.isSellerView = url.includes('/seller') || (!isAdmin && this.authService.isSeller());
+
+        // Double check: if both true (shouldn't happen with strict routes), admin wins on admin routes
+        if (this.isAdminView && url.includes('/admin')) {
+            this.isSellerView = false;
+        }
     }
 
     ngOnInit() {

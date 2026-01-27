@@ -7,6 +7,9 @@ import { CartService, CartItem } from '../../core/services/cart.service';
 import { OrderService } from '../../core/services/order.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ProfileService } from '../../core/services/profile.service';
+import { WholesaleService, CreateWholesaleOrderInput } from '../../core/services/wholesale.service';
+import { switchMap, forkJoin, of } from 'rxjs';
 
 @Component({
   selector: 'app-checkout',
@@ -39,7 +42,9 @@ export class CheckoutComponent implements OnInit {
     private cartService: CartService,
     private orderService: OrderService,
     private authService: AuthService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private profileService: ProfileService,
+    private wholesaleService: WholesaleService
   ) {
     this.checkoutForm = this.fb.group({
       firstName: ['', Validators.required],
@@ -112,30 +117,29 @@ export class CheckoutComponent implements OnInit {
 
   onSubmit(): void {
     if (this.checkoutForm.valid) {
+      this.toastService.showSuccess('Processing wholesale order...');
       const val = this.checkoutForm.value;
-      const orderInput: any = {
-        paymentMethod: val.paymentMethod,
-        shippingAddress: val.address,
-        country: val.country,
-        state: val.state,
-        city: val.city,
-        postalCode: val.zipCode,
-        shippingCost: this.shipping,
-        discount: 0,
-        // In a real app, customerProfileId comes from user profile
-        customerProfileId: '00000000-0000-0000-0000-000000000000',
-        sourcePlatform: 'PrimeShip'
+
+      const orderInput: CreateWholesaleOrderInput = {
+        items: this.cartItems.map(item => ({
+          productId: item.product.id,
+          quantity: item.quantity
+        })),
+        shippingAddress: `${val.address}, ${val.city}, ${val.state} ${val.zipCode}, ${val.country}`,
+        customerName: `${val.firstName} ${val.lastName}`
       };
 
-      this.orderService.createOrder(orderInput).subscribe({
+      this.wholesaleService.placeWholesaleOrder(orderInput).subscribe({
         next: (res) => {
-          this.toastService.showSuccess('Order placed successfully!');
+          this.toastService.showSuccess('Wholesale order placed successfully!');
           this.cartService.clearCart();
-          this.router.navigate(['/account/orders']);
+          // For sellers, redirection should go to seller orders
+          this.router.navigate(['/seller/orders']);
         },
         error: (err) => {
-          console.error('Order creation failed:', err);
-          this.toastService.showError('Failed to place order. Please try again.');
+          console.error('Wholesale checkout failed:', err);
+          const errorMsg = err.error?.error?.message || 'Failed to place wholesale order. Please ensure you have sufficient balance in your GlobalPayUK wallet.';
+          this.toastService.showError(errorMsg);
         }
       });
     } else {

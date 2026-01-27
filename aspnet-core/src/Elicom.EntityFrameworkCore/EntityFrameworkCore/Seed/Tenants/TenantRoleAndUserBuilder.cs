@@ -71,7 +71,12 @@ public class TenantRoleAndUserBuilder
         var supplierRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Supplier);
         if (supplierRole == null)
         {
-            _context.Roles.Add(new Role(_tenantId, StaticRoleNames.Tenants.Supplier, StaticRoleNames.Tenants.Supplier) { IsStatic = true });
+            supplierRole = _context.Roles.Add(new Role(_tenantId, StaticRoleNames.Tenants.Supplier, StaticRoleNames.Tenants.Supplier) { IsStatic = true, IsDefault = true }).Entity;
+            _context.SaveChanges();
+        }
+        else if (!supplierRole.IsDefault)
+        {
+            supplierRole.IsDefault = true;
             _context.SaveChanges();
         }
 
@@ -79,7 +84,12 @@ public class TenantRoleAndUserBuilder
         var resellerRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Reseller);
         if (resellerRole == null)
         {
-            _context.Roles.Add(new Role(_tenantId, StaticRoleNames.Tenants.Reseller, StaticRoleNames.Tenants.Reseller) { IsStatic = true });
+            resellerRole = _context.Roles.Add(new Role(_tenantId, StaticRoleNames.Tenants.Reseller, StaticRoleNames.Tenants.Reseller) { IsStatic = true, IsDefault = true }).Entity;
+            _context.SaveChanges();
+        }
+        else if (!resellerRole.IsDefault)
+        {
+            resellerRole.IsDefault = true;
             _context.SaveChanges();
         }
 
@@ -111,6 +121,44 @@ public class TenantRoleAndUserBuilder
 
         // Create verified test users for each platform
         CreateVerifiedTestUser();
+
+        // Grant permissions to specific roles
+        GrantPermissions();
+    }
+
+    private void GrantPermissions()
+    {
+        var supplierRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Supplier);
+        if (supplierRole != null)
+        {
+            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_PrimeShip);
+            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_Reseller_Marketplace);
+            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_GlobalPay); // For wallet/card access
+        }
+
+        var resellerRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Reseller);
+        if (resellerRole != null)
+        {
+            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_PrimeShip); // Allow wholesale purchases
+            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_Reseller_Store);
+            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_SmartStore_Seller);
+            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_GlobalPay);
+        }
+    }
+
+    private void GrantPermissionIfNotExists(Role role, string permissionName)
+    {
+        if (!_context.Permissions.OfType<RolePermissionSetting>().Any(p => p.TenantId == _tenantId && p.RoleId == role.Id && p.Name == permissionName))
+        {
+            _context.Permissions.Add(new RolePermissionSetting
+            {
+                TenantId = _tenantId,
+                Name = permissionName,
+                IsGranted = true,
+                RoleId = role.Id
+            });
+            _context.SaveChanges();
+        }
     }
 
     private void CreateVerifiedTestUser()
@@ -194,6 +242,19 @@ public class TenantRoleAndUserBuilder
                 existingUser.IsActive = true;
                 _context.Update(existingUser);
                 _context.SaveChanges();
+
+                // FORCE ROLE ASSIGNMENT for troubleshooting
+                var defaultRoleForUser = roleName;
+                var roleToFix = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == defaultRoleForUser);
+                if (roleToFix != null)
+                {
+                    var userRoleExists = _context.UserRoles.IgnoreQueryFilters().Any(ur => ur.UserId == existingUser.Id && ur.RoleId == roleToFix.Id);
+                    if (!userRoleExists)
+                    {
+                        _context.UserRoles.Add(new UserRole(_tenantId, existingUser.Id, roleToFix.Id));
+                        _context.SaveChanges();
+                    }
+                }
             }
         }
 

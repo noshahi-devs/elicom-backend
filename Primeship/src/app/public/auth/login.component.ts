@@ -81,27 +81,28 @@ export class LoginComponent implements OnInit {
           localStorage.setItem('userEmail', this.loginForm.value.email);
           console.log('💾 User email stored in localStorage');
 
-          // Navigate to return URL or seller dashboard
-          console.log('🧭 Attempting navigation to:', this.returnUrl);
-          console.log('🔍 Current router state:', this.router.url);
-          console.log('🔍 Router config:', this.router.config);
+          // Determine destination based on roles
+          let destination = this.returnUrl;
+          if (destination === '/admin/dashboard') {
+            if (this.authService.isAdmin()) {
+              destination = '/admin/dashboard';
+            } else if (this.authService.isSeller()) {
+              destination = '/seller/dashboard';
+            } else {
+              destination = '/home';
+            }
+          }
 
-          // Use replaceUrl like Easy Finora does
-          console.log('🚀 Calling router.navigate with replaceUrl: true');
+          console.log('🧭 Attempting navigation to:', destination);
 
-          this.router.navigate([this.returnUrl], { replaceUrl: true }).then(
+          this.router.navigate([destination], { replaceUrl: true }).then(
             (success) => {
               console.log('✅ Navigation completed. Success:', success);
               console.log('📍 Current URL after navigation:', this.router.url);
-              console.log('📍 Window location:', window.location.href);
             },
             (error) => {
               console.error('❌ Navigation failed with error:', error);
-              console.log('🔍 Trying alternative navigation method...');
-
-              // Fallback: Use window.location
-              console.log('🔄 Using window.location.href as fallback');
-              window.location.href = this.returnUrl;
+              window.location.href = destination;
             }
           );
         },

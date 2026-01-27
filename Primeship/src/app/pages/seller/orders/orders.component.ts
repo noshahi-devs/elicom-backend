@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OrderService } from '../../../core/services/order.service';
@@ -12,9 +12,11 @@ import { PrimeIcons } from 'primeng/api';
 type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
 interface OrderItem {
-  name: string;
+  name?: string;
+  productName?: string;
   qty: number;
-  price: number;
+  price?: number;
+  purchasePrice?: number;
 }
 
 interface Order {
@@ -49,7 +51,8 @@ export class SellerOrdersComponent implements OnInit {
     private cartService: CartService,
     private toastService: ToastService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) { }
 
   searchTerm = '';
@@ -91,6 +94,7 @@ export class SellerOrdersComponent implements OnInit {
         this.orders = res;
         this.applyFilters();
         this.calculateSellerStats();
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.showError('Failed to load orders');
@@ -156,7 +160,7 @@ export class SellerOrdersComponent implements OnInit {
   getOrderTotal(order: any): number {
     if (order.totalPurchaseAmount) return order.totalPurchaseAmount;
     if (order.items) {
-      return order.items.reduce((sum: number, it: any) => sum + (it.qty * it.price), 0);
+      return order.items.reduce((sum: number, it: any) => sum + (it.qty * (it.purchasePrice || it.price || 0)), 0);
     }
     return 0;
   }
