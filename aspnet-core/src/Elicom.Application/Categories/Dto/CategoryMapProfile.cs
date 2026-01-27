@@ -15,6 +15,7 @@ namespace Elicom.Categories.Dto
             CreateMap<Category, CategoryDto>();
             CreateMap<CreateCategoryDto, Category>();
             CreateMap<UpdateCategoryDto, Category>();
+            CreateMap<Category, CategoryLookupDto>();
         }
     }
 }

@@ -1,13 +1,17 @@
-import { Component, HostListener, OnInit } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, HostListener, OnInit, ChangeDetectorRef } from '@angular/core';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule, CurrencyPipe } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CartService } from '../../core/services/cart.service';
 import { AuthService } from '../../core/services/auth.service';
+import { CategoryService, CategoryLookupDto } from '../../core/services/category.service';
+import { filter } from 'rxjs/operators';
+import { NavigationEnd } from '@angular/router';
 
 @Component({
   selector: 'app-public-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, CurrencyPipe],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, CurrencyPipe, FormsModule, ReactiveFormsModule],
   template: `
     <div class="storefront-shell">
       <!-- Premium Top Bar -->
@@ -18,11 +22,11 @@ import { AuthService } from '../../core/services/auth.service';
               <i class="pi pi-bolt"></i>
               <span>Free Shipping on Orders Over $50</span>
             </div>
-            <a routerLink="/admin/dashboard" class="top-link">
+            <a routerLink="/home" class="top-link">
               <i class="pi pi-briefcase"></i>
-              Sell on Prime
+              Shop Now
             </a>
-            <a routerLink="/help" class="top-link">
+            <a routerLink="/home" class="top-link">
               <i class="pi pi-question-circle"></i>
               Help Center
             </a>
@@ -73,19 +77,37 @@ import { AuthService } from '../../core/services/auth.service';
             <!-- Enhanced Search Bar -->
             <div class="search-container">
               <div class="search-wrapper">
-                <button class="category-dropdown" (click)="toggleCategoryDropdown()">
-                  <span>{{ selectedCategory }}</span>
-                  <i class="pi pi-chevron-down"></i>
-                </button>
+                <div class="search-category-container" (mouseleave)="showCategoryDropdown = false">
+                  <button class="category-dropdown" (click)="toggleCategoryDropdown()">
+                    <span>{{ selectedCategory }}</span>
+                    <i class="pi pi-chevron-down"></i>
+                  </button>
+                  <div class="search-category-menu" [class.show]="showCategoryDropdown">
+                    <ul class="search-cat-list">
+                      <li [class.active]="!selectedCategorySlug" (click)="selectSearchCategory('All')">
+                        <i class="pi pi-th-large"></i>
+                        All Categories
+                      </li>
+                      <li *ngFor="let cat of categories" 
+                          [class.active]="selectedCategorySlug === cat.slug"
+                          (click)="selectSearchCategory(cat.name, cat.slug)">
+                        <i class="pi pi-tag"></i>
+                        {{ cat.name }}
+                      </li>
+                    </ul>
+                  </div>
+                </div>
                 <div class="search-input-group">
                   <i class="pi pi-search search-icon"></i>
                   <input 
                     type="text" 
+                    [(ngModel)]="searchTerm"
                     class="search-input" 
                     placeholder="Search for products, brands, and more..."
+                    (keyup.enter)="onSearch()"
                   >
                 </div>
-                <button class="search-submit">
+                <button class="search-submit" (click)="onSearch()">
                   <i class="pi pi-search"></i>
                   <span>Search</span>
                 </button>
@@ -136,11 +158,7 @@ import { AuthService } from '../../core/services/auth.service';
         <nav class="main-nav">
           <div class="nav-container">
             <div class="nav-content">
-              <button class="nav-categories" routerLink="/categories">
-                <i class="pi pi-th-large"></i>
-                <span>All Categories</span>
-                <i class="pi pi-chevron-down"></i>
-              </button>
+
               
               <ul class="nav-menu">
                 <li class="nav-menu-item">
@@ -150,14 +168,14 @@ import { AuthService } from '../../core/services/auth.service';
                   </a>
                 </li>
                 <li class="nav-menu-item hot">
-                  <a routerLink="/shop" class="nav-menu-link">
+                  <a routerLink="/shop" [queryParams]="{ sortBy: 'price-low' }" class="nav-menu-link">
                     <i class="pi pi-bolt"></i>
                     Flash Deals
                     <span class="hot-badge">HOT</span>
                   </a>
                 </li>
                 <li class="nav-menu-item">
-                  <a routerLink="/shop" class="nav-menu-link">
+                  <a routerLink="/shop" [queryParams]="{ sortBy: 'newest' }" class="nav-menu-link">
                     <i class="pi pi-star"></i>
                     New Arrivals
                   </a>
@@ -168,15 +186,10 @@ import { AuthService } from '../../core/services/auth.service';
                     Best Sellers
                   </a>
                 </li>
-                <li class="nav-menu-item">
-                  <a href="#" class="nav-menu-link">
-                    <i class="pi pi-tags"></i>
-                    Brands
-                  </a>
-                </li>
+                
               </ul>
 
-              <a routerLink="/admin/dashboard" class="merchant-portal">
+              <a [routerLink]="authService.isAuthenticated() ? '/admin/dashboard' : '/auth/login'" class="merchant-portal">
                 <i class="pi pi-briefcase"></i>
                 <span>Merchant Portal</span>
                 <i class="pi pi-arrow-right"></i>
@@ -202,25 +215,25 @@ import { AuthService } from '../../core/services/auth.service';
             <div class="footer-col">
               <h6 class="footer-heading">Shop</h6>
               <ul class="footer-links">
-                <li><a routerLink="/category/electronics">Electronics</a></li>
-                <li><a routerLink="/category/fashion">Fashion</a></li>
-                <li><a routerLink="/category/home-living">Home & Living</a></li>
+                <li *ngFor="let cat of categories | slice:0:5">
+                  <a [routerLink]="['/category', cat.slug]">{{ cat.name }}</a>
+                </li>
+                <li><a routerLink="/shop">View All Products</a></li>
               </ul>
             </div>
             <div class="footer-col">
               <h6 class="footer-heading">Support</h6>
               <ul class="footer-links">
-                <li><a routerLink="/help">Help Center</a></li>
-                <li><a routerLink="/track">Track Order</a></li>
-                <li><a routerLink="/returns">Returns</a></li>
+                <li><a routerLink="/home">Help Center</a></li>
+                <li><a routerLink="/home">Track Order</a></li>
+                <li><a routerLink="/home">Returns</a></li>
               </ul>
             </div>
             <div class="footer-col">
               <h6 class="footer-heading">Company</h6>
               <ul class="footer-links">
-                <li><a routerLink="/about">About Us</a></li>
-                <li><a routerLink="/careers">Careers</a></li>
-                <li><a routerLink="/admin/dashboard">Sell on Prime</a></li>
+                <li><a routerLink="/home">About Us</a></li>
+                <li><a routerLink="/home">Careers</a></li>
               </ul>
             </div>
             <div class="footer-col">
@@ -495,7 +508,7 @@ import { AuthService } from '../../core/services/auth.service';
       background: #fff; 
       border: 2px solid #e2e8f0;
       border-radius: 12px;
-      overflow: hidden;
+      /* removed overflow: hidden to allow dropdown */
       transition: all 0.3s;
       height: 52px;
     }
@@ -519,6 +532,81 @@ import { AuthService } from '../../core/services/auth.service';
       cursor: pointer;
       transition: all 0.3s;
       white-space: nowrap;
+      height: 100%;
+      border-top-left-radius: 10px;
+      border-bottom-left-radius: 10px;
+    }
+
+    .search-category-container {
+      position: relative;
+      display: flex;
+      align-items: stretch;
+    }
+
+    .search-category-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      width: 240px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      border: 1px solid #e2e8f0;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(10px);
+      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      z-index: 1100;
+      overflow: hidden;
+    }
+
+    .search-category-menu.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .search-cat-list {
+      list-style: none;
+      padding: 8px 0;
+      margin: 0;
+      max-height: 350px;
+      overflow-y: auto;
+    }
+
+    .search-cat-list li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      color: #4a5568;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .search-cat-list li i {
+      color: #a0aec0;
+      font-size: 14px;
+    }
+
+    .search-cat-list li:hover {
+      background: #f8fafc;
+      color: var(--primary);
+    }
+
+    .search-cat-list li.active {
+      background: #fff5f0;
+      color: var(--primary);
+    }
+
+    .search-cat-list li.active i {
+      color: var(--primary);
+    }
+
+    .search-cat-list li:hover i {
+      color: var(--primary);
     }
     
     .category-dropdown:hover {
@@ -565,6 +653,8 @@ import { AuthService } from '../../core/services/auth.service';
       gap: 8px;
       cursor: pointer;
       transition: all 0.3s;
+      border-top-right-radius: 10px;
+      border-bottom-right-radius: 10px;
     }
     
     .search-submit:hover { 
@@ -722,6 +812,99 @@ import { AuthService } from '../../core/services/auth.service';
       background: linear-gradient(135deg, var(--primary-dark) 0%, #ff5722 100%);
       transform: translateY(-2px);
       box-shadow: 0 6px 16px rgba(248, 86, 6, 0.35);
+    }
+
+    .nav-categories-wrapper {
+      position: relative;
+    }
+
+    .categories-dropdown {
+      position: absolute;
+      top: calc(100% + 10px);
+      left: 0;
+      width: 280px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      border: 1px solid #e2e8f0;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(10px);
+      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      z-index: 1000;
+      overflow: hidden;
+    }
+
+    .categories-dropdown.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .dropdown-header {
+      padding: 16px 20px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #1a202c;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .dropdown-header i {
+      color: var(--primary);
+    }
+
+    .categories-list {
+      list-style: none;
+      padding: 10px 0;
+      margin: 0;
+    }
+
+    .categories-list li a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      color: #4a5568;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .categories-list li a i {
+      font-size: 10px;
+      color: #a0aec0;
+      transition: all 0.2s;
+    }
+
+    .categories-list li a:hover {
+      background: #fff5f0;
+      color: var(--primary);
+      padding-left: 24px;
+    }
+
+    .categories-list li a:hover i {
+      color: var(--primary);
+      transform: translateX(3px);
+    }
+
+    .view-all {
+      border-top: 1px solid #f1f5f9;
+      margin-top: 5px;
+    }
+
+    .view-all a {
+      color: var(--primary) !important;
+      justify-content: space-between;
+    }
+
+    .view-all a i {
+      font-size: 12px !important;
+      color: var(--primary) !important;
     }
     
     .nav-menu {
@@ -1186,12 +1369,19 @@ export class PublicLayoutComponent implements OnInit {
   cartCount = 0;
   cartTotal = 0;
   userName = 'Guest';
+  categories: CategoryLookupDto[] = [];
+
+  searchTerm = '';
+  selectedCategorySlug = '';
 
   private lastScrollTop = 0;
 
   constructor(
     public cartService: CartService,
-    public authService: AuthService
+    public authService: AuthService,
+    private categoryService: CategoryService,
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
@@ -1202,6 +1392,52 @@ export class PublicLayoutComponent implements OnInit {
 
     this.authService.currentUser$.subscribe(user => {
       this.userName = user ? (user.email || 'User') : 'Guest';
+    });
+
+    this.loadCategories();
+
+    // Subscribe to router events to sync category label
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      this.syncCategoryWithUrl();
+    });
+  }
+
+  private syncCategoryWithUrl(): void {
+    const url = this.router.url;
+    // Extract slug from /category/:slug or /category/:slug?queryParams
+    const match = url.match(/\/category\/([^?\/]+)/);
+    if (match && match[1]) {
+      this.selectedCategorySlug = match[1];
+      // If categories are loaded, find the name
+      if (this.categories.length > 0) {
+        const cat = this.categories.find(c => c.slug === this.selectedCategorySlug);
+        if (cat) {
+          this.selectedCategory = cat.name;
+        } else {
+          this.selectedCategory = this.selectedCategorySlug.replace(/-/g, ' ');
+        }
+      }
+    } else if (url.includes('/shop')) {
+      this.selectedCategory = 'All';
+      this.selectedCategorySlug = '';
+    } else if (url.includes('/home') || url === '/') {
+      this.selectedCategory = 'All';
+      this.selectedCategorySlug = '';
+    }
+  }
+
+  loadCategories(): void {
+    this.categoryService.getLookup().subscribe({
+      next: (data) => {
+        this.categories = data;
+        this.syncCategoryWithUrl(); // Sync after data is loaded
+        this.cdr.detectChanges(); // Manually trigger detection to fix NG0100
+      },
+      error: (err) => {
+        console.error('Error loading categories:', err);
+      }
     });
   }
 
@@ -1225,7 +1461,29 @@ export class PublicLayoutComponent implements OnInit {
 
   toggleCategoryDropdown() {
     this.showCategoryDropdown = !this.showCategoryDropdown;
-    // You can implement actual dropdown menu here
-    console.log('Category dropdown toggled:', this.showCategoryDropdown);
+  }
+
+  selectSearchCategory(name: string, slug?: string) {
+    this.selectedCategory = name;
+    this.selectedCategorySlug = slug || '';
+    this.showCategoryDropdown = false;
+
+    // Navigate immediately to the selected category, preserving query params
+    const queryParams: any = {};
+    if (this.searchTerm) queryParams.q = this.searchTerm;
+
+    if (this.selectedCategorySlug) {
+      this.router.navigate(['/category', this.selectedCategorySlug], { queryParams });
+    } else {
+      this.router.navigate(['/shop'], { queryParams });
+    }
+  }
+
+  onSearch() {
+    if (this.selectedCategorySlug) {
+      this.router.navigate(['/category', this.selectedCategorySlug], { queryParams: { q: this.searchTerm } });
+    } else {
+      this.router.navigate(['/shop'], { queryParams: { q: this.searchTerm } });
+    }
   }
 }

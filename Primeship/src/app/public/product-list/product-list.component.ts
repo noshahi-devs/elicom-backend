@@ -1,246 +1,272 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, catchError, forkJoin, throwError } from 'rxjs';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Observable, catchError, throwError, combineLatest, Subject, of } from 'rxjs';
+import { map, switchMap, takeUntil, finalize, startWith } from 'rxjs/operators';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { PublicService } from '../../core/services/public.service';
 import { ProductService, ProductDto } from '../../core/services/product.service';
-import { Product } from '../../core/models';
+import { CartService } from '../../core/services/cart.service';
+import { MessageService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
+import { CategoryDto } from '../../core/services/category.service';
 
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonModule],
-  templateUrl: './product-list-fixed.html',
-  styleUrls: ['./product-list-interactive.scss']
+  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule, ButtonModule, ToastModule],
+  providers: [MessageService],
+  templateUrl: './product-list.component.html',
+  styleUrls: ['./product-list.component.scss']
 })
-export class ProductListComponent implements OnInit {
+export class ProductListComponent implements OnInit, OnDestroy {
+  // Data State
   products: any[] = [];
   filteredProducts: any[] = [];
-  categories: any[] = [];
+  categories: CategoryDto[] = [];
   categoriesWithCount: any[] = [];
-  isLoading = true;
+  isLoading = false; // Initialized to false, will be set true in the stream
 
-  // New UI Properties
+  // Selection
+  selectedProducts: Set<string> = new Set();
+  isAllSelected = false;
+
+  // UI State
   categoryTitle: string = 'Explore Products';
   categoryDescription: string = 'Discover high-performance products selected for quality and style.';
   categoryImage: string = 'assets/images/61+DG4Np+zL._AC_SX425_.jpg';
 
-  // Filters
+  // Filters state
   filtersForm: FormGroup;
   searchTerm = '';
   sortBy = 'newest';
-  maxPriceFilter = 250000; // Increased for larger prices
   currentCategorySlug = '';
+  pricePoints = [10, 50, 100, 200, 300, 400, 500];
+
+  private destroy$ = new Subject<void>();
 
   constructor(
-    private publicService: PublicService,
+    public publicService: PublicService,
     private productService: ProductService,
+    private cartService: CartService,
+    private messageService: MessageService,
     private route: ActivatedRoute,
     private router: Router,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private cdr: ChangeDetectorRef
   ) {
     this.filtersForm = this.fb.group({
       sortBy: ['newest'],
       category: [''],
       minPrice: [0],
-      maxPrice: [250000]
+      maxPrice: [10000000]
     });
   }
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe(params => {
-      this.currentCategorySlug = params.get('slug') || '';
-      this.loadData();
+    // -------------------------------------------------------------------------
+    // 1. Reactive Data Stream (BEST PRACTICE)
+    // This handles EVERYTHING: Loading, Navigation, Parameters, and Cancellation.
+    // -------------------------------------------------------------------------
+    combineLatest([this.route.paramMap, this.route.queryParamMap])
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap(([params, queryParams]) => {
+          this.isLoading = true;
+          this.products = [];
+          this.filteredProducts = [];
+          this.cdr.detectChanges();
+
+          const slug = params.get('slug') || '';
+          const q = queryParams.get('q') || '';
+          const sort = queryParams.get('sortBy') || 'newest';
+
+          this.currentCategorySlug = slug;
+          this.searchTerm = q;
+          this.sortBy = sort;
+
+          // Sync form UI instantly
+          this.filtersForm.patchValue({ category: slug, sortBy: sort }, { emitEvent: false });
+
+          console.log(`🚀 [ProductList] Loading Path: /${slug || 'all'} (Search: ${q})`);
+
+          // Fetch products immediately. Backend handles slug or id.
+          // We don't wait for categories to start the product search.
+          return this.publicService.getProductsByCategory(slug, q).pipe(
+            finalize(() => {
+              this.isLoading = false;
+              this.cdr.detectChanges();
+            }),
+            catchError(err => {
+              console.error('❌ [ProductList] API Error:', err);
+              return of([]);
+            })
+          );
+        })
+      )
+      .subscribe(allProducts => {
+        this.processProducts(allProducts);
+      });
+
+    // -------------------------------------------------------------------------
+    // 2. Background Category Polling
+    // Runs independently so it never blocks the main product grid.
+    // -------------------------------------------------------------------------
+    this.publicService.getCategories().pipe(takeUntil(this.destroy$)).subscribe(cats => {
+      this.categories = cats || [];
+      this.calculateCategoryCounts();
+      this.updateCategoryInfo();
+      this.cdr.detectChanges();
     });
 
-    // Handle filter changes
-    this.filtersForm.valueChanges.subscribe(val => {
+    // 3. Form Changes (Local UI narrowing)
+    this.filtersForm.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(val => {
       this.sortBy = val.sortBy;
-      this.maxPriceFilter = val.maxPrice;
-      if (val.category && val.category !== this.currentCategorySlug) {
-        this.router.navigate(['/category', val.category]);
+      const newCategory = val.category || '';
+
+      if (newCategory !== this.currentCategorySlug) {
+        const path = newCategory === '' ? ['/shop'] : ['/category', newCategory];
+        this.router.navigate(path);
       } else {
         this.applyFilters();
       }
     });
   }
 
-  loadData(): void {
-    this.isLoading = true;
-    forkJoin({
-      cats: this.publicService.getCategories(),
-      prods: this.publicService.getProducts()
-    }).subscribe({
-      next: (data) => {
-        this.categories = data.cats || [];
-        const allProducts = data.prods || [];
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
-        // Map products for template compatibility
-        this.products = allProducts.map(p => ({
-          ...p,
-          image: this.getFirstImage(p),
-          price: this.getDiscountedPrice(p),
-          originalPrice: p.resellerMaxPrice,
-          discount: p.discountPercentage,
-          reviewCount: Math.floor(Math.random() * 100) + 10 // Still dummy but consistent
-        }));
+  // Logic: Transform raw API products into UI models
+  private processProducts(raw: any[]): void {
+    const list = raw || [];
+    console.log(`📦 [ProductList] Processing ${list.length} Items.`);
 
-        this.updateCategoryInfo();
-        this.calculateCategoryCounts();
-        this.applyFilters();
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('❌ ProductListComponent: Error loading data:', err);
-        this.isLoading = false;
-      }
-    });
+    this.products = list.map(p => ({
+      ...p,
+      image: this.getFirstImage(p),
+      price: this.getDiscountedPrice(p),
+      // Casing safety: check both camelCase and PascalCase from API
+      originalPrice: p.resellerMaxPrice ?? p.ResellerMaxPrice ?? 0,
+      discount: p.discountPercentage ?? p.DiscountPercentage ?? 0,
+      reviewCount: Math.floor(Math.random() * 80) + 12
+    }));
+
+    this.applyFilters();
+  }
+
+  applyFilters(): void {
+    let result = [...this.products];
+    const val = this.filtersForm.value;
+
+    // Search Narrowing is handled by the backend API call in ngOnInit.
+    // We should NOT re-filter here, as it breaks fuzzy/category matches returned by the server.
+    // if (this.searchTerm) { ... } -> REMOVED
+
+    // Price Narrowing
+    const max = Number(val.maxPrice) || 10000000;
+    result = result.filter(p => (Number(p.price) || 0) <= max);
+
+    // Sorting
+    if (this.sortBy === 'price-low') result.sort((a, b) => a.price - b.price);
+    else if (this.sortBy === 'price-high') result.sort((a, b) => b.price - a.price);
+
+    this.filteredProducts = result;
+    this.checkIfAllSelected();
+    this.cdr.detectChanges();
   }
 
   private calculateCategoryCounts(): void {
     this.categoriesWithCount = this.categories.map(cat => ({
       ...cat,
-      count: this.products.filter(p =>
-        p.categoryId === cat.id ||
-        (p.categoryName && cat.name && p.categoryName.toLowerCase() === cat.name.toLowerCase())
-      ).length
+      count: cat.productCount || 0
     }));
   }
 
-  private matchingCategoryId: string = '';
-
   private updateCategoryInfo(): void {
-    this.matchingCategoryId = '';
-    if (this.currentCategorySlug) {
-      const cat = this.categories.find(c =>
-        c.slug === this.currentCategorySlug ||
-        this.productService.generateSlug(c.name) === this.currentCategorySlug
-      );
-      if (cat) {
-        this.categoryTitle = cat.name;
-        this.matchingCategoryId = cat.id;
-        this.categoryDescription = `Explore our curated ${cat.name} collection.`;
-        this.categoryImage = cat.imageUrl || this.getDefaultCategoryImage(cat.name);
-      } else {
-        // Fallback for custom slugs
-        this.categoryTitle = this.currentCategorySlug.replace(/-/g, ' ').toUpperCase();
-        this.categoryDescription = `Showing results for ${this.categoryTitle}`;
-      }
-    } else {
+    if (!this.currentCategorySlug || this.currentCategorySlug === 'all') {
       this.categoryTitle = 'All Products';
       this.categoryDescription = 'Discover high-performance products selected for quality and style.';
-      this.categoryImage = 'assets/images/61+DG4Np+zL._AC_SX425_.jpg';
+      return;
+    }
+
+    const cat = this.categories.find(c => c.id === this.currentCategorySlug || c.slug === this.currentCategorySlug);
+    if (cat) {
+      this.categoryTitle = cat.name;
+      this.categoryDescription = `Explore our curated ${cat.name} collection.`;
+      this.categoryImage = cat.imageUrl || this.categoryImage;
+    } else {
+      this.categoryTitle = this.currentCategorySlug.replace(/-/g, ' ');
     }
   }
 
-  applyFilters(): void {
-    let result = [...this.products];
-
-    // Category Filter (URL based)
-    if (this.currentCategorySlug) {
-      result = result.filter(p =>
-        (this.matchingCategoryId && p.categoryId === this.matchingCategoryId) ||
-        this.productService.generateSlug(p.categoryName || '') === this.currentCategorySlug ||
-        this.currentCategorySlug === 'all'
-      );
-    }
-
-    // Search Filter
-    if (this.searchTerm) {
-      const lower = this.searchTerm.toLowerCase();
-      result = result.filter(p =>
-        p.name.toLowerCase().includes(lower) ||
-        p.description?.toLowerCase().includes(lower) ||
-        p.categoryName?.toLowerCase().includes(lower)
-      );
-    }
-
-    // Price Filter
-    const val = this.filtersForm.value;
-    result = result.filter(p =>
-      p.price >= (val.minPrice || 0) &&
-      p.price <= (val.maxPrice || 1000000)
-    );
-
-    // Sorting
-    switch (this.sortBy) {
-      case 'price-low':
-        result.sort((a, b) => a.price - b.price);
-        break;
-      case 'price-high':
-        result.sort((a, b) => b.price - a.price);
-        break;
-      case 'newest':
-        // Assuming ID or internal order is newest
-        result.reverse();
-        break;
-      case 'rating':
-        result.sort((a, b) => b.reviewCount - a.reviewCount);
-        break;
-    }
-
-    this.filteredProducts = result;
-  }
-
-  onSearch(): void {
-    this.applyFilters();
-  }
-
-  onSort(): void {
-    this.applyFilters();
-  }
-
-  clearFilters(): void {
-    this.filtersForm.patchValue({
-      sortBy: 'newest',
-      category: '',
-      minPrice: 0,
-      maxPrice: 250000
-    });
-    this.searchTerm = '';
-    this.applyFilters();
+  // -------------------------------------------------------------------------
+  // UI Helpers
+  // -------------------------------------------------------------------------
+  getDiscountedPrice(p: any): number {
+    const original = p.resellerMaxPrice ?? p.ResellerMaxPrice ?? 0;
+    const discount = p.discountPercentage ?? p.DiscountPercentage ?? 0;
+    return original - (original * discount / 100);
   }
 
   getFirstImage(p: any): string {
     const images = this.productService.parseImages(p.images);
-    if (images.length > 0) return images[0];
-    return this.getDefaultCategoryImage(p.categoryName || '');
+    return images.length > 0 ? images[0] : `https://placehold.co/600x400/f85606/ffffff?text=${encodeURIComponent(p.name)}`;
   }
 
-  getDiscountedPrice(p: any): number {
-    const original = p.resellerMaxPrice || 0;
-    const discount = p.discountPercentage || 0;
-    return original - (original * discount / 100);
+  handleImageError(event: any, name: string): void {
+    event.target.src = `https://placehold.co/600x400/f85606/ffffff?text=${encodeURIComponent(name)}`;
   }
 
+  // -------------------------------------------------------------------------
+  // Actions
+  // -------------------------------------------------------------------------
   onProductClick(p: any): void {
     this.router.navigate(['/product', p.slug]);
   }
 
   onCategoryToggle(cat: any): void {
-    this.router.navigate(['/category', cat.slug]);
+    this.router.navigate(['/category', cat.slug || cat.id]);
   }
 
-  handleImageError(event: any, name: string): void {
-    const img = event.target;
-    img.src = `https://placehold.co/600x400/f85606/ffffff?text=${encodeURIComponent(name)}`;
-    img.onerror = null;
+  setPricePoint(val: number): void {
+    this.filtersForm.patchValue({ maxPrice: val });
   }
 
-  private getDefaultCategoryImage(categoryName: string): string {
-    const defaults: { [key: string]: string } = {
-      'Electronics': 'assets/images/61+DG4Np+zL._AC_SX425_.jpg',
-      'Fashion': 'assets/images/71NpF4JP7HL._AC_SY879_.jpg',
-      'Beauty': 'assets/images/81BrD6Y4ieL._AC_SX425_.jpg',
-      'Home': 'assets/images/81jgetrp87L._AC_SX679_.jpg',
-      'Sports': 'assets/images/81ec6uY7eML._AC_SX425_.jpg',
-      'Accessories': 'assets/images/61BKAbqOL5L._AC_SX679_.jpg'
-    };
-    for (const key in defaults) {
-      if (categoryName && categoryName.toLowerCase().includes(key.toLowerCase())) return defaults[key];
-    }
-    return 'https://placehold.co/600x400/f85606/ffffff?text=' + encodeURIComponent(categoryName || 'Product');
+  clearFilters(): void {
+    this.filtersForm.patchValue({ sortBy: 'newest', maxPrice: 10000000 }, { emitEvent: false });
+    this.searchTerm = '';
+    if (this.currentCategorySlug) this.router.navigate(['/shop']);
+    else this.applyFilters();
+  }
+
+  toggleProductSelection(productId: string): void {
+    this.selectedProducts.has(productId) ? this.selectedProducts.delete(productId) : this.selectedProducts.add(productId);
+    this.checkIfAllSelected();
+  }
+
+  toggleAllProducts(event: any): void {
+    this.isAllSelected = event.target.checked;
+    if (this.isAllSelected) this.filteredProducts.forEach(p => this.selectedProducts.add(p.id));
+    else this.selectedProducts.clear();
+  }
+
+  private checkIfAllSelected(): void {
+    this.isAllSelected = this.filteredProducts.length > 0 && this.filteredProducts.every(p => this.selectedProducts.has(p.id));
+  }
+
+  addToCart(product: any): void {
+    this.cartService.addToCart(product, 1);
+    this.messageService.add({ severity: 'success', summary: 'Added to Cart', detail: `${product.name} added!` });
+  }
+
+  addSelectedToCart(): void {
+    const selected = this.filteredProducts.filter(p => this.selectedProducts.has(p.id));
+    selected.forEach(p => this.cartService.addToCart(p, 1));
+    this.messageService.add({ severity: 'success', summary: 'Added to Cart', detail: `Successfully added ${selected.length} items!` });
+    this.selectedProducts.clear();
+    this.isAllSelected = false;
   }
 }

@@ -15,6 +15,7 @@ namespace Elicom.Categories
         Task<ListResultDto<CategoryDto>> GetAll();
         Task<CategoryDto> Create(CreateCategoryDto input);
         Task<CategoryDto> Update(UpdateCategoryDto input);
+        Task<ListResultDto<CategoryLookupDto>> GetLookup();
         Task Delete(Guid id, bool forceDelete = false);
     }
 }

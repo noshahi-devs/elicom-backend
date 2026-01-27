@@ -5,8 +5,9 @@ using System.Collections.Generic;
 
 namespace Elicom.Entities
 {
-    public class Product : Entity<Guid>
+    public class Product : Entity<Guid>, IMayHaveTenant
     {
+        public int? TenantId { get; set; }
         public string Name { get; set; }
 
         public long? SupplierId { get; set; } // Link to AbpUsers

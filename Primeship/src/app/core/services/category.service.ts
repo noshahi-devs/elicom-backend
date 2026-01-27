@@ -11,7 +11,14 @@ export interface CategoryDto {
     status: boolean;
     createdAt: Date;
     updatedAt: Date;
+    productCount?: number;
     parentId?: any; // For template compatibility (not used in current model)
+}
+
+export interface CategoryLookupDto {
+    id: string;
+    name: string;
+    slug: string;
 }
 
 
@@ -44,6 +51,17 @@ export class CategoryService {
      */
     getAll(): Observable<CategoryDto[]> {
         return this.http.get<any>(this.apiUrl + '/GetAll', {
+            headers: this.getHeaders()
+        }).pipe(
+            map(response => response.result.items || [])
+        );
+    }
+
+    /**
+     * Get simplified category list for lookups
+     */
+    getLookup(): Observable<CategoryLookupDto[]> {
+        return this.http.get<any>(this.apiUrl + '/GetLookup', {
             headers: this.getHeaders()
         }).pipe(
             map(response => response.result.items || [])

@@ -105,15 +105,19 @@
             </div>
 
             <div class="products-grid-3d">
-                <div class="pro-card-premium" *ngFor="let product of visibleFeaturedProducts" (click)="onProductSelected(product)">
+                <div class="pro-card-premium" *ngFor="let product of visibleFeaturedProducts"
+                    (click)="onProductSelected(product)">
                     <div class="pro-img-box">
                         <img [src]="product.image" [alt]="product.name">
                         <span class="badge-tag">-{{ product.discount }}% OFF</span>
 
                         <div class="pro-actions-overlay">
-                            <button class="btn-circle" title="Add to Wishlist" (click)="$event.stopPropagation()"><i class="pi pi-heart"></i></button>
-                            <button class="btn-circle" title="Add to Cart" (click)="$event.stopPropagation()"><i class="pi pi-shopping-bag"></i></button>
-                            <button class="btn-circle" title="Quick View" (click)="$event.stopPropagation()"><i class="pi pi-eye"></i></button>
+                            <button class="btn-circle" title="Add to Wishlist" (click)="$event.stopPropagation()"><i
+                                    class="pi pi-heart"></i></button>
+                            <button class="btn-circle" title="Add to Cart" (click)="$event.stopPropagation()"><i
+                                    class="pi pi-shopping-bag"></i></button>
+                            <button class="btn-circle" title="Quick View" (click)="$event.stopPropagation()"><i
+                                    class="pi pi-eye"></i></button>
                         </div>
                     </div>
                     <div class="pro-info">
@@ -134,13 +138,17 @@
             </div>
 
             <!-- Show More Button for Featured Products -->
-            <div class="text-center mt-5" *ngIf="canLoadMoreFeatured">
+            <div class="load-more-container" *ngIf="canLoadMoreFeatured">
+                <div class="progress-wrap">
+                    <div class="progress-bar" [style.width.%]="(visibleFeaturedCount / featuredProducts.length) * 100">
+                    </div>
+                </div>
                 <button class="btn-show-more" (click)="loadMoreFeatured()">
                     <span>Show More Products</span>
                     <i class="pi pi-chevron-down"></i>
                 </button>
-                <p class="text-muted mt-3 small">Showing {{ visibleFeaturedCount }} of {{ featuredProducts.length }}
-                    products</p>
+                <p class="text-muted small">Showing {{ visibleFeaturedCount }} of {{ featuredProducts.length }} products
+                </p>
             </div>
         </div>
     </section>
@@ -170,7 +178,8 @@
                     <p class="text-muted mb-0">Get unlimited free shipping and exclusive early access to New York
                         Fashion Week collections.</p>
                 </div>
-                <button class="btn-premium">Join Now <i class="pi pi-user-plus"></i></button>
+                <button class="btn-premium" routerLink="/auth/register">Join Now <i
+                        class="pi pi-user-plus"></i></button>
             </div>
         </div>
     </section>
@@ -186,11 +195,13 @@
             </div>
 
             <div class="products-grid-3d">
-                <div class="pro-card-premium" *ngFor="let product of visibleLatestProducts" (click)="onProductSelected(product)">
+                <div class="pro-card-premium" *ngFor="let product of visibleLatestProducts"
+                    (click)="onProductSelected(product)">
                     <div class="pro-img-box">
                         <img [src]="product.image" [alt]="product.name">
                         <div class="pro-actions-overlay">
-                            <button class="btn-circle" (click)="$event.stopPropagation()"><i class="pi pi-shopping-bag"></i></button>
+                            <button class="btn-circle" (click)="$event.stopPropagation()"><i
+                                    class="pi pi-shopping-bag"></i></button>
                         </div>
                     </div>
                     <div class="pro-info">
@@ -208,13 +219,16 @@
             </div>
 
             <!-- Show More Button for Latest Products -->
-            <div class="text-center mt-5" *ngIf="canLoadMoreLatest">
+            <div class="load-more-container" *ngIf="canLoadMoreLatest">
+                <div class="progress-wrap">
+                    <div class="progress-bar" [style.width.%]="(visibleLatestCount / latestProducts.length) * 100">
+                    </div>
+                </div>
                 <button class="btn-show-more" (click)="loadMoreLatest()">
                     <span>Show More Products</span>
                     <i class="pi pi-chevron-down"></i>
                 </button>
-                <p class="text-muted mt-3 small">Showing {{ visibleLatestCount }} of {{ latestProducts.length }}
-                    products</p>
+                <p class="text-muted small">Showing {{ visibleLatestCount }} of {{ latestProducts.length }} products</p>
             </div>
         </div>
     </section>

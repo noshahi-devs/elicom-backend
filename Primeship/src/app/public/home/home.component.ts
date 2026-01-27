@@ -190,7 +190,7 @@ export class HomeComponent implements OnInit {
   }
 
   private getDefaultProductImage(): string {
-    return 'https://via.placeholder.com/400x400?text=No+Image';
+    return 'https://placehold.co/400x400?text=No+Image';
   }
 
   private loadDefaultCategories(): void {

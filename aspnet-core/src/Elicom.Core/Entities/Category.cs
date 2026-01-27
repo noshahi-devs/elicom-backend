@@ -10,8 +10,9 @@ namespace Elicom.Entities
     /// <summary>
     /// Represents a category entity with name, slug, image URL, status, and timestamps.
     /// </summary>
-    public class Category : Entity<Guid>
+    public class Category : Entity<Guid>, IMayHaveTenant
     {
+        public int? TenantId { get; set; }
         /// <summary>
         /// Gets or sets the name of the category.
         /// </summary>

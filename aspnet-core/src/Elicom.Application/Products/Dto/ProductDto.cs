@@ -30,5 +30,6 @@ namespace Elicom.Products.Dto
         public string Slug { get; set; }
 
         public bool Status { get; set; }
+        public int? SupplierTenantId { get; set; }
     }
 }
