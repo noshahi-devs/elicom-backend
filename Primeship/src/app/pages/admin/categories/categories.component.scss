@@ -169,65 +169,6 @@ $shadow-medium: rgba(0, 0, 0, 0.15);
     }
   }
 
-  // Table
-  .table-container {
-    background: white;
-    border-radius: 12px;
-    overflow: hidden;
-    @include card-shadow;
-
-    .simple-table {
-      width: 100%;
-      border-collapse: collapse;
-
-      thead {
-        background: linear-gradient(135deg, $primary-color 0%, $primary-dark 100%);
-
-        th {
-          padding: 1.25rem 1.5rem;
-          color: white;
-          font-weight: 600;
-          text-align: left;
-          font-size: 0.95rem;
-          letter-spacing: 0.025em;
-        }
-      }
-
-      tbody {
-        tr {
-          @include transition();
-          border-bottom: 1px solid rgba($border-color, 0.5);
-
-          &:hover {
-            transform: translateY(-4px) scale(1.01);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-            background: #fff;
-          }
-
-          &:last-child {
-            border-bottom: none;
-          }
-
-          td {
-            padding: 1.25rem 1.5rem;
-            color: $text-dark;
-
-            &.actions {
-              @include flex-center(0.5rem);
-              justify-content: flex-start;
-            }
-
-            &.no-data {
-              text-align: center;
-              color: $text-light;
-              padding: 3rem;
-              font-style: italic;
-            }
-          }
-        }
-      }
-    }
-  }
 
   // Status Badge
   .status-badge {

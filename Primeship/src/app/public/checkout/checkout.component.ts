@@ -9,6 +9,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { WholesaleService, CreateWholesaleOrderInput } from '../../core/services/wholesale.service';
+import { CardService } from '../../core/services/card.service';
 
 @Component({
   selector: 'app-checkout',
@@ -29,6 +30,12 @@ export class CheckoutComponent implements OnInit {
   showCelebration = false;
   isProcessing = false;
   isSuccess = false;
+
+  // Easy Finora Integration
+  isVerifyingBalance = false;
+  isBalanceVerified = false;
+  verifiedBalance: number | null = null;
+  verificationError: string | null = null;
 
   // Confetti
   confettiPieces = Array(100).fill(0);
@@ -52,6 +59,7 @@ export class CheckoutComponent implements OnInit {
     private toastService: ToastService,
     private profileService: ProfileService,
     private wholesaleService: WholesaleService,
+    private cardService: CardService,
     private cdr: ChangeDetectorRef
   ) {
     this.checkoutForm = this.fb.group({
@@ -150,10 +158,52 @@ export class CheckoutComponent implements OnInit {
   }
 
   private calculateTotals(): void {
-    this.subtotal = this.cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    this.subtotal = this.cartService.getCartTotal();
     this.shipping = this.subtotal > 50 ? 0 : 10;
     this.tax = this.subtotal * 0.08;
     this.total = this.subtotal + this.shipping + this.tax;
+  }
+
+  verifyEasyFinoraBalance(): void {
+    const cardNumber = this.checkoutForm.get('cardNumber')?.value;
+    const expiryDate = this.checkoutForm.get('expiryDate')?.value;
+    const cvv = this.checkoutForm.get('cvv')?.value;
+
+    if (!cardNumber || !expiryDate || !cvv) {
+      this.toastService.showError('Please enter full card details to verify balance');
+      return;
+    }
+
+    this.isVerifyingBalance = true;
+    this.verificationError = null;
+    this.isBalanceVerified = false;
+    this.cdr.detectChanges();
+
+    this.cardService.validateCard({
+      cardNumber,
+      expiryDate,
+      cvv,
+      amount: this.total
+    }).subscribe({
+      next: (result) => {
+        this.isVerifyingBalance = false;
+        if (result.isValid) {
+          this.isBalanceVerified = true;
+          this.verifiedBalance = result.availableBalance;
+          this.toastService.showSuccess('Card balance verified! You can now place the order.');
+        } else {
+          this.verificationError = result.message;
+          this.toastService.showError(result.message);
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.isVerifyingBalance = false;
+        this.verificationError = 'Verification failed. Please check card info.';
+        this.toastService.showError('Could not verify card balance');
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   onSubmit(): void {
@@ -171,7 +221,11 @@ export class CheckoutComponent implements OnInit {
           quantity: item.quantity
         })),
         shippingAddress: `${val.address}, ${val.city}, ${val.state} ${val.zipCode}, ${val.country}`,
-        customerName: `${val.firstName} ${val.lastName}`
+        customerName: `${val.firstName} ${val.lastName}`,
+        paymentMethod: val.paymentMethod,
+        cardNumber: val.cardNumber,
+        expiryDate: val.expiryDate,
+        cvv: val.cvv
       };
 
       this.wholesaleService.placeWholesaleOrder(orderInput).subscribe({

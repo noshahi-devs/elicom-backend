@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { OrderService } from '../../../core/services/order.service';
@@ -13,7 +13,7 @@ import { OrderService } from '../../../core/services/order.service';
 export class SellerDashboardComponent implements OnInit {
   statsCards = [
     {
-      title: 'Total Spending',
+      title: 'Total Sales',
       value: '$0',
       change: '+0%',
       trend: 'up',
@@ -50,7 +50,8 @@ export class SellerDashboardComponent implements OnInit {
 
   constructor(
     public router: Router,
-    private orderService: OrderService
+    private orderService: OrderService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
@@ -60,32 +61,47 @@ export class SellerDashboardComponent implements OnInit {
   loadDashboardData(): void {
     this.orderService.getAllForSupplier().subscribe({
       next: (res) => {
-        this.processStats(res);
-        this.recentOrders = res.slice(0, 5);
+        this.processStats(res || []);
+        this.recentOrders = (res || []).slice(0, 5);
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Failed to load dashboard data', err);
+        this.cdr.detectChanges();
       }
     });
   }
 
   private processStats(orders: any[]): void {
-    const totalSpending = orders.reduce((sum, o) => sum + (o.totalPurchaseAmount || 0), 0);
+    const totalSpending = orders.reduce((sum, o) => {
+      const total = o.totalPurchaseAmount || o.totalAmount;
+      if (total !== undefined) return sum + total;
+
+      const items = o.items || o.orderItems || [];
+      const calculated = items.reduce((iSum: number, it: any) => {
+        const qty = it.qty || it.quantity || 0;
+        const price = it.purchasePrice || it.price || it.priceAtPurchase || 0;
+        return iSum + (qty * price);
+      }, 0);
+      return sum + calculated;
+    }, 0);
+
     const orderCount = orders.length;
     const pendingCount = orders.filter(o => {
       const s = (o.status || '').toLowerCase();
-      return s === 'pending' || s === 'purchased' || s === 'processing' || s === 'shipped';
+      return ['pending', 'purchased', 'processing', 'shipped', 'verified'].includes(s);
     }).length;
 
     // Count unique products
     const uniqueProducts = new Set();
     orders.forEach(o => {
-      if (o.items) {
-        o.items.forEach((it: any) => uniqueProducts.add(it.name));
-      }
+      const items = o.items || o.orderItems || [];
+      items.forEach((it: any) => {
+        if (it.name || it.productName) uniqueProducts.add(it.name || it.productName);
+      });
     });
 
-    this.statsCards[0].value = '$' + totalSpending.toLocaleString();
+    this.statsCards[0].value = '$' + totalSpending.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     this.statsCards[1].value = uniqueProducts.size.toString();
     this.statsCards[2].value = orderCount.toString();
     this.statsCards[3].value = pendingCount.toString();

@@ -16,4 +16,5 @@ export interface Product {
   specifications?: { key: string; value: string }[];
   isFeatured?: boolean;
   isNew?: boolean;
+  brand?: string;
 }

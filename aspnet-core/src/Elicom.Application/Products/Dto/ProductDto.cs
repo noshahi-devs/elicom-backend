@@ -9,6 +9,7 @@ namespace Elicom.Products.Dto
 {
     public class ProductDto : EntityDto<Guid>
     {
+        public int? TenantId { get; set; }
         public string Name { get; set; }
         public long? SupplierId { get; set; }
         public Guid CategoryId { get; set; }

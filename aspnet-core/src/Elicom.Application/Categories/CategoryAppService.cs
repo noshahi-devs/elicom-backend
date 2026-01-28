@@ -48,6 +48,8 @@ namespace Elicom.Categories
         public async Task<CategoryDto> Create(CreateCategoryDto input)
         {
             var entity = _mapper.Map<Category>(input);
+            entity.TenantId = input.TenantId ?? AbpSession.TenantId;
+            
             await _categoryRepository.InsertAsync(entity);
             return _mapper.Map<CategoryDto>(entity);
         }
@@ -57,6 +59,16 @@ namespace Elicom.Categories
         {
             var entity = await _categoryRepository.GetAsync(input.Id);
             _mapper.Map(input, entity);
+            
+            if (input.TenantId.HasValue)
+            {
+                entity.TenantId = input.TenantId;
+            }
+            else if (!entity.TenantId.HasValue)
+            {
+                entity.TenantId = AbpSession.TenantId;
+            }
+
             return _mapper.Map<CategoryDto>(entity);
         }
 

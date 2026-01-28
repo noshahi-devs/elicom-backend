@@ -40,8 +40,11 @@
 
 
 
+  <!-- Loader -->
+  <app-game-loader *ngIf="isLoading"></app-game-loader>
+
   <!-- Table -->
-  <div class="table-container">
+  <div class="table-container" *ngIf="!isLoading">
     <table class="simple-table">
       <thead>
         <tr>

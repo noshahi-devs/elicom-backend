@@ -7,6 +7,7 @@ using Elicom.SupplierOrders.Dto;
 using Elicom.Wallets;
 using Elicom.Authorization;
 using Elicom.Wholesale.Dto;
+using Elicom.Cards;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -22,17 +23,20 @@ namespace Elicom.Wholesale
         private readonly IRepository<SupplierOrder, Guid> _supplierOrderRepository;
         private readonly IWalletManager _walletManager;
         private readonly IEmailSender _emailSender;
+        private readonly ICardAppService _cardAppService;
 
         public WholesaleAppService(
             IRepository<Product, Guid> productRepository,
             IRepository<SupplierOrder, Guid> supplierOrderRepository,
             IWalletManager walletManager,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            ICardAppService cardAppService)
         {
             _productRepository = productRepository;
             _supplierOrderRepository = supplierOrderRepository;
             _walletManager = walletManager;
             _emailSender = emailSender;
+            _cardAppService = cardAppService;
         }
 
         public async Task<SupplierOrderDto> PlaceWholesaleOrder(CreateWholesaleOrderInput input)
@@ -61,20 +65,28 @@ namespace Elicom.Wholesale
                 });
             }
 
-            // 2. Pay Upfront (Deduct from GlobalPayUK Card / Wallet) - DISABLED FOR NOW
-            /*
-            bool paymentSuccess = await _walletManager.TryDebitAsync(
-                user.Id, 
-                totalAmount, 
-                "WHOLESALE-PURCHASE", 
-                $"Purchase from Prime Ship UK for customer: {input.CustomerName}"
-            );
-
-            if (!paymentSuccess)
+            // 2. Pay Upfront (Deduct from EasyFinora Card if method is finora)
+            if (input.PaymentMethod == "finora")
             {
-                throw new UserFriendlyException("Insufficient balance in your GlobalPayUK Card to place this wholesale order.");
+                if (string.IsNullOrEmpty(input.CardNumber))
+                {
+                    throw new UserFriendlyException("Card number is required for EasyFinora payment.");
+                }
+
+                await _cardAppService.ProcessPayment(new ProcessCardPaymentInput
+                {
+                    CardNumber = input.CardNumber,
+                    ExpiryDate = input.ExpiryDate,
+                    Cvv = input.Cvv,
+                    Amount = totalAmount,
+                    Description = $"Wholesale purchase from PrimeShip for {input.CustomerName}",
+                    ReferenceId = "Pending" // Will be updated if needed or used as is
+                });
             }
-            */
+            else
+            {
+                // Fallback for other methods or the original wallet logic (currently disabled)
+            }
 
             // 3. Create the Supplier Order (Directed to Admin - we'll assume AdminId is 1 for now or use Host)
             // In a more robust system, we would have a setting for 'SystemAdminId'

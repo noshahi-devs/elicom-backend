@@ -55,6 +55,7 @@ namespace Elicom.SupplierProducts
             var product = ObjectMapper.Map<Product>(input);
             product.SupplierId = user.Id;
             product.Status = true; // Default to active? Or as per input.
+            product.TenantId = input.TenantId ?? AbpSession.TenantId;
 
             await _productRepository.InsertAsync(product);
 

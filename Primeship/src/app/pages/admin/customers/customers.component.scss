@@ -22,6 +22,7 @@ $shadow-medium: rgba(0, 0, 0, 0.15);
 
 @mixin card-shadow {
   box-shadow: 0 4px 16px $shadow-light;
+
   &:hover {
     box-shadow: 0 8px 24px $shadow-medium;
   }
@@ -33,17 +34,22 @@ $shadow-medium: rgba(0, 0, 0, 0.15);
   background: $bg-light;
   transition: all 0.3s ease;
   margin-top: 20px;
+
   /* When sidebar is collapsed */
   &.sidebar-collapsed {
-    margin-left: 70px; /* Collapsed sidebar width */
+    margin-left: 70px;
+
+    /* Collapsed sidebar width */
     .table-container {
       max-width: calc(100vw - 90px); // Account for collapsed sidebar and some padding
     }
   }
-  
+
   /* When sidebar is expanded */
   &.sidebar-expanded {
-    margin-left: 250px; /* Expanded sidebar width */
+    margin-left: 250px;
+
+    /* Expanded sidebar width */
     .table-container {
       max-width: calc(100vw - 270px); // Account for expanded sidebar and some padding
     }
@@ -65,7 +71,7 @@ $shadow-medium: rgba(0, 0, 0, 0.15);
     .header-title {
       flex: 1;
       min-width: 200px;
-      
+
       h2 {
         font-size: 1.75rem;
         font-weight: 700;
@@ -75,7 +81,7 @@ $shadow-medium: rgba(0, 0, 0, 0.15);
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        
+
         i {
           color: $primary-color;
         }
@@ -87,12 +93,12 @@ $shadow-medium: rgba(0, 0, 0, 0.15);
         font-size: 0.95rem;
       }
     }
-    
+
     .btn.primary {
       margin-left: auto;
       align-self: center;
       white-space: nowrap;
-      
+
       i {
         margin-right: 0.5rem;
       }
@@ -303,6 +309,65 @@ $shadow-medium: rgba(0, 0, 0, 0.15);
     }
   }
 
+  .id-badge {
+    padding: 0.35rem 0.6rem;
+    background: #f3f4f6;
+    border-radius: 6px;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: 600;
+    color: #4b5563;
+    font-size: 0.85rem;
+  }
+
+  .email-cell {
+    color: $text-light;
+    font-size: 0.9rem;
+  }
+
+  .text-nowrap {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    max-width: 180px;
+  }
+
+  .spending-cell {
+    font-weight: 700;
+    color: #059669;
+    font-size: 1rem;
+    white-space: nowrap;
+  }
+
+  .status-control {
+    @include flex-center(0.75rem);
+
+    .btn-toggle {
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      color: $text-light;
+      font-size: 1.5rem;
+      @include transition();
+      display: flex;
+      align-items: center;
+
+      &:hover {
+        color: $primary-color;
+        transform: scale(1.1);
+      }
+
+      i.pi-toggle-on {
+        color: #10b981;
+      }
+
+      i.pi-toggle-off {
+        color: $danger-color;
+      }
+    }
+  }
+
   .pagination {
     display: flex;
     align-items: center;
@@ -371,10 +436,21 @@ $shadow-medium: rgba(0, 0, 0, 0.15);
         border-radius: 6px;
       }
 
-      &.success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-      &.error { background: linear-gradient(135deg, $danger-color 0%, $danger-dark 100%); }
-      &.warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
-      &.info { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+      &.success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      }
+
+      &.error {
+        background: linear-gradient(135deg, $danger-color 0%, $danger-dark 100%);
+      }
+
+      &.warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      }
+
+      &.info {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      }
     }
   }
 
@@ -489,9 +565,10 @@ $shadow-medium: rgba(0, 0, 0, 0.15);
 
 @media (max-width: 1200px) {
   .customers-container {
-    margin-left: 70px; /* Collapsed sidebar */
+    margin-left: 70px;
+    /* Collapsed sidebar */
     padding: 1rem;
-    
+
     &.sidebar-expanded {
       margin-left: 250px;
     }
@@ -522,7 +599,8 @@ $shadow-medium: rgba(0, 0, 0, 0.15);
 
 @media (max-width: 992px) {
   .customers-container {
-    margin-left: 0 !important; /* Full width on mobile */
+    margin-left: 0 !important;
+    /* Full width on mobile */
     padding: 1rem 0.75rem;
     padding: 1rem;
 

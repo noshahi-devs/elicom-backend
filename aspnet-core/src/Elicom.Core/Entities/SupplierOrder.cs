@@ -1,6 +1,8 @@
 ﻿using Abp.Domain.Entities.Auditing;
+using Elicom.Authorization.Users;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Elicom.Entities
 {
@@ -11,6 +13,8 @@ namespace Elicom.Entities
 
         // Seller / Reseller
         public long ResellerId { get; set; }
+        [ForeignKey(nameof(ResellerId))]
+        public virtual User Reseller { get; set; }
 
         // The Supplier
         public long SupplierId { get; set; }

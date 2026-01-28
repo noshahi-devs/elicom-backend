@@ -147,10 +147,12 @@ export class ProductListComponent implements OnInit, OnDestroy {
     this.products = list.map(p => ({
       ...p,
       image: this.getFirstImage(p),
-      price: this.getDiscountedPrice(p),
+      // Update: Use SupplierPrice (Wholesale) instead of Retail Price
+      price: (p as any).SupplierPrice ?? p.supplierPrice ?? 0,
       // Casing safety: check both camelCase and PascalCase from API
       originalPrice: p.resellerMaxPrice ?? p.ResellerMaxPrice ?? 0,
       discount: p.discountPercentage ?? p.DiscountPercentage ?? 0,
+      brand: p.brandName || p.BrandName || 'Generic',
       reviewCount: Math.floor(Math.random() * 80) + 12
     }));
 

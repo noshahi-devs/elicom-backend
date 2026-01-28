@@ -1,9 +1,12 @@
 using Elicom.Entities;
 using Elicom.Orders;
 using Elicom.Orders.Dto;
+using Elicom.SupplierOrders;
+using Elicom.SupplierOrders.Dto;
 using Elicom.Wallets;
 using Shouldly;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
@@ -13,11 +16,13 @@ namespace Elicom.Tests.Orders
     public class OrderAppService_Tests : ElicomTestBase
     {
         private readonly IOrderAppService _orderAppService;
+        private readonly ISupplierOrderAppService _supplierOrderAppService;
         private readonly IWalletManager _walletManager;
 
         public OrderAppService_Tests()
         {
             _orderAppService = Resolve<IOrderAppService>();
+            _supplierOrderAppService = Resolve<ISupplierOrderAppService>();
             _walletManager = Resolve<IWalletManager>();
         }
 
@@ -301,6 +306,261 @@ namespace Elicom.Tests.Orders
                 order.PaymentMethod.ShouldBe("MasterCard");
                 order.PaymentStatus.ShouldBe("Paid (External)");
                 order.TotalAmount.ShouldBe(45); // 40 + 5
+
+                await uow.CompleteAsync();
+            }
+        }
+
+        [Fact]
+        public async Task Should_Get_All_Orders_For_Admin()
+        {
+            var uowManager = Resolve<Abp.Domain.Uow.IUnitOfWorkManager>();
+            using (var uow = uowManager.Begin())
+            {
+                LoginAsDefaultTenantAdmin();
+                var user = await GetCurrentUserAsync();
+
+                // Setup: Create test supplier orders directly
+                var referenceCodes = UsingDbContext(context => {
+                    var so1 = new SupplierOrder { 
+                        ReferenceCode = "SUP-101", 
+                        CustomerName = "C1", 
+                        Status = "Purchased", 
+                        TotalPurchaseAmount = 100,
+                        ResellerId = user.Id,
+                        SupplierId = user.Id
+                    };
+                    var so2 = new SupplierOrder { 
+                        ReferenceCode = "SUP-102", 
+                        CustomerName = "C2", 
+                        Status = "Purchased", 
+                        TotalPurchaseAmount = 200,
+                        ResellerId = user.Id,
+                        SupplierId = user.Id
+                    };
+                    context.SupplierOrders.Add(so1);
+                    context.SupplierOrders.Add(so2);
+                    context.SaveChanges();
+                    return new[] { so1.ReferenceCode, so2.ReferenceCode };
+                });
+
+                // Act: Get all orders
+                var allOrdersResult = await _supplierOrderAppService.GetAll();
+
+                // Assert
+                allOrdersResult.ShouldNotBeNull();
+                allOrdersResult.Items.Count.ShouldBeGreaterThanOrEqualTo(2);
+                allOrdersResult.Items.Any(o => o.ReferenceCode == "SUP-101").ShouldBeTrue();
+                allOrdersResult.Items.Any(o => o.ReferenceCode == "SUP-102").ShouldBeTrue();
+
+                await uow.CompleteAsync();
+            }
+        }
+
+        [Fact]
+        public async Task Should_Update_Order_Status()
+        {
+            var uowManager = Resolve<Abp.Domain.Uow.IUnitOfWorkManager>();
+            using (var uow = uowManager.Begin())
+            {
+                LoginAsDefaultTenantAdmin();
+                var user = await GetCurrentUserAsync();
+
+                // Setup: Create test order
+                var category = UsingDbContext(context => {
+                    var c = new Category { Name = "StatusCat", Slug = "statuscat", Status = true };
+                    context.Categories.Add(c);
+                    context.SaveChanges();
+                    return c;
+                });
+
+                var store = UsingDbContext(context => {
+                    var s = new Store { Name = "Status Store", OwnerId = user.Id, Status = true, Slug = "statusstore" };
+                    context.Stores.Add(s);
+                    context.SaveChanges();
+                    return s;
+                });
+
+                var product = UsingDbContext(context => {
+                    var p = new Product { 
+                        Name = "StatusProduct", CategoryId = category.Id, SupplierId = user.Id, 
+                        SupplierPrice = 30, ResellerMaxPrice = 60, StockQuantity = 10, Status = true 
+                    };
+                    context.Products.Add(p);
+                    context.SaveChanges();
+                    return p;
+                });
+
+                var storeProduct = UsingDbContext(context => {
+                    var sp = new StoreProduct { 
+                        StoreId = store.Id, ProductId = product.Id, ResellerPrice = 45, Status = true, StockQuantity = 10 
+                    };
+                    context.StoreProducts.Add(sp);
+                    context.SaveChanges();
+                    return sp;
+                });
+
+                var customerProfileId = Guid.NewGuid();
+                UsingDbContext(context => {
+                    context.CartItems.Add(new CartItem { 
+                        CustomerProfileId = customerProfileId, StoreProductId = storeProduct.Id, Price = 45, Quantity = 1, Status = "Active" 
+                    });
+                    context.SaveChanges();
+                });
+
+                await _walletManager.DepositAsync(user.Id, 1000, "DEP", "Deposit");
+                await uowManager.Current.SaveChangesAsync();
+
+                var orderDto = await _orderAppService.Create(new CreateOrderDto {
+                    CustomerProfileId = customerProfileId,
+                    PaymentMethod = "Wallet",
+                    ShippingCost = 5,
+                    ShippingAddress = "Test Address"
+                });
+
+                await uowManager.Current.SaveChangesAsync();
+
+                // Verify initial status
+                orderDto.Status.ShouldBe("Pending");
+
+                // Act: Update status to Processing
+                var updatedOrder = await _orderAppService.UpdateStatus(new Elicom.Orders.Dto.UpdateOrderStatusDto {
+                    Id = orderDto.Id,
+                    Status = "Processing"
+                });
+
+                await uowManager.Current.SaveChangesAsync();
+
+                // Assert
+                updatedOrder.ShouldNotBeNull();
+                updatedOrder.Status.ShouldBe("Processing");
+
+                // Act: Update status to Delivered
+                var deliveredOrder = await _orderAppService.UpdateStatus(new Elicom.Orders.Dto.UpdateOrderStatusDto {
+                    Id = orderDto.Id,
+                    Status = "Delivered"
+                });
+
+                await uowManager.Current.SaveChangesAsync();
+
+                // Assert: Status should be Delivered and PaymentStatus should be Completed
+                deliveredOrder.Status.ShouldBe("Delivered");
+                deliveredOrder.PaymentStatus.ShouldBe("Completed");
+
+                await uow.CompleteAsync();
+            }
+        }
+
+        [Fact]
+        public async Task Should_Reject_Invalid_Status_Update()
+        {
+            var uowManager = Resolve<Abp.Domain.Uow.IUnitOfWorkManager>();
+            using (var uow = uowManager.Begin())
+            {
+                LoginAsDefaultTenantAdmin();
+                var user = await GetCurrentUserAsync();
+
+                // Setup: Create test order
+                var category = UsingDbContext(context => {
+                    var c = new Category { Name = "InvalidCat", Slug = "invalidcat", Status = true };
+                    context.Categories.Add(c);
+                    context.SaveChanges();
+                    return c;
+                });
+
+                var store = UsingDbContext(context => {
+                    var s = new Store { Name = "Invalid Store", OwnerId = user.Id, Status = true, Slug = "invalidstore" };
+                    context.Stores.Add(s);
+                    context.SaveChanges();
+                    return s;
+                });
+
+                var product = UsingDbContext(context => {
+                    var p = new Product { 
+                        Name = "InvalidProduct", CategoryId = category.Id, SupplierId = user.Id, 
+                        SupplierPrice = 20, ResellerMaxPrice = 40, StockQuantity = 10, Status = true 
+                    };
+                    context.Products.Add(p);
+                    context.SaveChanges();
+                    return p;
+                });
+
+                var storeProduct = UsingDbContext(context => {
+                    var sp = new StoreProduct { 
+                        StoreId = store.Id, ProductId = product.Id, ResellerPrice = 30, Status = true, StockQuantity = 10 
+                    };
+                    context.StoreProducts.Add(sp);
+                    context.SaveChanges();
+                    return sp;
+                });
+
+                var customerProfileId = Guid.NewGuid();
+                UsingDbContext(context => {
+                    context.CartItems.Add(new CartItem { 
+                        CustomerProfileId = customerProfileId, StoreProductId = storeProduct.Id, Price = 30, Quantity = 1, Status = "Active" 
+                    });
+                    context.SaveChanges();
+                });
+
+                await _walletManager.DepositAsync(user.Id, 1000, "DEP", "Deposit");
+                await uowManager.Current.SaveChangesAsync();
+
+                var orderDto = await _orderAppService.Create(new CreateOrderDto {
+                    CustomerProfileId = customerProfileId,
+                    PaymentMethod = "Wallet",
+                    ShippingCost = 5,
+                    ShippingAddress = "Test Address"
+                });
+
+                await uowManager.Current.SaveChangesAsync();
+
+                // Act & Assert: Try to update with invalid status
+                await Should.ThrowAsync<Abp.UI.UserFriendlyException>(async () =>
+                {
+                    await _orderAppService.UpdateStatus(new Elicom.Orders.Dto.UpdateOrderStatusDto {
+                        Id = orderDto.Id,
+                        Status = "InvalidStatus"
+                    });
+                });
+
+                await uow.CompleteAsync();
+            }
+        }
+        [Fact]
+        public async Task Should_Update_Wholesale_Order_Status()
+        {
+            var uowManager = Resolve<Abp.Domain.Uow.IUnitOfWorkManager>();
+            using (var uow = uowManager.Begin())
+            {
+                LoginAsDefaultTenantAdmin();
+                var user = await GetCurrentUserAsync();
+
+                // Setup: Create test wholesale order
+                var soId = UsingDbContext(context => {
+                    var so = new SupplierOrder { 
+                        ReferenceCode = "SUP-UPDATE", 
+                        CustomerName = "C-UPDATE", 
+                        Status = "Purchased", 
+                        TotalPurchaseAmount = 500,
+                        ResellerId = user.Id,
+                        SupplierId = user.Id
+                    };
+                    context.SupplierOrders.Add(so);
+                    context.SaveChanges();
+                    return so.Id;
+                });
+
+                // Act: Update status to Shipped
+                var updatedOrder = await _supplierOrderAppService.UpdateStatus(new Elicom.Orders.Dto.UpdateOrderStatusDto {
+                    Id = soId,
+                    Status = "Shipped"
+                });
+
+                await uowManager.Current.SaveChangesAsync();
+
+                // Assert
+                updatedOrder.ShouldNotBeNull();
+                updatedOrder.Status.ShouldBe("Shipped");
 
                 await uow.CompleteAsync();
             }

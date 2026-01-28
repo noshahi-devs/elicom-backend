@@ -9,6 +9,7 @@ namespace Elicom.Categories.Dto
 {
     public class CategoryDto : EntityDto<Guid>
     {
+        public int? TenantId { get; set; }
         public string Name { get; set; }
         public string Slug { get; set; }
         public string ImageUrl { get; set; }

@@ -10,7 +10,7 @@
         <span class="breadcrumb-item active">{{ product?.name }}</span>
       </div>
     </nav>
-    
+
     <!-- Main Product Section -->
     <div class="product-main-section">
       <div class="product-visual-section">
@@ -27,11 +27,13 @@
               <span>3D View</span>
             </button>
           </div>
-          
+
           <!-- Images View -->
           <div class="images-view" *ngIf="activeVisualTab === 'images'">
             <div class="main-image-container">
-              <img [src]="product?.images?.[0] || product?.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop&crop=center'" [alt]="product?.name || 'Product'" class="main-product-image">
+              <img
+                [src]="product?.images?.[0] || product?.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop&crop=center'"
+                [alt]="product?.name || 'Product'" class="main-product-image">
               <div class="image-overlay">
                 <button class="overlay-btn"><i class="pi pi-search-plus"></i></button>
                 <button class="overlay-btn"><i class="pi pi-expand"></i></button>
@@ -43,28 +45,29 @@
               </div>
             </div>
           </div>
-          
+
           <!-- 3D View -->
           <div class="three-d-view" *ngIf="activeVisualTab === '3d'">
             <app-product-3d-viewer [productImage]="product?.image || ''"></app-product-3d-viewer>
           </div>
         </div>
       </div>
-      
+
       <div class="product-info-section">
         <!-- Product Header -->
         <div class="product-header">
           <div class="product-meta">
-            <span class="brand-badge">PREMIUM COLLECTION</span>
+            <span class="brand-badge" *ngIf="product?.brand">{{ product?.brand }}</span>
+            <span class="brand-badge" *ngIf="!product?.brand">PREMIUM COLLECTION</span>
             <div class="product-rating">
               <div class="stars">★★★★★</div>
               <span class="rating-text">{{ product?.reviewCount || 128 }} Reviews</span>
               <a href="#" class="write-review">Write a review</a>
             </div>
           </div>
-          
+
           <h1 class="product-title">{{ product?.name }}</h1>
-          
+
           <div class="price-section">
             <div class="price-row">
               <span class="current-price">${{ product?.price }}</span>
@@ -76,33 +79,30 @@
             </div>
           </div>
         </div>
-        
+
         <!-- Product Description -->
         <div class="product-description">
           <p>{{ product?.description }}</p>
         </div>
-        
+
         <!-- Product Options -->
         <div class="product-options">
           <div class="option-group">
             <label class="option-label">Size:</label>
             <div class="size-options">
-              <button class="size-btn" *ngFor="let size of sizes" 
-                      [class.active]="selectedSize === size" 
-                      (click)="selectedSize = size">{{ size }}</button>
+              <button class="size-btn" *ngFor="let size of sizes" [class.active]="selectedSize === size"
+                (click)="selectedSize = size">{{ size }}</button>
             </div>
           </div>
-          
+
           <div class="option-group">
             <label class="option-label">Color:</label>
             <div class="color-options">
-              <div class="color-option" *ngFor="let color of colors" 
-                   [style.backgroundColor]="color"
-                   [class.active]="selectedColor === color"
-                   (click)="selectedColor = color"></div>
+              <div class="color-option" *ngFor="let color of colors" [style.backgroundColor]="color"
+                [class.active]="selectedColor === color" (click)="selectedColor = color"></div>
             </div>
           </div>
-          
+
           <div class="option-group quantity-group">
             <label class="option-label">Quantity:</label>
             <div class="quantity-selector">
@@ -116,7 +116,7 @@
             </div>
           </div>
         </div>
-        
+
         <!-- Action Buttons -->
         <div class="product-actions">
           <button class="btn-primary-action" (click)="buyNow()">
@@ -131,7 +131,7 @@
             <i class="pi pi-heart"></i>
           </button>
         </div>
-        
+
         <!-- Product Features -->
         <div class="product-features">
           <div class="feature-item">
@@ -174,7 +174,7 @@
           <span>Reviews ({{ product?.reviewCount || 128 }})</span>
         </button>
       </div>
-      
+
       <div class="details-content">
         <!-- Product Details Tab -->
         <div class="tab-pane" *ngIf="activeTab === 'description'">
@@ -183,7 +183,7 @@
               <h3>Product Description</h3>
               <p>{{ product?.fullDescription || product?.description }}</p>
             </div>
-            
+
             <!-- Product Gallery -->
             <div class="product-gallery">
               <h4>Product Gallery</h4>
@@ -196,7 +196,7 @@
                 </div>
               </div>
             </div>
-            
+
             <!-- Key Features -->
             <div class="key-features">
               <h4>Key Features</h4>
@@ -209,7 +209,7 @@
             </div>
           </div>
         </div>
-        
+
         <!-- Specifications Tab -->
         <div class="tab-pane" *ngIf="activeTab === 'specifications'">
           <div class="specifications-content">
@@ -222,7 +222,7 @@
             </div>
           </div>
         </div>
-        
+
         <!-- Reviews Tab -->
         <div class="tab-pane" *ngIf="activeTab === 'reviews'">
           <div class="reviews-content">
@@ -236,7 +236,7 @@
                 </div>
               </div>
             </div>
-            
+
             <div class="reviews-list">
               <div class="review-card" *ngFor="let review of reviews">
                 <div class="review-header">
@@ -258,37 +258,37 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Related Products Section -->
     <div class="related-products-section">
       <div class="section-header">
         <h3>You Might Also Like</h3>
-        <a href="#" class="view-all-btn" 
-           [class.loading]="isLoadingMore"
-           (click)="toggleViewAll(); $event.preventDefault()">
+        <a href="#" class="view-all-btn" [class.loading]="isLoadingMore"
+          (click)="toggleViewAll(); $event.preventDefault()">
           <span *ngIf="!showAllProducts">View All Products</span>
           <span *ngIf="showAllProducts">Show Less</span>
         </a>
       </div>
-      
+
       <div class="related-products-grid">
-        <div class="related-product-card" *ngFor="let product of relatedProducts" (click)="onRelatedProductClick(product)">
+        <div class="related-product-card" *ngFor="let product of relatedProducts"
+          (click)="onRelatedProductClick(product)">
           <div class="related-product-image">
             <!-- Image Carousel -->
             <div class="image-carousel">
               <div class="carousel-container">
-                <img [src]="product?.images?.[0] || product?.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop&crop=center'" [alt]="product?.name || 'Product'" class="main-carousel-image">
+                <img
+                  [src]="product?.images?.[0] || product?.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop&crop=center'"
+                  [alt]="product?.name || 'Product'" class="main-carousel-image">
                 <div class="carousel-thumbnails">
-                  <div class="thumbnail-dot" 
-                       *ngFor="let img of product?.images || []; let i = index"
-                       [class.active]="i === 0"
-                       (click)="selectImage(product, i)">
+                  <div class="thumbnail-dot" *ngFor="let img of product?.images || []; let i = index"
+                    [class.active]="i === 0" (click)="selectImage(product, i)">
                     <img [src]="img" [alt]="'Thumbnail ' + (i + 1)">
                   </div>
                 </div>
               </div>
             </div>
-            
+
             <!-- Overlay Actions -->
             <div class="related-product-actions">
               <button class="action-btn"><i class="pi pi-heart"></i></button>
@@ -296,7 +296,7 @@
             </div>
             <div class="discount-badge" *ngIf="product.discount">{{ product.discount }}% OFF</div>
           </div>
-          
+
           <div class="related-product-info">
             <h6 class="related-product-name">{{ product.name }}</h6>
             <div class="related-product-price">
@@ -319,7 +319,8 @@
           <i class="pi pi-chevron-down" *ngIf="!isLoadingMore"></i>
           <i class="pi pi-spin pi-spinner" *ngIf="isLoadingMore"></i>
         </button>
-        <p class="text-muted mt-3 small">Showing {{ relatedProducts.length }} of {{ allRelatedProducts.length || 120 }} products</p>
+        <p class="text-muted mt-3 small">Showing {{ relatedProducts.length }} of {{ allRelatedProducts.length || 120 }}
+          products</p>
       </div>
     </div>
   </div>

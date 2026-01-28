@@ -129,6 +129,34 @@
               </div>
             </div>
 
+            <!-- Easy Finora Verification UI -->
+            <div class="finora-verification mt-3 animate-fade-in"
+              *ngIf="checkoutForm.get('paymentMethod')?.value === 'finora'">
+
+              <div class="verification-status" *ngIf="isBalanceVerified">
+                <div class="balance-badge success">
+                  <i class="pi pi-check-circle"></i>
+                  <span>Available Balance: <strong>${{ verifiedBalance | number:'1.2-2' }}</strong></span>
+                </div>
+                <p class="status-msg success">Card verified for payment of ${{ total | number:'1.2-2' }}</p>
+              </div>
+
+              <div class="verification-status" *ngIf="verificationError">
+                <div class="balance-badge error">
+                  <i class="pi pi-exclamation-circle"></i>
+                  <span>{{ verificationError }}</span>
+                </div>
+              </div>
+
+              <button type="button" class="btn btn-info w-100 mt-2" (click)="verifyEasyFinoraBalance()"
+                [disabled]="isVerifyingBalance">
+                <i class="pi" [class.pi-spin]="isVerifyingBalance" [class.pi-spinner]="isVerifyingBalance"
+                  [class.pi-search]="!isVerifyingBalance"></i>
+                {{ isVerifyingBalance ? 'Verifying Card...' : 'Verify Card Balance' }}
+              </button>
+            </div>
+
+
             <!-- Bank Transfer Details -->
             <div class="payment-details-form" *ngIf="checkoutForm.get('paymentMethod')?.value === 'bank_transfer'">
               <div class="bank-info-box animate-fade-in">
@@ -158,6 +186,9 @@
               <div class="summary-items">
                 <div class="summary-item" *ngFor="let item of cartItems">
                   <div class="item-info">
+                    <span class="brand-name" *ngIf="item.product.brand"
+                      style="display:block; font-size:11px; color: #f85606; font-weight: 700; margin-bottom: 2px;">{{
+                      item.product.brand }}</span>
                     <span class="item-name">{{ item.product.name }}</span>
                     <span class="item-quantity">x{{ item.quantity }}</span>
                   </div>
@@ -193,7 +224,7 @@
                 Back to Cart
               </button>
               <button type="submit" class="btn btn-primary btn-lg w-100"
-                [disabled]="checkoutForm.invalid || isProcessing">
+                [disabled]="checkoutForm.invalid || isProcessing || (checkoutForm.get('paymentMethod')?.value === 'finora' && !isBalanceVerified)">
                 Place Order
               </button>
             </div>

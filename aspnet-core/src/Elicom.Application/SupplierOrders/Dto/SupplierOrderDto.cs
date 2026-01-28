@@ -15,6 +15,8 @@ namespace Elicom.SupplierOrders.Dto
         public string ShippingAddress { get; set; }
         public string CustomerName { get; set; }
         public string Status { get; set; }
+        public string SellerName { get; set; }
+        public long SellerId { get; set; }
 
         public Guid? OrderId { get; set; }
 

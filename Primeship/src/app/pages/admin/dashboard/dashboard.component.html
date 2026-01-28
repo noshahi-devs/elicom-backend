@@ -7,7 +7,7 @@
 
   <!-- Stats Cards Grid -->
   <div class="stats-grid">
-    <div class="stat-card-3d" *ngFor="let card of statsCards" [style.background]="card.gradient">
+    <div *ngFor="let card of statsCards" class="stat-card-3d" [class.orange-card]="card.title === 'Total Orders'">
       <div class="stat-card-content">
         <div class="stat-icon-wrapper">
           <span class="stat-icon">{{ card.icon }}</span>
@@ -44,6 +44,10 @@
             <button class="action-card color-success" (click)="onQuickAction('/admin/sellers')">
               <span class="action-icon">👥</span>
               <span class="action-title">Sellers List</span>
+            </button>
+            <button class="action-card" (click)="onQuickAction('/admin/customers')">
+              <span class="action-icon">⚙️</span>
+              <span class="action-title">User Management</span>
             </button>
           </div>
         </div>

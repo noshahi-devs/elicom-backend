@@ -67,9 +67,10 @@ export class CartService {
     }
 
     getCartTotal(): number {
-        return this.cartItemsSubject.value.reduce((total, item) =>
-            total + (item.product.price * item.quantity), 0
-        );
+        return this.cartItemsSubject.value.reduce((total, item) => {
+            const price = item.product.supplierPrice || item.product.purchasePrice || item.product.price || 0;
+            return total + (price * item.quantity);
+        }, 0);
     }
 
     getCartCount(): number {

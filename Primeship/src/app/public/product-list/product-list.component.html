@@ -121,7 +121,10 @@
                   </div>
 
                   <div class="product-info">
-                    <h3 class="product-name">{{ product.name }}</h3>
+                    <span class="brand-label" *ngIf="product.brand"
+                      style="display:block; color: #f85606; font-size: 0.85rem; font-weight: 600; margin-bottom: 2px;">{{
+                      product.brand }}</span>
+                    <h3 class="product-name" style="margin-top: 0;">{{ product.name }}</h3>
                     <div class="price-row">
                       <span class="price">${{ product.price | number:'1.0-0' }}</span>
                       <button class="add-cart-mini" (click)="$event.stopPropagation(); addToCart(product)">

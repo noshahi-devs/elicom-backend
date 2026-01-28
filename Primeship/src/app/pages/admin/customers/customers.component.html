@@ -13,8 +13,8 @@
   <!-- Header -->
   <div class="header">
     <div class="header-title">
-      <h2><i class="pi pi-users"></i> Customers</h2>
-      <p>Manage customer profiles, status, and order activity</p>
+      <h2><i class="pi pi-store"></i> Sellers</h2>
+      <p>Manage seller profiles, status, and total platform spendings</p>
     </div>
     <button type="button" class="btn primary" (click)="openAddCustomerModal()">
       <i class="pi pi-plus"></i>
@@ -41,36 +41,38 @@
     </button>
   </div>
 
+  <app-game-loader *ngIf="isLoading"></app-game-loader>
+
   <!-- Customers Table -->
-  <div class="table-container">
+  <div class="table-container" *ngIf="!isLoading">
     <table class="simple-table">
       <thead>
         <tr>
-          <th>ID</th>
+          <th>Seller ID</th>
           <th>Name</th>
           <th>Email</th>
-          <th>Phone</th>
-          <th>Orders</th>
-          <th>Total Spent</th>
+          <th>Volume</th>
           <th>Status</th>
-          <th>Created</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let customer of paginatedCustomers">
-          <td>{{ customer.id }}</td>
-          <td><strong>{{ customer.name }}</strong></td>
+          <td><span class="id-badge">{{ customer.id }}</span></td>
+          <td><strong class="text-nowrap">{{ customer.name }}</strong></td>
           <td>{{ customer.email }}</td>
-          <td>{{ customer.phone }}</td>
-          <td>{{ customer.totalOrders }}</td>
-          <td>{{ formatCurrency(customer.totalSpent) }}</td>
+          <td class="spending-cell">{{ formatCurrency(customer.totalSpent) }}</td>
           <td>
-            <span class="status-badge" [ngClass]="customer.status">
-              {{ getStatusLabel(customer.status) }}
-            </span>
+            <div class="status-control">
+              <span class="status-badge" [ngClass]="customer.status">
+                {{ getStatusLabel(customer.status) }}
+              </span>
+              <button type="button" class="btn-toggle"
+                [title]="customer.status === 'active' ? 'Deactivate' : 'Activate'" (click)="toggleUserStatus(customer)">
+                <i [class]="customer.status === 'active' ? 'pi pi-toggle-on' : 'pi pi-toggle-off'"></i>
+              </button>
+            </div>
           </td>
-          <td>{{ customer.createdAt | date: 'mediumDate' }}</td>
           <td class="actions">
             <button type="button" class="btn icon edit" (click)="openEditCustomerModal(customer)" title="Edit">
               <i class="pi pi-pencil"></i>
@@ -85,7 +87,8 @@
           <td colspan="9" class="no-data">
             <i class="pi pi-inbox"></i>
             <p>No customers found</p>
-            <button type="button" class="btn secondary" (click)="openAddCustomerModal()">Add Your First Customer</button>
+            <button type="button" class="btn secondary" (click)="openAddCustomerModal()">Add Your First
+              Customer</button>
           </td>
         </tr>
       </tbody>
@@ -104,7 +107,8 @@
       </button>
 
       <div class="page-numbers">
-        <button *ngFor="let page of getPageNumbers()" class="btn page-btn" [ngClass]="{ 'active': page === currentPage }" (click)="changePage(page)">
+        <button *ngFor="let page of getPageNumbers()" class="btn page-btn"
+          [ngClass]="{ 'active': page === currentPage }" (click)="changePage(page)">
           {{ page }}
         </button>
       </div>

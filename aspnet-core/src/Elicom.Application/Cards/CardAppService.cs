@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Abp.Authorization;
 using Abp.Domain.Repositories;
+using Abp.Domain.Uow;
 using Abp.Runtime.Session;
 using Abp.UI;
 using Elicom.Authorization.Users;
@@ -58,6 +59,83 @@ namespace Elicom.Cards
                 PendingWithdrawal = pendingWithdrawal,
                 Currency = "USD"
             };
+        }
+
+        public async Task<CardValidationResultDto> ValidateCard(ValidateCardInput input)
+        {
+            // Clean card number (remove spaces)
+            var cleanCardNumber = input.CardNumber.Replace(" ", "");
+
+            // Cross-tenant lookup: Ignore filters to find the card in any tenant (usually Tenant 3)
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
+            {
+                var card = await _cardRepository.GetAll()
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(c => c.CardNumber == cleanCardNumber);
+
+                if (card == null)
+                {
+                    return new CardValidationResultDto { IsValid = false, Message = "Card not found." };
+                }
+
+                if (card.Cvv != input.Cvv || card.ExpiryDate != input.ExpiryDate)
+                {
+                    return new CardValidationResultDto { IsValid = false, Message = "Invalid CVV or Expiry Date." };
+                }
+
+                if (card.Status != "Active")
+                {
+                    return new CardValidationResultDto { IsValid = false, Message = $"Card is {card.Status}." };
+                }
+
+                if (card.Balance < input.Amount)
+                {
+                    return new CardValidationResultDto 
+                    { 
+                        IsValid = false, 
+                        Message = "Insufficient balance.",
+                        AvailableBalance = card.Balance
+                    };
+                }
+
+                return new CardValidationResultDto 
+                { 
+                    IsValid = true, 
+                    Message = "Card verified successfully.",
+                    AvailableBalance = card.Balance
+                };
+            }
+        }
+
+        public async Task ProcessPayment(ProcessCardPaymentInput input)
+        {
+            var cleanCardNumber = input.CardNumber.Replace(" ", "");
+
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
+            {
+                var card = await _cardRepository.GetAll()
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(c => c.CardNumber == cleanCardNumber);
+
+                if (card == null || card.Cvv != input.Cvv || card.ExpiryDate != input.ExpiryDate)
+                {
+                    throw new UserFriendlyException("Verification failed during payment processing.");
+                }
+
+                if (card.Balance < input.Amount)
+                {
+                    throw new UserFriendlyException("Insufficient balance on the card.");
+                }
+
+                // Deduct balance
+                card.Balance -= input.Amount;
+                await _cardRepository.UpdateAsync(card);
+
+                // Record transaction
+                // Note: We'd typically create a WalletTransaction here, 
+                // but since Wallets and VirtualCards are slightly different models in this codebase,
+                // we'll focus on the card balance for this specific EasyFinora integration.
+            }
         }
 
         public async Task<VirtualCardDto> CreateVirtualCard(CreateVirtualCardInput input)

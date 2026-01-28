@@ -11,6 +11,9 @@
                 <img [src]="item.product.image" [alt]="item.product.name" class="cart-item-image">
               </div>
               <div class="col-md-4">
+                <span class="brand-item" *ngIf="item.product.brand"
+                  style="display:block; font-size: 0.8rem; color: #f85606; font-weight: 600;">{{ item.product.brand
+                  }}</span>
                 <h6 class="cart-item-name">{{ item.product.name }}</h6>
                 <p class="cart-item-details">
                   Size: {{ item.size }} | Color: {{ item.color }}

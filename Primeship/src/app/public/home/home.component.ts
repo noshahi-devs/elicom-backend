@@ -28,6 +28,7 @@ interface Product {
   inStock: boolean;
   isFeatured?: boolean;
   isNew?: boolean;
+  brand?: string;
 }
 
 @Component({
@@ -149,7 +150,9 @@ export class HomeComponent implements OnInit {
     // Calculate discount percentage
     const discount = dto.discountPercentage || 0;
     const originalPrice = dto.resellerMaxPrice;
-    const price = originalPrice - (originalPrice * discount / 100);
+    // Update: Use SupplierPrice for Homepage display (Wholesale)
+    // Cast to any to safely check PascalCase which might be returned by some API endpoints
+    const price = (dto as any).SupplierPrice || dto.supplierPrice || 0;
 
     return {
       id: dto.id,
@@ -164,7 +167,8 @@ export class HomeComponent implements OnInit {
       image: firstImage,
       inStock: dto.stockQuantity > 0,
       isFeatured: true,
-      isNew: true
+      isNew: true,
+      brand: dto.brandName || 'Generic'
     };
   }
 

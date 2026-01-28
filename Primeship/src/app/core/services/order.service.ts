@@ -49,6 +49,7 @@ export interface CreateOrderInput {
 })
 export class OrderService {
     private apiUrl = 'https://localhost:44311/api/services/app/Order';
+    private wholesaleApiUrl = 'https://localhost:44311/api/services/app/SupplierOrder';
 
     constructor(
         private http: HttpClient,
@@ -57,6 +58,12 @@ export class OrderService {
 
     createOrder(input: CreateOrderInput): Observable<any> {
         return this.http.post(`${this.apiUrl}/Create`, input, {
+            headers: this.authService.getAuthHeaders()
+        });
+    }
+
+    createSupplierOrder(input: any): Observable<any> {
+        return this.http.post(`${this.wholesaleApiUrl}/Create`, input, {
             headers: this.authService.getAuthHeaders()
         });
     }
@@ -70,18 +77,18 @@ export class OrderService {
     }
 
     getAllOrders(): Observable<Order[]> {
-        return this.http.get<any>(`${this.apiUrl}/GetAll`, {
+        return this.http.get<any>(`${this.wholesaleApiUrl}/GetAll`, {
             headers: this.authService.getAuthHeaders()
         }).pipe(
-            map(response => response.result || [])
+            map(response => response.result?.items || [])
         );
     }
 
     getAllForSupplier(): Observable<any[]> {
-        return this.http.get<any>(`${this.apiUrl}/GetAllForSupplier`, {
+        return this.http.get<any>(`${this.wholesaleApiUrl}/GetMyOrders`, {
             headers: this.authService.getAuthHeaders()
         }).pipe(
-            map(response => response.result || [])
+            map(response => response.result?.items || [])
         );
     }
 
@@ -93,13 +100,19 @@ export class OrderService {
     }
 
     markAsVerified(id: string): Observable<any> {
-        return this.http.post(`${this.apiUrl}/MarkAsVerified`, { id }, {
+        return this.http.post(`${this.wholesaleApiUrl}/MarkAsVerified`, { id }, {
             headers: this.authService.getAuthHeaders()
         });
     }
 
     markAsDelivered(id: string): Observable<any> {
-        return this.http.post(`${this.apiUrl}/MarkAsDelivered`, { id }, {
+        return this.http.post(`${this.wholesaleApiUrl}/MarkAsDelivered`, { id }, {
+            headers: this.authService.getAuthHeaders()
+        });
+    }
+
+    updateOrderStatus(id: any, status: OrderStatus): Observable<any> {
+        return this.http.put(`${this.wholesaleApiUrl}/UpdateStatus`, { id, status }, {
             headers: this.authService.getAuthHeaders()
         });
     }

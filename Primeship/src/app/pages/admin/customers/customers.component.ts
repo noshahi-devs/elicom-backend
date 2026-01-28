@@ -1,7 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { GameLoaderComponent } from '../../../shared/components/game-loader/game-loader.component';
+import { UserService, UserDto, CreateUserDto, UpdateUserDto } from '../../../core/services/user.service';
+import { OrderService, Order } from '../../../core/services/order.service';
+import { forkJoin } from 'rxjs';
 
 interface Toast {
   id: number;
@@ -23,7 +27,7 @@ interface Customer {
 @Component({
   selector: 'app-customers',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, GameLoaderComponent],
   templateUrl: './customers.component.html',
   styleUrls: ['./customers.component.scss']
 })
@@ -48,77 +52,110 @@ export class CustomersComponent implements OnInit {
   searchTerm = '';
   selectedStatusFilter: string | null = null;
 
+  isLoading = false;
   toasts: Toast[] = [];
   private toastId = 0;
 
-  constructor(private fb: FormBuilder) {}
+  constructor(
+    private fb: FormBuilder,
+    private cdr: ChangeDetectorRef,
+    private userService: UserService,
+    private orderService: OrderService
+  ) { }
 
   ngOnInit(): void {
     this.initForms();
-    this.loadDummyData();
-    this.filterTable();
+    this.loadCustomers(); // Load real data
   }
 
   private initForms(): void {
     this.addCustomerForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
+      surname: ['', [Validators.required]],
+      userName: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
-      phone: ['', [Validators.required]],
-      status: [true]
+      phone: [''],
+      status: [true],
+      password: ['123456'] // Default password for new users
     });
 
     this.editCustomerForm = this.fb.group({
       id: [null],
       name: ['', [Validators.required, Validators.minLength(3)]],
+      surname: ['', [Validators.required]],
+      userName: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
-      phone: ['', [Validators.required]],
+      phone: [''],
       status: [true]
     });
   }
 
-  private loadDummyData(): void {
-    this.customers = [
-      {
-        id: 1,
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        phone: '+1 (555) 010-1000',
-        status: 'active',
-        totalOrders: 12,
-        totalSpent: 3456.78,
-        createdAt: new Date('2024-01-10')
+  loadCustomers(): void {
+    this.isLoading = true;
+
+    // Fetch users and orders in parallel to calculate spending
+    forkJoin({
+      users: this.userService.getAll(),
+      orders: this.orderService.getAllOrders() // These are SupplierOrders (Wholesale)
+    }).subscribe({
+      next: ({ users, orders }) => {
+        this.customers = users.map(u => {
+          // Total Volume = Wholesale orders placed by this user (reseller)
+          // Match by resellerId or creatorUserId
+          const userOrders = (orders || []).filter(o =>
+            Number(o.resellerId) === u.id ||
+            Number(o.sellerId) === u.id ||
+            Number((o as any).creatorUserId) === u.id
+          );
+
+          const totalVolume = userOrders.reduce((sum, order: any) => {
+            const orderTotal = order.totalAmount || order.totalPurchaseAmount || (order.items || []).reduce((itemSum: number, item: any) => {
+              const price = Number(item.price) || 0;
+              const qty = Number(item.qty || item.quantity) || 0;
+              return itemSum + (price * qty);
+            }, 0);
+            return sum + Number(orderTotal || 0);
+          }, 0);
+
+          return {
+            id: u.id,
+            name: u.fullName || (u.name + ' ' + u.surname),
+            email: u.emailAddress,
+            phone: (u as any).phoneNumber || '',
+            status: u.isActive ? 'active' : 'inactive',
+            totalOrders: userOrders.length,
+            totalSpent: totalVolume,
+            createdAt: new Date(u.creationTime)
+          };
+        });
+
+        this.filterTable();
+        this.isLoading = false;
+        this.cdr.detectChanges();
       },
-      {
-        id: 2,
-        name: 'Jane Smith',
-        email: 'jane.smith@example.com',
-        phone: '+1 (555) 010-2000',
-        status: 'active',
-        totalOrders: 6,
-        totalSpent: 1299.0,
-        createdAt: new Date('2024-01-18')
-      },
-      {
-        id: 3,
-        name: 'Bob Johnson',
-        email: 'bob.johnson@example.com',
-        phone: '+1 (555) 010-3000',
-        status: 'inactive',
-        totalOrders: 2,
-        totalSpent: 249.0,
-        createdAt: new Date('2024-01-05')
-      },
-      {
-        id: 4,
-        name: 'Alice Brown',
-        email: 'alice.brown@example.com',
-        phone: '+1 (555) 010-4000',
-        status: 'active',
-        totalOrders: 9,
-        totalSpent: 1899.99,
-        createdAt: new Date('2024-01-22')
+      error: (err) => {
+        console.error('Failed to load sellers', err);
+        this.showToast('Failed to load sellers', 'error');
+        this.isLoading = false;
+        this.cdr.detectChanges();
       }
-    ];
+    });
+  }
+
+  toggleUserStatus(customer: Customer): void {
+    const isActactivating = customer.status === 'inactive';
+    const action = isActactivating ? this.userService.activate(customer.id) : this.userService.deactivate(customer.id);
+
+    action.subscribe({
+      next: () => {
+        this.showToast(`Seller ${isActactivating ? 'activated' : 'deactivated'} successfully`, 'success');
+        this.loadCustomers(); // Reload to reflect status
+      },
+      error: (err) => {
+        console.error(err);
+        this.showToast(`Failed to ${isActactivating ? 'activate' : 'deactivate'} seller`, 'error');
+      }
+    });
   }
 
   showToast(message: string, type: Toast['type'] = 'info'): void {
@@ -145,51 +182,78 @@ export class CustomersComponent implements OnInit {
   }
 
   openAddCustomerModal(): void {
-    this.addCustomerForm.reset({ name: '', email: '', phone: '', status: true });
+    this.addCustomerForm.reset({
+      name: '',
+      surname: '',
+      userName: '',
+      email: '',
+      phone: '',
+      status: true,
+      password: 'Password123!' // Default strong password
+    });
     this.addCustomerModalVisible = true;
+    this.cdr.detectChanges();
   }
 
   closeAddCustomerModal(): void {
     this.addCustomerModalVisible = false;
+    this.cdr.detectChanges();
   }
 
   openEditCustomerModal(customer: Customer): void {
     this.selectedCustomer = customer;
+    // We need to fetch full details or key off existing. 
+    // Ideally we call get(id) to fill form, but for now using grid data.
+    // Splitting name to name/surname is hacky, but ok for now.
+    const nameParts = customer.name.split(' ');
+    const name = nameParts[0];
+    const surname = nameParts.slice(1).join(' ') || '-';
+
     this.editCustomerForm.patchValue({
       id: customer.id,
-      name: customer.name,
+      name: name,
+      surname: surname,
+      userName: customer.email, // Often email is username
       email: customer.email,
       phone: customer.phone,
       status: customer.status === 'active'
     });
     this.editCustomerModalVisible = true;
+    this.cdr.detectChanges();
   }
 
   closeEditCustomerModal(): void {
     this.editCustomerModalVisible = false;
     this.selectedCustomer = null;
+    this.cdr.detectChanges();
   }
 
   openDeleteConfirmation(customer: Customer): void {
     this.customerToDelete = customer;
     this.deleteConfirmationVisible = true;
+    this.cdr.detectChanges();
   }
 
   cancelDelete(): void {
     this.deleteConfirmationVisible = false;
     this.customerToDelete = null;
+    this.cdr.detectChanges();
   }
 
   confirmDelete(): void {
     if (this.customerToDelete) {
-      const index = this.customers.findIndex(c => c.id === this.customerToDelete!.id);
-      if (index > -1) {
-        this.customers.splice(index, 1);
-        this.showToast(`Customer "${this.customerToDelete.name}" deleted successfully`, 'success');
-        this.filterTable();
-      }
+      this.userService.delete(this.customerToDelete.id).subscribe({
+        next: () => {
+          this.showToast(`Customer "${this.customerToDelete?.name}" deleted successfully`, 'success');
+          this.loadCustomers();
+          this.cancelDelete();
+        },
+        error: (err) => {
+          this.showToast('Failed to delete customer', 'error');
+          this.cancelDelete();
+        }
+      });
     }
-    this.cancelDelete();
   }
 
   saveCustomer(): void {
@@ -199,21 +263,27 @@ export class CustomersComponent implements OnInit {
     }
 
     const formValue = this.addCustomerForm.value;
-    const newCustomer: Customer = {
-      id: Math.max(...this.customers.map(c => c.id), 0) + 1,
+    const input: CreateUserDto = {
+      userName: formValue.userName || formValue.email,
       name: formValue.name,
-      email: formValue.email,
-      phone: formValue.phone,
-      status: formValue.status ? 'active' : 'inactive',
-      totalOrders: 0,
-      totalSpent: 0,
-      createdAt: new Date()
+      surname: formValue.surname,
+      emailAddress: formValue.email,
+      isActive: formValue.status,
+      roleNames: ['Customer'],
+      password: formValue.password
     };
 
-    this.customers.unshift(newCustomer);
-    this.showToast('Customer added successfully', 'success');
-    this.closeAddCustomerModal();
-    this.filterTable();
+    this.userService.create(input).subscribe({
+      next: () => {
+        this.showToast('Customer added successfully', 'success');
+        this.closeAddCustomerModal();
+        this.loadCustomers();
+      },
+      error: (err) => {
+        console.error(err);
+        this.showToast('Failed to create customer', 'error');
+      }
+    });
   }
 
   updateCustomer(): void {
@@ -223,21 +293,26 @@ export class CustomersComponent implements OnInit {
     }
 
     const formValue = this.editCustomerForm.value;
-    const index = this.customers.findIndex(c => c.id === formValue.id);
+    const input: UpdateUserDto = {
+      id: formValue.id,
+      userName: formValue.userName || formValue.email,
+      name: formValue.name,
+      surname: formValue.surname,
+      emailAddress: formValue.email,
+      isActive: formValue.status,
+      roleNames: ['Customer']
+    };
 
-    if (index > -1) {
-      this.customers[index] = {
-        ...this.customers[index],
-        name: formValue.name,
-        email: formValue.email,
-        phone: formValue.phone,
-        status: formValue.status ? 'active' : 'inactive'
-      };
-
-      this.showToast('Customer updated successfully', 'success');
-      this.closeEditCustomerModal();
-      this.filterTable();
-    }
+    this.userService.update(input).subscribe({
+      next: () => {
+        this.showToast('Customer updated successfully', 'success');
+        this.closeEditCustomerModal();
+        this.loadCustomers();
+      },
+      error: (err) => {
+        this.showToast('Failed to update customer', 'error');
+      }
+    });
   }
 
   getStatusLabel(status: Customer['status']): string {
@@ -266,6 +341,7 @@ export class CustomersComponent implements OnInit {
 
     this.filteredCustomers = filtered;
     this.updatePagination();
+    this.cdr.detectChanges();
   }
 
   private updatePagination(): void {
@@ -275,12 +351,14 @@ export class CustomersComponent implements OnInit {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     const endIndex = startIndex + this.itemsPerPage;
     this.paginatedCustomers = this.filteredCustomers.slice(startIndex, endIndex);
+    this.cdr.detectChanges();
   }
 
   changePage(page: number): void {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
       this.updatePagination();
+      this.cdr.detectChanges();
     }
   }
 

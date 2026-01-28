@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { UserService, UserDto } from '../../../core/services/user.service';
 
 export interface User {
   id: number;
   name: string;
   email: string;
-  role: 'admin' | 'seller' | 'customer';
+  role: string;
   status: 'active' | 'inactive';
   createdAt: Date;
   lastLogin: Date | null;
@@ -37,80 +38,45 @@ export class UsersComponent implements OnInit {
   errorPopupVisible = false;
   errorMessage = '';
 
+  constructor(private userService: UserService) { }
+
   ngOnInit(): void {
-    this.loadDummyUsers();
-    this.applyFilters();
+    this.loadUsers();
   }
 
-  loadDummyUsers(): void {
-    this.users = [
-      {
-        id: 1,
-        name: 'Ali Khan',
-        email: 'ali.khan@example.com',
-        role: 'seller',
-        status: 'active',
-        createdAt: new Date('2025-12-01'),
-        lastLogin: new Date('2026-01-24')
+  loadUsers(): void {
+    this.userService.getAll().subscribe({
+      next: (users) => {
+        this.users = users.map(u => ({
+          id: u.id,
+          name: u.fullName,
+          email: u.emailAddress,
+          role: u.roleNames && u.roleNames.length > 0 ? u.roleNames.join(', ') : 'User',
+          status: u.isActive ? 'active' : 'inactive',
+          createdAt: new Date(u.creationTime),
+          lastLogin: u.lastLoginTime ? new Date(u.lastLoginTime) : null
+        }));
+        this.applyFilters();
       },
-      {
-        id: 2,
-        name: 'Fatima Noor',
-        email: 'fatima.noor@example.com',
-        role: 'seller',
-        status: 'inactive',
-        createdAt: new Date('2025-11-15'),
-        lastLogin: new Date('2026-01-10')
-      },
-      {
-        id: 3,
-        name: 'Usman Ahmad',
-        email: 'usman.ahmad@example.com',
-        role: 'customer',
-        status: 'active',
-        createdAt: new Date('2026-01-05'),
-        lastLogin: new Date('2026-01-23')
-      },
-      {
-        id: 4,
-        name: 'Ayesha Malik',
-        email: 'ayesha.malik@example.com',
-        role: 'admin',
-        status: 'active',
-        createdAt: new Date('2025-10-20'),
-        lastLogin: new Date('2026-01-24')
-      },
-      {
-        id: 5,
-        name: 'Hamza Sheikh',
-        email: 'hamza.sheikh@example.com',
-        role: 'customer',
-        status: 'inactive',
-        createdAt: new Date('2025-12-12'),
-        lastLogin: null
-      },
-      {
-        id: 6,
-        name: 'Sara Ali',
-        email: 'sara.ali@example.com',
-        role: 'seller',
-        status: 'active',
-        createdAt: new Date('2026-01-02'),
-        lastLogin: new Date('2026-01-22')
+      error: (err) => {
+        console.error('Failed to load users', err);
+        this.showError('Failed to load users');
       }
-    ];
+    });
   }
 
   applyFilters(): void {
     const term = this.searchTerm.trim().toLowerCase();
     this.filteredUsers = this.users.filter(user => {
-      const matchesSearch = !term || 
+      const matchesSearch = !term ||
         user.name.toLowerCase().includes(term) ||
         user.email.toLowerCase().includes(term);
-      
+
       const matchesStatus = this.selectedStatus === 'all' || user.status === this.selectedStatus;
-      const matchesRole = this.selectedRole === 'all' || user.role === this.selectedRole;
-      
+
+      // Role filter might need adjustment if roles are comma separated strings now
+      const matchesRole = this.selectedRole === 'all' || user.role.toLowerCase().includes(this.selectedRole.toLowerCase());
+
       return matchesSearch && matchesStatus && matchesRole;
     });
   }
@@ -129,14 +95,25 @@ export class UsersComponent implements OnInit {
 
   confirmStatusToggle(): void {
     if (!this.userToToggle || !this.newStatus) return;
-    
+
     const user = this.userToToggle;
-    const oldStatus = user.status;
-    user.status = this.newStatus;
-    
-    this.applyFilters();
-    this.closeStatusConfirm();
-    this.showSuccess(`User ${user.name} is now ${user.status}`);
+    const action = this.newStatus === 'active'
+      ? this.userService.activate(user.id)
+      : this.userService.deactivate(user.id);
+
+    action.subscribe({
+      next: () => {
+        user.status = this.newStatus!;
+        this.applyFilters();
+        this.closeStatusConfirm();
+        this.showSuccess(`User ${user.name} is now ${user.status}`);
+      },
+      error: (err) => {
+        console.error(err);
+        this.showError('Failed to update user status');
+        this.closeStatusConfirm();
+      }
+    });
   }
 
   getStatusColor(status: 'active' | 'inactive'): string {
@@ -144,20 +121,19 @@ export class UsersComponent implements OnInit {
   }
 
   getRoleBadgeClass(role: string): string {
-    switch (role) {
-      case 'admin': return 'admin';
-      case 'seller': return 'seller';
-      case 'customer': return 'customer';
-      default: return '';
-    }
+    const lowerRole = role.toLowerCase();
+    if (lowerRole.includes('admin')) return 'admin';
+    if (lowerRole.includes('supplier')) return 'seller';
+    if (lowerRole.includes('customer')) return 'customer';
+    return 'customer'; // default
   }
 
   formatDate(date: Date | null): string {
     if (!date) return 'Never';
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     });
   }
 

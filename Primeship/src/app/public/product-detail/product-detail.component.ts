@@ -120,7 +120,8 @@ export class ProductDetailComponent implements OnInit {
         // Map DTO to template model
         const originalPrice = dto.resellerMaxPrice;
         const discount = dto.discountPercentage || 0;
-        const price = originalPrice - (originalPrice * discount / 100);
+        // Update: Use SupplierPrice (Wholesale) instead of retail discounted price
+        const price = (dto as any).SupplierPrice || dto.supplierPrice || 0;
 
         this.product = {
           id: dto.id,
@@ -141,7 +142,8 @@ export class ProductDetailComponent implements OnInit {
             { key: 'SKU', value: dto.sku },
             { key: 'Brand', value: dto.brandName || 'Store Brand' },
             { key: 'Stock', value: `${dto.stockQuantity} units` }
-          ]
+          ],
+          brand: dto.brandName || (dto as any).BrandName || 'Generic'
         };
 
         this.isLoading = false;

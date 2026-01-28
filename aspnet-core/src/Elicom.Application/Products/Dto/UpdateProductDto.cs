@@ -10,6 +10,7 @@ namespace Elicom.Products.Dto
 
     public class UpdateProductDto : EntityDto<Guid>
     {
+        public int? TenantId { get; set; }
         public string Name { get; set; }
         public Guid CategoryId { get; set; }
 

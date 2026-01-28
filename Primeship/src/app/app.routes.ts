@@ -6,7 +6,6 @@ import { SellerOrdersComponent } from './pages/seller/orders/orders.component';
 import { CategoriesComponent } from './pages/admin/categories/categories.component';
 import { OrdersComponent } from './pages/admin/orders/orders.component';
 import { ThreeplPartnersComponent } from './pages/admin/threepl-partners/threepl-partners.component';
-import { InventoryComponent } from './pages/admin/inventory/inventory.component';
 import { CustomersComponent } from './pages/admin/customers/customers.component';
 import { SellersComponent } from './pages/admin/sellers/sellers.component';
 import { FinanceComponent } from './pages/admin/finance/finance.component';
@@ -83,10 +82,6 @@ export const routes: Routes = [
       {
         path: 'categories',
         component: CategoriesComponent
-      },
-      {
-        path: 'inventory',
-        component: InventoryComponent
       },
       {
         path: 'orders',

@@ -1,16 +1,16 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { OrderService, Order, OrderStatus } from '../../../core/services/order.service';
-import { Subscription } from 'rxjs';
+
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { PrimeIcons } from 'primeng/api';
+import { GameLoaderComponent } from '../../../shared/components/game-loader/game-loader.component';
 
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  providers: [OrderService],
+  imports: [CommonModule, FormsModule, GameLoaderComponent],
   templateUrl: './orders.component.html',
   styleUrls: ['./orders.component.scss'],
   animations: [
@@ -32,24 +32,25 @@ import { PrimeIcons } from 'primeng/api';
     ])
   ]
 })
-export class OrdersComponent implements OnInit, OnDestroy {
-  orders: Order[] = [];
-  filteredOrders: Order[] = [];
+export class OrdersComponent implements OnInit {
+  orders: any[] = [];
+  filteredOrders: any[] = [];
+  isLoading = false;
 
   searchTerm = '';
-  selectedStatus: OrderStatus | 'all' = 'all';
-  selectedSeller: number | 'all' = 'all'; // Admin can filter by seller
+  selectedStatus: string = 'all';
+  selectedSeller: any = 'all'; // Admin can filter by seller
 
   viewModalVisible = false;
-  selectedOrder: Order | null = null;
+  selectedOrder: any = null;
 
   // Status update modal properties
   statusUpdateModalVisible = false;
-  orderForStatusUpdate: Order | null = null;
-  selectedNewStatus: OrderStatus = 'pending';
+  orderForStatusUpdate: any = null;
+  selectedNewStatus: string = 'pending';
 
   // Available statuses as const array
-  availableStatuses: OrderStatus[] = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+  availableStatuses: string[] = ['purchased', 'verified', 'processing', 'shipped', 'delivered', 'cancelled'];
 
   // Success popup properties
   showSuccessPopup = false;
@@ -64,7 +65,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   // Delete modal properties
   deleteModalVisible = false;
-  orderToDelete: Order | null = null;
+  orderToDelete: any = null;
 
   // Admin-specific properties
   adminStats = {
@@ -74,138 +75,189 @@ export class OrdersComponent implements OnInit, OnDestroy {
     deliveredOrders: 0
   };
 
-  private ordersSubscription: Subscription = new Subscription();
-
-  constructor(private orderService: OrderService) { }
+  constructor(
+    private orderService: OrderService,
+    private cdr: ChangeDetectorRef
+  ) { }
 
   ngOnInit(): void {
-    // Subscribe to orders from service
-    this.ordersSubscription = this.orderService.getAllOrders().subscribe(orders => {
-      this.orders = orders;
-      this.applyFilters();
-      this.calculateAdminStats();
-    });
+    this.loadOrders();
   }
 
-  ngOnDestroy(): void {
-    if (this.ordersSubscription) {
-      this.ordersSubscription.unsubscribe();
-    }
+  loadOrders(): void {
+    this.isLoading = true;
+    this.orderService.getAllOrders().subscribe({
+      next: (orders) => {
+        const rawOrders = orders || [];
+        this.orders = rawOrders.map((o: any) => ({
+          ...o,
+          items: (o.items || o.orderItems || []).map((it: any) => ({
+            ...it,
+            qty: it.qty || it.quantity || 0,
+            price: it.price || it.purchasePrice || it.priceAtPurchase || 0,
+            name: it.productName || it.name // Admin template uses 'name'
+          }))
+        }));
+
+        this.applyFilters();
+        this.calculateAdminStats();
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error loading orders:', err);
+        this.orders = [];
+        this.applyFilters();
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   // Admin can delete orders
   deleteOrder(order: Order): void {
     this.orderToDelete = order;
     this.deleteModalVisible = true;
+    this.cdr.detectChanges();
   }
 
   closeDeleteModal(): void {
     this.deleteModalVisible = false;
     this.orderToDelete = null;
+    this.cdr.detectChanges();
   }
 
   confirmDelete(): void {
     if (this.orderToDelete) {
-      const orderNumber = this.orderToDelete.orderNo || this.orderToDelete.referenceCode;
-      this.orderService.deleteOrder(this.orderToDelete.id);
-
-      // Show delete success popup
-      this.showDeleteSuccessPopup = true;
-      this.deletedOrderNumber = orderNumber;
-
-      // Auto-hide after 3 seconds
-      this.deleteSuccessTimeout = setTimeout(() => {
-        this.hideDeleteSuccessPopup();
-      }, 3000);
-
-      // Stats will be updated automatically through the subscription
+      const orderNumber = this.orderToDelete.orderNo || this.orderToDelete.referenceCode || this.orderToDelete.orderNumber;
+      this.orderService.deleteOrder(this.orderToDelete.id).subscribe({
+        next: () => {
+          this.showDeleteSuccessPopup = true;
+          this.deletedOrderNumber = orderNumber;
+          this.cdr.detectChanges();
+          this.deleteSuccessTimeout = setTimeout(() => {
+            this.hideDeleteSuccessPopup();
+          }, 3000);
+          this.loadOrders();
+        },
+        error: (err) => console.error('Delete failed', err)
+      });
       this.closeDeleteModal();
     }
   }
 
   hideDeleteSuccessPopup(): void {
     this.showDeleteSuccessPopup = false;
+    this.cdr.detectChanges();
     if (this.deleteSuccessTimeout) {
       clearTimeout(this.deleteSuccessTimeout);
     }
   }
 
   // Admin can assign orders to sellers
-  assignOrderToSeller(order: Order, sellerId: number, sellerName: string): void {
+  assignOrderToSeller(order: any, sellerId: number, sellerName: string): void {
     order.sellerId = sellerId;
     order.sellerName = sellerName;
     this.applyFilters();
+    this.cdr.detectChanges();
   }
 
   // Status update methods
-  openStatusUpdate(order: Order): void {
+  openStatusUpdate(order: any): void {
     this.orderForStatusUpdate = order;
-    this.selectedNewStatus = order.status;
+    this.selectedNewStatus = this.getNextStatus(order.status) || order.status;
     this.statusUpdateModalVisible = true;
+    this.cdr.detectChanges();
   }
 
   closeStatusUpdate(): void {
     this.statusUpdateModalVisible = false;
     this.orderForStatusUpdate = null;
     this.selectedNewStatus = 'pending';
+    this.cdr.detectChanges();
+  }
+
+  getNextStatus(currentStatus: string): string | null {
+    const status = (currentStatus || '').toLowerCase();
+    switch (status) {
+      case 'purchased': return 'verified';
+      case 'pending': return 'verified';
+      case 'verified': return 'processing';
+      case 'processing': return 'shipped';
+      case 'shipped': return 'delivered';
+      default: return null;
+    }
   }
 
   updateOrderStatus(): void {
-    if (this.orderForStatusUpdate && this.selectedNewStatus !== this.orderForStatusUpdate.status) {
-      if (this.selectedNewStatus === 'delivered') {
-        this.orderService.markAsDelivered(this.orderForStatusUpdate.id).subscribe({
-          next: () => {
-            this.showSuccessPopup = true;
-            this.updatedOrderNumber = this.orderForStatusUpdate!.orderNo || this.orderForStatusUpdate!.referenceCode;
-            this.updatedStatusText = 'Delivered';
-            setTimeout(() => this.hideSuccessPopup(), 3000);
-            this.ngOnInit(); // Refresh list
+    const orderToUpdate = this.orderForStatusUpdate || this.selectedOrder;
+    if (orderToUpdate && this.selectedNewStatus) {
+      this.orderService.updateOrderStatus(orderToUpdate.id, this.selectedNewStatus as any).subscribe({
+        next: () => {
+          this.showSuccessPopup = true;
+          this.updatedOrderNumber = this.orderForStatusUpdate!.orderNo || this.orderForStatusUpdate!.referenceCode || this.orderForStatusUpdate!.orderNumber;
+          this.updatedStatusText = this.getStatusLabel(this.selectedNewStatus);
+          this.cdr.detectChanges();
+          setTimeout(() => this.hideSuccessPopup(), 3000);
+          this.loadOrders(); // Refresh list
+          this.closeStatusUpdate();
+          // If update came from view modal, also close it or just refresh the selected order
+          if (this.selectedOrder && this.selectedOrder.id === orderToUpdate.id) {
+            this.selectedOrder.status = this.selectedNewStatus;
           }
-        });
-      } else {
-        // Fallback for other statuses - simplified for now
-        this.orderForStatusUpdate.status = this.selectedNewStatus;
-        this.showSuccessPopup = true;
-        this.updatedOrderNumber = this.orderForStatusUpdate.orderNo || this.orderForStatusUpdate.referenceCode;
-        this.updatedStatusText = this.getStatusLabel(this.selectedNewStatus);
-        setTimeout(() => this.hideSuccessPopup(), 3000);
-      }
+        },
+        error: (err) => {
+          console.error('Error updating order status:', err);
+          // Show error toast or similar if needed
+        }
+      });
     }
-    this.closeStatusUpdate();
   }
 
   hideSuccessPopup(): void {
     this.showSuccessPopup = false;
+    this.cdr.detectChanges();
     if (this.successTimeout) {
       clearTimeout(this.successTimeout);
     }
   }
 
   applyFilters(): void {
-    const q = this.searchTerm.trim().toLowerCase();
+    const q = (this.searchTerm || '').trim().toLowerCase();
 
     this.filteredOrders = this.orders.filter(o => {
+      const orderNo = (o.orderNo || o.referenceCode || o.orderNumber || '').toLowerCase();
+      const customerName = (o.customerName || '').toLowerCase();
+      const phone = (o.phone || '').toLowerCase();
+      const sellerName = (o.sellerName || '').toLowerCase();
+
       const matchesSearch =
         !q ||
-        (o.orderNo || o.referenceCode).toLowerCase().includes(q) ||
-        o.customerName.toLowerCase().includes(q) ||
-        (o.phone || '').toLowerCase().includes(q) ||
-        (o.sellerName && o.sellerName.toLowerCase().includes(q));
+        orderNo.includes(q) ||
+        customerName.includes(q) ||
+        phone.includes(q) ||
+        sellerName.includes(q);
 
-      const matchesStatus = this.selectedStatus === 'all' || o.status === this.selectedStatus;
+      const status = (o.status || '').toLowerCase();
+      const matchesStatus = this.selectedStatus === 'all' || status === this.selectedStatus.toLowerCase();
       const matchesSeller = this.selectedSeller === 'all' || o.sellerId === this.selectedSeller;
 
       return matchesSearch && matchesStatus && matchesSeller;
     });
+    this.cdr.detectChanges();
   }
 
   calculateAdminStats(): void {
     this.adminStats = {
       totalOrders: this.orders.length,
-      totalRevenue: this.orders.reduce((sum, order) => sum + this.getOrderTotal(order), 0),
-      pendingOrders: this.orders.filter(o => o.status === 'pending').length,
-      deliveredOrders: this.orders.filter(o => o.status === 'delivered').length
+      totalRevenue: this.orders.reduce((sum, order) => {
+        const total = this.getOrderTotal(order);
+        return sum + (isNaN(total) ? 0 : total);
+      }, 0),
+      pendingOrders: this.orders.filter(o => (o.status || '').toLowerCase() === 'pending').length,
+      deliveredOrders: this.orders.filter(o => (o.status || '').toLowerCase() === 'delivered').length
     };
+    this.cdr.detectChanges();
   }
 
   // Admin-specific methods
@@ -224,23 +276,31 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.selectedStatus = 'all';
     this.selectedSeller = 'all';
     this.applyFilters();
+    this.cdr.detectChanges();
   }
 
-  openView(order: Order): void {
+  openView(order: any): void {
     this.selectedOrder = order;
+    this.selectedNewStatus = order.status; // Initialize status for inline update
     this.viewModalVisible = true;
+    this.cdr.detectChanges();
   }
 
   closeView(): void {
     this.viewModalVisible = false;
     this.selectedOrder = null;
+    this.cdr.detectChanges();
   }
 
-  getStatusLabel(status: OrderStatus | string): string {
-    const statusValue = typeof status === 'string' ? status : status;
+  getStatusLabel(status: any): string {
+    const statusValue = (status || '').toLowerCase();
     switch (statusValue) {
+      case 'purchased':
+        return 'Purchased';
       case 'pending':
         return 'Pending';
+      case 'verified':
+        return 'Verified';
       case 'processing':
         return 'Processing';
       case 'shipped':
@@ -250,15 +310,19 @@ export class OrdersComponent implements OnInit, OnDestroy {
       case 'cancelled':
         return 'Cancelled';
       default:
-        return statusValue;
+        return status || 'Unknown';
     }
   }
 
-  getStatusDescription(status: OrderStatus | string): string {
-    const statusValue = typeof status === 'string' ? status : status;
+  getStatusDescription(status: any): string {
+    const statusValue = (status || '').toLowerCase();
     switch (statusValue) {
+      case 'purchased':
+        return 'Initial wholesale order placed';
       case 'pending':
         return 'Order received, awaiting processing';
+      case 'verified':
+        return 'Order identity and items have been verified';
       case 'processing':
         return 'Order is being prepared for shipment';
       case 'shipped':
@@ -268,15 +332,19 @@ export class OrdersComponent implements OnInit, OnDestroy {
       case 'cancelled':
         return 'Order has been cancelled';
       default:
-        return 'Status: ' + statusValue;
+        return 'Status: ' + (status || 'Unknown');
     }
   }
 
-  getStatusStyle(status: OrderStatus | string): any {
-    const statusValue = typeof status === 'string' ? status : status;
+  getStatusStyle(status: any): any {
+    const statusValue = (status || '').toLowerCase();
     switch (statusValue) {
+      case 'purchased':
+        return { backgroundColor: '#f3f4f6', color: '#374151' };
       case 'pending':
         return { backgroundColor: '#fef3c7', color: '#92400e' };
+      case 'verified':
+        return { backgroundColor: '#e0f2fe', color: '#0369a1' };
       case 'processing':
         return { backgroundColor: '#dbeafe', color: '#1d4ed8' };
       case 'shipped':
@@ -290,11 +358,15 @@ export class OrdersComponent implements OnInit, OnDestroy {
     }
   }
 
-  getStatusIcon(status: OrderStatus | string): string {
-    const statusValue = typeof status === 'string' ? status : status;
+  getStatusIcon(status: any): string {
+    const statusValue = (status || '').toLowerCase();
     switch (statusValue) {
+      case 'purchased':
+        return 'pi-shopping-cart';
       case 'pending':
         return 'pi-clock';
+      case 'verified':
+        return 'pi-verified';
       case 'processing':
         return 'pi-cog';
       case 'shipped':
@@ -308,11 +380,21 @@ export class OrdersComponent implements OnInit, OnDestroy {
     }
   }
 
-  getOrderTotal(order: Order): number {
-    return order.items.reduce((sum, it) => sum + it.qty * it.price, 0);
+  getOrderTotal(order: any): number {
+    if (!order) return 0;
+    if (order.totalAmount !== undefined) return order.totalAmount;
+    if (order.totalPurchaseAmount !== undefined) return order.totalPurchaseAmount;
+
+    const items = order.items || order.orderItems || [];
+    return items.reduce((sum: number, it: any) => {
+      const qty = it.qty || it.quantity || 0;
+      const price = it.price || it.purchasePrice || it.priceAtPurchase || 0;
+      return sum + (qty * price);
+    }, 0);
   }
 
-  formatPrice(amount: number): string {
-    return '$' + amount.toFixed(2);
+  formatPrice(amount: any): string {
+    const val = parseFloat(amount || 0);
+    return isNaN(val) ? '$0.00' : '$' + val.toFixed(2);
   }
 }

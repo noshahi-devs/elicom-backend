@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 
 export interface ProductDto {
   id: string;
+  tenantId?: number;
   name: string;
   sku: string;
   categoryId: string;
@@ -32,6 +34,7 @@ export interface ProductDto {
 }
 
 export interface CreateProductDto {
+  tenantId?: number;
   name: string;
   sku: string;
   categoryId: string;
@@ -63,35 +66,43 @@ export class ProductService {
   ) { }
 
   getAll(): Observable<ProductDto[]> {
-    return this.http.get<ProductDto[]>(`${this.productApiUrl}/GetAll`, {
+    return this.http.get<any>(`${this.productApiUrl}/GetAll`, {
       headers: this.authService.getAuthHeaders()
-    });
+    }).pipe(
+      map(response => {
+        // Handle wrapped response: response.result.items or response.result
+        if (response?.result?.items) {
+          return response.result.items;
+        }
+        return response?.result || [];
+      })
+    );
   }
 
   get(id: string): Observable<ProductDto> {
-    return this.http.get<ProductDto>(`${this.productApiUrl}/Get`, {
+    return this.http.get<any>(`${this.productApiUrl}/Get`, {
       params: { id },
       headers: this.authService.getAuthHeaders()
-    });
+    }).pipe(map(response => response?.result));
   }
 
   create(input: CreateProductDto): Observable<ProductDto> {
-    return this.http.post<ProductDto>(`${this.productApiUrl}/Create`, input, {
+    return this.http.post<any>(`${this.productApiUrl}/Create`, input, {
       headers: this.authService.getAuthHeaders()
-    });
+    }).pipe(map(response => response?.result));
   }
 
   update(input: UpdateProductDto): Observable<ProductDto> {
-    return this.http.put<ProductDto>(`${this.productApiUrl}/Update`, input, {
+    return this.http.put<any>(`${this.productApiUrl}/Update`, input, {
       headers: this.authService.getAuthHeaders()
-    });
+    }).pipe(map(response => response?.result));
   }
 
   delete(id: string): Observable<any> {
-    return this.http.delete(`${this.productApiUrl}/Delete`, {
+    return this.http.delete<any>(`${this.productApiUrl}/Delete`, {
       params: { id },
       headers: this.authService.getAuthHeaders()
-    });
+    }); // Delete often returns empty result or success bool
   }
 
   getProductBySku(sku: string): Observable<any> {
@@ -102,10 +113,17 @@ export class ProductService {
   }
 
   searchProducts(term: string): Observable<ProductDto[]> {
-    return this.http.get<ProductDto[]>(`${this.publicApiUrl}/GetProductsBySearch`, {
+    return this.http.get<any>(`${this.publicApiUrl}/GetProductsBySearch`, {
       params: { term },
       headers: this.authService.getAuthHeaders()
-    });
+    }).pipe(
+      map(response => {
+        if (response?.result?.items) {
+          return response.result.items;
+        }
+        return response?.result || [];
+      })
+    );
   }
 
   // Helper Utilities used by components

@@ -155,12 +155,11 @@
             </span>
           </td>
           <td class="actions">
-            <button type="button" class="btn small primary" (click)="openView(order)">
+            <button type="button" class="btn small primary icon-only" (click)="openView(order)" title="View Details">
               <i class="pi pi-eye"></i>
-              View
             </button>
-            <button type="button" class="btn small danger" *ngIf="order.status === 'pending'"
-              (click)="openDeleteConfirm(order)">
+            <button type="button" class="btn small danger icon-only" *ngIf="order.status === 'pending'"
+              (click)="openDeleteConfirm(order)" title="Delete Order">
               <i class="pi pi-trash"></i>
             </button>
           </td>
@@ -324,6 +323,9 @@
               <tbody>
                 <tr *ngFor="let it of selectedOrder.items">
                   <td>
+                    <div class="brand-small" *ngIf="it.brandName"
+                      style="color: #f85606; font-size: 0.75rem; font-weight: 700; margin-bottom: 2px;">{{ it.brandName
+                      }}</div>
                     <div class="item-name-3d">{{ it.productName || it.name }}</div>
                   </td>
                   <td class="text-center">{{ it.qty }}</td>

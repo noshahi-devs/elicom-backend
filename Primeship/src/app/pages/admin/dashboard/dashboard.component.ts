@@ -19,7 +19,7 @@ export class DashboardComponent implements OnInit {
       trend: 'up',
       icon: '💰',
       color: 'success',
-      gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+      gradient: 'linear-gradient(135deg, #f85606 0%, #ff8c42 100%)'
     },
     {
       title: 'Total Orders',
@@ -28,7 +28,7 @@ export class DashboardComponent implements OnInit {
       trend: 'up',
       icon: '🛒',
       color: 'info',
-      gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+      gradient: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)'
     },
     {
       title: 'Active Sellers',
@@ -37,17 +37,8 @@ export class DashboardComponent implements OnInit {
       trend: 'up',
       icon: '🏪',
       color: 'warning',
-      gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+      gradient: 'linear-gradient(135deg, #f85606 0%, #b43d04 100%)'
     },
-    {
-      title: 'Active SKUs',
-      value: '0',
-      change: '0',
-      trend: 'up',
-      icon: '📦',
-      color: 'danger',
-      gradient: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'
-    }
   ];
 
   recentOrders: any[] = [];

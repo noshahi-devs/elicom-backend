@@ -457,7 +457,18 @@
             cursor: pointer;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
+            /* Center content */
             gap: 0.25rem;
+            min-width: 32px;
+            /* Ensure minimum width */
+
+            &.icon-only {
+              padding: 0.5rem;
+              width: 32px;
+              height: 32px;
+              border-radius: 8px;
+            }
 
             &:hover {
               transform: translateY(-2px);
@@ -480,7 +491,8 @@
             }
 
             i {
-              font-size: 0.85rem;
+              font-size: 0.9rem;
+              /* Sligthly larger icon */
             }
           }
         }
@@ -1274,6 +1286,7 @@
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 0.08em;
+      white-space: nowrap;
 
       &.pending {
         background: #fef3c7;

@@ -4,11 +4,12 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { ProductService, ProductDto, CreateProductDto, UpdateProductDto } from '../../../core/services/product.service';
 import { CategoryService, CategoryDto } from '../../../core/services/category.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { GameLoaderComponent } from '../../../shared/components/game-loader/game-loader.component';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, GameLoaderComponent],
   templateUrl: './products.component.html',
   styleUrls: ['./products.component.scss']
 })
@@ -75,10 +76,11 @@ export class ProductsComponent implements OnInit {
       name: ['', [Validators.required, Validators.minLength(3)]],
       sku: [{ value: '', disabled: true }, [Validators.required]],
       categoryId: ['', [Validators.required]],
+      brandName: ['', [Validators.required]],
       description: ['', [Validators.required, Validators.minLength(10)]],
-      price: [0, [Validators.required, Validators.min(0)]],
-      discountPercentage: [0, [Validators.min(0), Validators.max(100)]],
-      stock: [0, [Validators.required, Validators.min(0)]],
+      price: [null, [Validators.required, Validators.min(0.01)]],
+      discountPercentage: [null, [Validators.min(0), Validators.max(100)]],
+      stock: [null, [Validators.required, Validators.min(0)]],
       status: [true]
     });
 
@@ -87,10 +89,11 @@ export class ProductsComponent implements OnInit {
       name: ['', [Validators.required, Validators.minLength(3)]],
       sku: [{ value: '', disabled: true }, [Validators.required]],
       categoryId: ['', [Validators.required]],
+      brandName: ['', [Validators.required]],
       description: ['', [Validators.required, Validators.minLength(10)]],
-      price: [0, [Validators.required, Validators.min(0)]],
-      discountPercentage: [0, [Validators.min(0), Validators.max(100)]],
-      stock: [0, [Validators.required, Validators.min(0)]],
+      price: [null, [Validators.required, Validators.min(0.01)]],
+      discountPercentage: [null, [Validators.min(0), Validators.max(100)]],
+      stock: [null, [Validators.required, Validators.min(0)]],
       status: [true]
     });
 
@@ -109,8 +112,13 @@ export class ProductsComponent implements OnInit {
         category.name.split(' ').map(word => word[0]).join('').toUpperCase().substring(0, 3) :
         'PRD';
 
-      const randomStr = Math.random().toString(36).substring(2, 7).toUpperCase();
-      const sku = `${prefix}-${randomStr}`;
+      // Generate 8-character unique alphanumeric string
+      // Mix of timestamp (last 4 chars) and random (4 chars) to ensure uniqueness
+      const timestampPart = Date.now().toString(36).toUpperCase().slice(-4);
+      const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+      const uniqueCode = `${timestampPart}${randomPart}`;
+
+      const sku = `${prefix}-${uniqueCode}`;
 
       this.addProductForm.patchValue({
         sku: sku
@@ -144,6 +152,7 @@ export class ProductsComponent implements OnInit {
         console.error('❌ Error loading categories:', error);
         this.toastService.showError('Failed to load categories');
         this.isCategoriesLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -176,9 +185,9 @@ export class ProductsComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error('❌ Error loading products:', error);
         this.toastService.showError('Failed to load products');
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -189,9 +198,10 @@ export class ProductsComponent implements OnInit {
       name: '',
       sku: '',
       categoryId: '',
+      brandName: '',
       description: '',
-      price: 0,
-      discountPercentage: 0,
+      price: null,
+      discountPercentage: null,
       stock: this.generateRandomStock(),
       status: true
     });
@@ -199,10 +209,12 @@ export class ProductsComponent implements OnInit {
     this.imagePreviewUrls = [];
     this.currentImageUrl = '';
     this.addProductModalVisible = true;
+    this.cdr.detectChanges();
   }
 
   closeAddProductModal(): void {
     this.addProductModalVisible = false;
+    this.cdr.detectChanges();
   }
 
   openEditProductModal(product: ProductDto): void {
@@ -219,6 +231,7 @@ export class ProductsComponent implements OnInit {
       name: product.name,
       sku: product.sku,
       categoryId: product.categoryId,
+      brandName: product.brandName,
       description: product.description,
       price: product.resellerMaxPrice,
       discountPercentage: product.discountPercentage,
@@ -227,21 +240,25 @@ export class ProductsComponent implements OnInit {
     });
 
     this.editProductModalVisible = true;
+    this.cdr.detectChanges();
   }
 
   closeEditProductModal(): void {
     this.editProductModalVisible = false;
     this.selectedProduct = null;
+    this.cdr.detectChanges();
   }
 
   openViewProductModal(product: ProductDto): void {
     this.selectedProduct = product;
     this.viewProductModalVisible = true;
+    this.cdr.detectChanges();
   }
 
   closeViewProductModal(): void {
     this.viewProductModalVisible = false;
     this.selectedProduct = null;
+    this.cdr.detectChanges();
   }
 
   openDeleteConfirmation(product: ProductDto): void {
@@ -334,11 +351,12 @@ export class ProductsComponent implements OnInit {
     }
 
     const input: CreateProductDto = {
+      tenantId: 2, // Explicitly set Prime Ship Tenant ID
       name: formValue.name,
       sku: formValue.sku,
       categoryId: formValue.categoryId,
       description: formValue.description,
-      brandName: '',
+      brandName: formValue.brandName,
       images: this.productService.stringifyImages(this.imageUrls),
       supplierPrice: formValue.price * 0.7, // Assume 70% cost
       resellerMaxPrice: formValue.price,
@@ -380,11 +398,12 @@ export class ProductsComponent implements OnInit {
 
     const input: UpdateProductDto = {
       id: formValue.id,
+      tenantId: 2, // Explicitly set Prime Ship Tenant ID
       name: formValue.name,
       sku: formValue.sku,
       categoryId: formValue.categoryId,
       description: formValue.description,
-      brandName: '',
+      brandName: formValue.brandName,
       images: this.productService.stringifyImages(this.imageUrls),
       supplierPrice: formValue.price * 0.7,
       resellerMaxPrice: formValue.price,
@@ -474,12 +493,14 @@ export class ProductsComponent implements OnInit {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     const endIndex = startIndex + this.itemsPerPage;
     this.paginatedProducts = this.filteredProducts.slice(startIndex, endIndex);
+    this.cdr.detectChanges();
   }
 
   changePage(page: number): void {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
       this.updatePagination();
+      this.cdr.detectChanges();
     }
   }
 
@@ -581,5 +602,9 @@ export class ProductsComponent implements OnInit {
 
   safeGetDiscountPercentage(price: number | undefined, discountPrice: number | undefined): string {
     return this.getDiscountPercentage(price || 0, discountPrice || 0);
+  }
+
+  getProductBrand(product: ProductDto): string {
+    return product.brandName || (product as any).BrandName || 'Generic';
   }
 }

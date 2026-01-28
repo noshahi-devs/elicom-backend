@@ -66,7 +66,7 @@ export class SellerOrdersComponent implements OnInit {
     customerName: '',
     phone: '',
     address: '',
-    items: [{ name: '', qty: 1, price: 0 }]
+    items: [{ name: '', productId: '', qty: 1, price: 0 }]
   };
 
   deleteConfirmVisible = false;
@@ -91,22 +91,35 @@ export class SellerOrdersComponent implements OnInit {
   loadOrders(): void {
     this.orderService.getAllForSupplier().subscribe({
       next: (res) => {
-        this.orders = res;
+        const rawOrders = res || [];
+        // Map backend data to frontend model to ensure consistent property access
+        this.orders = rawOrders.map((o: any) => ({
+          ...o,
+          items: (o.items || o.orderItems || []).map((it: any) => ({
+            ...it,
+            qty: it.qty || it.quantity || 0,
+            price: it.price || it.purchasePrice || it.priceAtPurchase || 0,
+            productName: it.productName || it.name
+          }))
+        }));
+
         this.applyFilters();
         this.calculateSellerStats();
         this.cdr.detectChanges();
       },
       error: (err) => {
+        console.error('Error loading seller orders:', err);
         this.showError('Failed to load orders');
+        this.cdr.detectChanges();
       }
     });
   }
 
   applyFilters(): void {
-    const q = this.searchTerm.trim().toLowerCase();
+    const q = (this.searchTerm || '').trim().toLowerCase();
 
     this.filteredOrders = this.orders.filter(o => {
-      const orderNo = (o.referenceCode || o.orderNo || '').toLowerCase();
+      const orderNo = (o.referenceCode || o.orderNo || o.orderNumber || '').toLowerCase();
       const customerName = (o.customerName || '').toLowerCase();
 
       const matchesSearch =
@@ -115,34 +128,40 @@ export class SellerOrdersComponent implements OnInit {
         customerName.includes(q);
 
       const status = (o.status || '').toLowerCase();
-      const matchesStatus = this.selectedStatus === 'all' || status === this.selectedStatus;
+      const matchesStatus = this.selectedStatus === 'all' || status === this.selectedStatus.toLowerCase();
 
       return matchesSearch && matchesStatus;
     });
+    this.cdr.detectChanges();
   }
 
   clearFilters(): void {
     this.searchTerm = '';
     this.selectedStatus = 'all';
     this.applyFilters();
+    this.cdr.detectChanges();
   }
 
   openView(order: any): void {
     this.selectedOrder = order;
     this.viewModalVisible = true;
+    this.cdr.detectChanges();
   }
 
   closeView(): void {
     this.viewModalVisible = false;
     this.selectedOrder = null;
+    this.cdr.detectChanges();
   }
 
-  getStatusLabel(status: string): string {
-    if (!status) return 'Unknown';
-    switch (status.toLowerCase()) {
+  getStatusLabel(status: any): string {
+    const s = (status || '').toLowerCase();
+    switch (s) {
       case 'purchased':
       case 'pending':
         return 'Pending';
+      case 'verified':
+        return 'Verified';
       case 'processing':
         return 'Processing';
       case 'shipped':
@@ -153,20 +172,26 @@ export class SellerOrdersComponent implements OnInit {
       case 'cancelled':
         return 'Cancelled';
       default:
-        return status;
+        return status || 'Unknown';
     }
   }
 
   getOrderTotal(order: any): number {
-    if (order.totalPurchaseAmount) return order.totalPurchaseAmount;
-    if (order.items) {
-      return order.items.reduce((sum: number, it: any) => sum + (it.qty * (it.purchasePrice || it.price || 0)), 0);
-    }
-    return 0;
+    if (!order) return 0;
+    if (order.totalPurchaseAmount !== undefined) return order.totalPurchaseAmount;
+    if (order.totalAmount !== undefined) return order.totalAmount;
+
+    const items = order.items || order.orderItems || [];
+    return items.reduce((sum: number, it: any) => {
+      const qty = it.qty || it.quantity || 0;
+      const price = it.purchasePrice || it.price || it.priceAtPurchase || 0;
+      return sum + (qty * price);
+    }, 0);
   }
 
-  formatPrice(amount: number): string {
-    return '$' + (amount || 0).toFixed(2);
+  formatPrice(amount: any): string {
+    const val = parseFloat(amount || 0);
+    return isNaN(val) ? '$0.00' : '$' + val.toFixed(2);
   }
 
   searchProduct(): void {
@@ -194,18 +219,17 @@ export class SellerOrdersComponent implements OnInit {
     if (existing) {
       existing.qty++;
     } else {
+      const newItem = {
+        name: this.foundProduct.name,
+        productId: this.foundProduct.id,
+        qty: 1,
+        price: this.foundProduct.resellerPrice || this.foundProduct.price
+      };
+
       if (this.newOrder.items.length === 1 && !this.newOrder.items[0].name) {
-        this.newOrder.items[0] = {
-          name: this.foundProduct.name,
-          qty: 1,
-          price: this.foundProduct.resellerPrice || this.foundProduct.price
-        };
+        this.newOrder.items[0] = newItem;
       } else {
-        this.newOrder.items.push({
-          name: this.foundProduct.name,
-          qty: 1,
-          price: this.foundProduct.resellerPrice || this.foundProduct.price
-        });
+        this.newOrder.items.push(newItem);
       }
     }
     this.skuSearchTerm = '';
@@ -229,7 +253,7 @@ export class SellerOrdersComponent implements OnInit {
       customerName: '',
       phone: '',
       address: '',
-      items: [{ name: '', qty: 1, price: 0 }]
+      items: [{ name: '', productId: '', qty: 1, price: 0 }] as any[]
     };
   }
 
@@ -240,7 +264,7 @@ export class SellerOrdersComponent implements OnInit {
       customerName: '',
       phone: '',
       address: '',
-      items: [{ name: '', qty: 1, price: 0 }]
+      items: [{ name: '', productId: '', qty: 1, price: 0 }]
     };
   }
 
@@ -269,7 +293,7 @@ export class SellerOrdersComponent implements OnInit {
   }
 
   addOrderItem(): void {
-    this.newOrder.items.push({ name: '', qty: 1, price: 0 });
+    this.newOrder.items.push({ name: '', productId: '', qty: 1, price: 0 });
   }
 
   removeOrderItem(index: number): void {
@@ -306,11 +330,30 @@ export class SellerOrdersComponent implements OnInit {
   }
 
   private saveOrderInternal(): void {
-    // This part is complex because it involves checkout.
-    // Simplifying: Show success and notify user.
-    this.showSuccess('Order request sent to admin');
-    this.closeAddOrder();
-    this.loadOrders();
+    const input = {
+      customerName: this.newOrder.customerName,
+      shippingAddress: this.newOrder.address,
+      warehouseAddress: this.newOrder.address, // Defaulting to same for now
+      items: this.newOrder.items
+        .filter(item => item.productId && item.qty > 0)
+        .map(item => ({
+          productId: item.productId,
+          quantity: item.qty,
+          purchasePrice: item.price
+        }))
+    };
+
+    this.orderService.createSupplierOrder(input).subscribe({
+      next: () => {
+        this.showSuccess('Order request sent to admin');
+        this.closeAddOrder();
+        this.loadOrders();
+      },
+      error: (err) => {
+        console.error('Failed to create wholesale order:', err);
+        this.showError('Failed to place order. Please check details.');
+      }
+    });
   }
 
   getNewOrderTotal(): number {

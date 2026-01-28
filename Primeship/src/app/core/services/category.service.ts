@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 
 export interface CategoryDto {
     id: string;
+    tenantId?: number;
     name: string;
     slug: string;
     imageUrl: string;
@@ -23,6 +24,7 @@ export interface CategoryLookupDto {
 
 
 export interface CreateCategoryDto {
+    tenantId?: number;
     name: string;
     slug?: string;
     imageUrl?: string;
@@ -31,6 +33,7 @@ export interface CreateCategoryDto {
 
 export interface UpdateCategoryDto {
     id: string;
+    tenantId?: number;
     name: string;
     slug?: string;
     imageUrl?: string;

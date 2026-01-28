@@ -1,5 +1,6 @@
 ﻿using Abp.Application.Services;
 using Abp.Application.Services.Dto;
+using Elicom.Orders.Dto;
 using Elicom.SupplierOrders.Dto;
 using System;
 using System.Threading.Tasks;
@@ -13,5 +14,8 @@ namespace Elicom.SupplierOrders
         Task<SupplierOrderDto> Get(Guid id);
         Task MarkAsShipped(Guid id);
         Task MarkAsDelivered(Guid id);
+        Task<SupplierOrderDto> MarkAsVerified(Guid id);
+        Task<ListResultDto<SupplierOrderDto>> GetAll();
+        Task<SupplierOrderDto> UpdateStatus(UpdateOrderStatusDto input);
     }
 }

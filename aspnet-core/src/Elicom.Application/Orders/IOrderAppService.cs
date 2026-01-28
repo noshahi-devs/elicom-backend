@@ -10,12 +10,12 @@ namespace Elicom.Orders
     {
         Task<OrderDto> Create(CreateOrderDto input);
         Task<OrderDto> Get(Guid id);
+        Task<List<OrderDto>> GetAll();
         Task<List<OrderDto>> GetAllForCustomer(Guid customerProfileId);
 
         Task<OrderDto> MarkAsProcessing(MarkOrderProcessingDto input);
         Task<OrderDto> LinkWholesaleOrder(LinkWholesaleOrderDto input);
-        Task<Elicom.SupplierOrders.Dto.SupplierOrderDto> MarkAsVerified(Abp.Application.Services.Dto.EntityDto<Guid> input);
         Task<OrderDto> MarkAsDelivered(MarkOrderDeliveredDto input);
-        Task<List<Elicom.SupplierOrders.Dto.SupplierOrderDto>> GetAllForSupplier();
+        Task<OrderDto> UpdateStatus(UpdateOrderStatusDto input);
     }
 }

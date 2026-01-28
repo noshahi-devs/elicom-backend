@@ -10,6 +10,8 @@ namespace Elicom.Products.Dto
 
     public class CreateProductDto
     {
+        public int? TenantId { get; set; }
+
         [Required]
         public string Name { get; set; }
 

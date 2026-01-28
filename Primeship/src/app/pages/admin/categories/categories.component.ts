@@ -3,12 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CategoryService, CategoryDto, CreateCategoryDto, UpdateCategoryDto } from '../../../core/services/category.service';
 import { ToastService } from '../../../core/services/toast.service';
-
+import { GameLoaderComponent } from '../../../shared/components/game-loader/game-loader.component';
 
 @Component({
   selector: 'app-categories',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, GameLoaderComponent],
   templateUrl: './categories.component.html',
   styleUrls: ['./categories.component.scss']
 })
@@ -116,11 +116,13 @@ export class CategoriesComponent implements OnInit {
     this.addCategoryForm.reset({ name: '', slug: '', imageUrl: '', status: true });
     this.imagePreviewUrl = null;
     this.addCategoryModalVisible = true;
+    this.cdr.detectChanges();
   }
 
   closeAddCategoryModal(): void {
     this.addCategoryModalVisible = false;
     this.imagePreviewUrl = null;
+    this.cdr.detectChanges();
   }
 
   openEditCategoryModal(category: CategoryDto): void {
@@ -133,11 +135,13 @@ export class CategoriesComponent implements OnInit {
     });
     this.editImagePreviewUrl = category.imageUrl;
     this.editCategoryModalVisible = true;
+    this.cdr.detectChanges();
   }
 
   closeEditCategoryModal(): void {
     this.editCategoryModalVisible = false;
     this.editImagePreviewUrl = null;
+    this.cdr.detectChanges();
   }
 
   openDeleteConfirmation(category: CategoryDto): void {
@@ -201,6 +205,7 @@ export class CategoriesComponent implements OnInit {
 
     const formValue = this.addCategoryForm.value;
     const input: CreateCategoryDto = {
+      tenantId: 2, // Explicitly set Prime Ship Tenant ID
       name: formValue.name,
       slug: formValue.slug || this.generateSlug(formValue.name),
       imageUrl: formValue.imageUrl,
@@ -232,6 +237,7 @@ export class CategoriesComponent implements OnInit {
     const formValue = this.editCategoryForm.value;
     const input: UpdateCategoryDto = {
       id: formValue.id,
+      tenantId: 2, // Explicitly set Prime Ship Tenant ID
       name: formValue.name,
       slug: formValue.slug || this.generateSlug(formValue.name),
       imageUrl: formValue.imageUrl,
@@ -344,6 +350,7 @@ export class CategoriesComponent implements OnInit {
     this.filteredCategories = filtered;
     console.log('✅ Filtered categories:', this.filteredCategories.length);
     this.updatePagination();
+    this.cdr.detectChanges();
   }
 
   private updatePagination(): void {
@@ -358,12 +365,14 @@ export class CategoriesComponent implements OnInit {
     this.paginatedCategories = this.filteredCategories.slice(startIndex, endIndex);
     console.log('📄 Paginated categories:', this.paginatedCategories.length);
     console.log('📄 Paginated data:', this.paginatedCategories);
+    this.cdr.detectChanges();
   }
 
   changePage(page: number): void {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
       this.updatePagination();
+      this.cdr.detectChanges();
     }
   }
 
@@ -373,6 +382,7 @@ export class CategoriesComponent implements OnInit {
     this.selectedStatusFilter = null;
     console.log('🧹 Filters cleared. searchTerm:', JSON.stringify(this.searchTerm), 'statusFilter:', this.selectedStatusFilter);
     this.filterTable();
+    this.cdr.detectChanges();
   }
 
   // Pagination helper

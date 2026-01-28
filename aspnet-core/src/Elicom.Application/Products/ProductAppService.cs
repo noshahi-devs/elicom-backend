@@ -51,6 +51,8 @@ namespace Elicom.Products
         public async Task<ProductDto> Create(CreateProductDto input)
         {
             var product = ObjectMapper.Map<Product>(input);
+            product.TenantId = input.TenantId ?? AbpSession.TenantId; // Use DTO tenantId if provided
+            
             await _productRepo.InsertAsync(product);
             return ObjectMapper.Map<ProductDto>(product);
         }
@@ -60,6 +62,17 @@ namespace Elicom.Products
         {
             var product = await _productRepo.GetAsync(input.Id);
             ObjectMapper.Map(input, product);
+            
+            // Ensure TenantId is preserved or updated from DTO
+            if (input.TenantId.HasValue)
+            {
+                product.TenantId = input.TenantId;
+            }
+            else if (!product.TenantId.HasValue)
+            {
+                product.TenantId = AbpSession.TenantId;
+            }
+
             return ObjectMapper.Map<ProductDto>(product);
         }
 

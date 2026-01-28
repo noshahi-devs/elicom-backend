@@ -55,7 +55,7 @@ body {
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  
+
   /* Amazon-style body enhancements */
   &::before {
     content: '';
@@ -68,23 +68,23 @@ body {
     z-index: 1000;
     animation: shimmer 3s ease-in-out infinite;
   }
-  
+
   /* Smooth scroll behavior */
   scroll-behavior: smooth;
-  
+
   /* Custom scrollbar */
   &::-webkit-scrollbar {
     width: 8px;
   }
-  
+
   &::-webkit-scrollbar-track {
     background: #F7F8FA;
   }
-  
+
   &::-webkit-scrollbar-thumb {
     background: #F85606;
     border-radius: 4px;
-    
+
     &:hover {
       background: #E64A00;
     }
@@ -92,8 +92,15 @@ body {
 }
 
 @keyframes shimmer {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
+
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 h1,
@@ -209,4 +216,148 @@ img {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
+}
+
+/* Global Table Styles - Bold Card Rows */
+.table-container {
+  background: transparent;
+  /* Remove container bg to let rows stand out */
+  border: none;
+  box-shadow: none;
+  padding: 0.5rem;
+  overflow-x: auto;
+}
+
+.simple-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+  /* Gap between "card" rows */
+  margin-top: -10px;
+
+  thead {
+    tr {
+      background: linear-gradient(135deg, #F85606 0%, #FF8B52 100%);
+      /* Orange Header */
+      box-shadow: 0 4px 6px -1px rgba(248, 86, 6, 0.2);
+      /* Subtle orange shadow */
+      border-radius: 12px;
+    }
+
+    th {
+      padding: 0.75rem 1rem;
+      /* Compact padding */
+      color: #FFFFFF;
+      /* White text for contrast */
+      font-weight: 700;
+      /* Bold */
+      text-align: left;
+      font-size: 0.8rem;
+      /* Reduced font size */
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: none;
+      white-space: nowrap;
+
+      &:first-child {
+        border-top-left-radius: 12px;
+        border-bottom-left-radius: 12px;
+      }
+
+      &:last-child {
+        border-top-right-radius: 12px;
+        border-bottom-right-radius: 12px;
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      background: #FFFFFF;
+      /* Stronger default shadow to match "hover" look request */
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      border-radius: 12px;
+      /* Crisp border to prevent "blur" */
+      border: 1px solid #e5e7eb;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+      td {
+        padding: 0.75rem 1rem;
+        /* Highly compact padding */
+        color: #000000;
+        /* Pure black */
+        font-size: 0.8rem;
+        /* Highly compact font size */
+        font-weight: 600;
+        border: none;
+        vertical-align: middle;
+        background: #FFFFFF;
+
+        /* Round corners of first and last cells */
+        &:first-child {
+          border-top-left-radius: 12px;
+          border-bottom-left-radius: 12px;
+        }
+
+        &:last-child {
+          border-top-right-radius: 12px;
+          border-bottom-right-radius: 12px;
+        }
+
+        /* Minimalist Action Icons */
+        .btn {
+          padding: 0;
+          width: 28px;
+          height: 28px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border: none;
+          /* No border "circle" */
+          background: transparent;
+          /* Transparent background */
+          box-shadow: none;
+          color: #9ca3af;
+          /* Muted gray by default */
+          transition: all 0.2s ease;
+          border-radius: 6px;
+          /* Subtle radius for hover state */
+
+          i {
+            font-size: 0.95rem;
+            /* Larger icon for visibility */
+          }
+
+          /* Hover Effects */
+          &:hover {
+            color: #F85606;
+            /* Brand color */
+            background: rgba(248, 86, 6, 0.1);
+            transform: scale(1.1);
+          }
+
+          /* Specific colors for delete */
+          &.danger:hover {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+          }
+        }
+      }
+
+      /* Hover bumps it up even more */
+      &:hover {
+        transform: translateY(-5px) scale(1.01);
+        box-shadow: 0 25px 50px -12px rgba(248, 86, 6, 0.25);
+        border-color: #F85606;
+        /* Orange border on hover */
+        z-index: 10;
+        position: relative;
+
+        td {
+          color: #F85606;
+          /* Orange text on hover highlight */
+        }
+      }
+    }
+  }
 }

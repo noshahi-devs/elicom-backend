@@ -251,6 +251,9 @@ $shadow-dark: rgba(0, 0, 0, 0.15);
               }
 
               .product-details {
+                flex: 1;
+                min-width: 0; // Essential for text truncation in flexbox
+
                 strong {
                   display: block;
                   font-weight: 600;
@@ -375,6 +378,21 @@ $shadow-dark: rgba(0, 0, 0, 0.15);
   }
 
   // Badges
+  .sku-badge {
+    display: inline-block;
+    background: #f9fafb;
+    color: #4b5563;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    font-family: 'Roboto Mono', monospace; // Better monospace font
+    border: 1px solid #e5e7eb;
+    white-space: nowrap; // Prevent wrapping
+    min-width: 80px; // Consistent minimum width
+    text-align: center;
+  }
+
   .stock-badge {
     display: inline-block;
     padding: 0.35rem 0.75rem;
@@ -1451,4 +1469,12 @@ $shadow-dark: rgba(0, 0, 0, 0.15);
 
 .bg-primary {
   background: rgba($primary-color, 0.1);
+}
+
+.text-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  max-width: 100%;
 }

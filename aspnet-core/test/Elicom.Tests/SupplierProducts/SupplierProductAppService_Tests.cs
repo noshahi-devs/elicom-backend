@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Xunit;
 using System.Linq;
 using Elicom.Authorization.Roles;
+using Microsoft.EntityFrameworkCore;
 
 namespace Elicom.Tests.SupplierProducts
 {
@@ -21,35 +22,38 @@ namespace Elicom.Tests.SupplierProducts
         [Fact]
         public async Task Should_Create_And_Get_Supplier_Products()
         {
+            // 1. Setup Tenant and Login
+            LoginAsDefaultTenantAdmin();
+            var tenantId = AbpSession.TenantId.Value;
+            var user = await GetCurrentUserAsync();
+
             var uowManager = Resolve<Abp.Domain.Uow.IUnitOfWorkManager>();
             
             using (var uow = uowManager.Begin())
             {
-                // 1. Login as a default tenant admin (who has all permissions initially in tests)
-                // In real scenario we'd use a user with 'Supplier' role
-                LoginAsDefaultTenantAdmin();
-                var user = await GetCurrentUserAsync();
-                
-                // 2. Ensure a Category exists
-                var category = UsingDbContext(context => context.Categories.FirstOrDefault());
-                if (category == null)
+                // 2. Ensure a Category exists for this tenant
+                var categoryId = await UsingDbContextAsync(tenantId, async context => 
                 {
-                    category = new Elicom.Entities.Category { Name = "General", Slug = "general", Status = true };
-                    UsingDbContext(context => {
-                        context.Categories.Add(category);
-                        context.SaveChanges();
-                    });
-                }
+                    var cat = await context.Categories.FirstOrDefaultAsync(c => c.TenantId == tenantId);
+                    if (cat == null)
+                    {
+                        cat = new Elicom.Entities.Category { Name = "General", Slug = "general", Status = true, TenantId = tenantId };
+                        context.Categories.Add(cat);
+                        await context.SaveChangesAsync();
+                    }
+                    return cat.Id;
+                });
 
-                // 3. Create Product
+                // 3. Create Product with explicit TenantId
                 var productDto = await _supplierProductAppService.CreateProduct(new CreateProductDto
                 {
                     Name = "Test Supplier Product",
-                    CategoryId = category.Id,
+                    CategoryId = categoryId,
                     SupplierPrice = 100,
                     ResellerMaxPrice = 150,
                     StockQuantity = 10,
-                    Description = "Supplier product description"
+                    Description = "Supplier product description",
+                    TenantId = tenantId
                 });
 
                 productDto.Id.ShouldNotBe(Guid.Empty);

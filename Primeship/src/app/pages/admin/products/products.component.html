@@ -46,14 +46,16 @@
     </button>
   </div>
 
+  <!-- Loader -->
+  <app-game-loader *ngIf="isLoading"></app-game-loader>
+
   <!-- Products Table -->
-  <div class="table-container">
+  <div class="table-container" *ngIf="!isLoading">
     <table class="simple-table">
       <thead>
         <tr>
-          <th>ID</th>
-          <th>Product</th>
           <th>SKU</th>
+          <th style="width: 35%;">Product</th>
           <th>Category</th>
           <th>Price</th>
           <th>Stock</th>
@@ -64,22 +66,23 @@
 
       <tbody>
         <tr *ngFor="let product of paginatedProducts">
-          <td>{{ product.id }}</td>
-          <td class="product-info">
+          <td><span class="sku-badge">{{ product.sku }}</span></td>
+          <td class="product-info" style="max-width: 300px;">
             <img [src]="getFirstImage(product)" [alt]="product.name" class="product-thumb" />
             <div class="product-details">
-              <strong>{{ product.name }}</strong>
+              <strong class="text-truncate" [title]="product.name">{{ product.name }}</strong>
             </div>
           </td>
-          <td>{{ product.sku }}</td>
           <td>{{ product.category }}</td>
           <td class="price-info">
-            <div class="current-price">{{ safeFormatPrice(getProductDiscountPrice(product) || getProductPrice(product))
-              }}</div>
+            <div class="price-row">
+              <span class="current-price">{{ safeFormatPrice(getProductDiscountPrice(product) ||
+                getProductPrice(product)) }}</span>
+              <span *ngIf="getProductDiscountPrice(product)" class="discount-badge">{{
+                safeGetDiscountPercentage(getProductPrice(product), getProductDiscountPrice(product)) }}</span>
+            </div>
             <div *ngIf="getProductDiscountPrice(product)" class="original-price">
               {{ safeFormatPrice(getProductPrice(product)) }}
-              <span class="discount-badge">{{ safeGetDiscountPercentage(getProductPrice(product),
-                getProductDiscountPrice(product)) }}</span>
             </div>
           </td>
           <td>
@@ -150,7 +153,7 @@
   </div>
 
   <!-- Add Product Modal -->
-  <div class="modal-overlay" *ngIf="addProductModalVisible" (click)="closeAddProductModal()">
+  <div class="modal-overlay" *ngIf="addProductModalVisible">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <div class="modal-title">
@@ -189,6 +192,15 @@
             </div>
 
             <div class="form-group">
+              <label for="addBrand">Brand Name *</label>
+              <input id="addBrand" type="text" formControlName="brandName" placeholder="Enter brand name" />
+              <div class="error"
+                *ngIf="addProductForm.get('brandName')?.invalid && addProductForm.get('brandName')?.touched">
+                Brand Name is required
+              </div>
+            </div>
+
+            <div class="form-group">
               <label for="addSKU">SKU (Auto-generated)</label>
               <input id="addSKU" type="text" formControlName="sku" readonly class="readonly-input" />
             </div>
@@ -218,7 +230,7 @@
           <div class="form-grid">
             <div class="form-group">
               <label for="addPrice">Price ($) *</label>
-              <input id="addPrice" type="number" formControlName="price" min="0" step="0.01" />
+              <input id="addPrice" type="number" formControlName="price" min="0" step="0.01" placeholder="99.99" />
             </div>
 
             <div class="form-group">
@@ -282,7 +294,7 @@
   </div>
 
   <!-- Edit Product Modal -->
-  <div class="modal-overlay" *ngIf="editProductModalVisible" (click)="closeEditProductModal()">
+  <div class="modal-overlay" *ngIf="editProductModalVisible">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <div class="modal-title">
@@ -314,6 +326,15 @@
                 <option value="">Select Category</option>
                 <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
               </select>
+            </div>
+
+            <div class="form-group">
+              <label for="editBrand">Brand Name *</label>
+              <input id="editBrand" type="text" formControlName="brandName" placeholder="Enter brand name" />
+              <div class="error"
+                *ngIf="editProductForm.get('brandName')?.invalid && editProductForm.get('brandName')?.touched">
+                Brand Name is required
+              </div>
             </div>
 
             <div class="form-group">
@@ -439,6 +460,10 @@
                 <span class="category-badge">{{ selectedProduct.category }}</span>
               </div>
               <div class="info-item">
+                <label>Brand:</label>
+                <span>{{ selectedProduct.brandName || getProductBrand(selectedProduct) }}</span>
+              </div>
+              <div class="info-item">
                 <label>Status:</label>
                 <span class="status-badge" [ngClass]="getStatusClass(selectedProduct.status)">
                   {{ getStatusLabel(selectedProduct.status) }}
@@ -488,19 +513,7 @@
             <p class="description">{{ selectedProduct.description }}</p>
           </div>
 
-          <div class="info-section" *ngIf="selectedProduct.metaTitle || selectedProduct.metaDescription">
-            <h4>SEO Information</h4>
-            <div class="info-grid">
-              <div class="info-item" *ngIf="selectedProduct.metaTitle">
-                <label>Meta Title:</label>
-                <span>{{ selectedProduct.metaTitle }}</span>
-              </div>
-              <div class="info-item" *ngIf="selectedProduct.metaDescription">
-                <label>Meta Description:</label>
-                <span>{{ selectedProduct.metaDescription }}</span>
-              </div>
-            </div>
-          </div>
+
         </div>
       </div>
 

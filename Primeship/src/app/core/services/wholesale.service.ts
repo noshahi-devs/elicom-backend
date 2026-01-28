@@ -12,6 +12,10 @@ export interface CreateWholesaleOrderInput {
     items: WholesaleOrderItemInput[];
     shippingAddress: string;
     customerName: string;
+    paymentMethod: string;
+    cardNumber?: string;
+    expiryDate?: string;
+    cvv?: string;
 }
 
 @Injectable({

@@ -127,40 +127,6 @@ namespace Elicom.Orders
             await _orderRepository.InsertAsync(order);
             await CurrentUnitOfWork.SaveChangesAsync();
 
-            // --- AUTOMATION: Create Supplier Orders ---
-            // Group cart items by the Product's SupplierId
-            var groupedItems = cartItems.GroupBy(ci => ci.StoreProduct.Product.SupplierId);
-
-            foreach (var group in groupedItems)
-            {
-                var supplierId = group.Key;
-                if (!supplierId.HasValue) continue; // Skip if no supplier (shouldn't happen)
-
-                var supplierOrder = new SupplierOrder
-                {
-                    ReferenceCode = $"SUP-{order.OrderNumber}-{supplierId}",
-                    ResellerId = user.Id, 
-                    SupplierId = supplierId.Value,
-                    OrderId = order.Id,
-                    Status = "Pending", // Sourcing Purchase starts as Pending
-                    TotalPurchaseAmount = group.Sum(gi => gi.StoreProduct.Product.SupplierPrice * gi.Quantity),
-                    SourcePlatform = "Primeship",
-                    Items = new List<SupplierOrderItem>()
-                };
-
-                foreach (var gi in group)
-                {
-                    supplierOrder.Items.Add(new SupplierOrderItem
-                    {
-                        ProductId = gi.StoreProduct.ProductId,
-                        Quantity = gi.Quantity,
-                        PurchasePrice = gi.StoreProduct.Product.SupplierPrice
-                    });
-                }
-
-                await _supplierOrderRepository.InsertAsync(supplierOrder);
-            }
-
             foreach (var ci in cartItems)
             {
                 await _cartItemRepository.DeleteAsync(ci.Id);
@@ -177,6 +143,17 @@ namespace Elicom.Orders
                 .FirstOrDefaultAsync(o => o.Id == id);
 
             return ObjectMapper.Map<OrderDto>(order);
+        }
+
+        // Get all orders (Admin - fetches all retail orders)
+        public async Task<List<OrderDto>> GetAll()
+        {
+            var orders = await _orderRepository.GetAll()
+                .Include(o => o.OrderItems)
+                .OrderByDescending(o => o.CreationTime)
+                .ToListAsync();
+
+            return ObjectMapper.Map<List<OrderDto>>(orders);
         }
 
         // Get all orders for customer
@@ -240,31 +217,6 @@ namespace Elicom.Orders
             await CurrentUnitOfWork.SaveChangesAsync();
 
             return ObjectMapper.Map<OrderDto>(retailOrder);
-        }
-
-        public async Task<Elicom.SupplierOrders.Dto.SupplierOrderDto> MarkAsVerified(Abp.Application.Services.Dto.EntityDto<Guid> input)
-        {
-            var order = await _supplierOrderRepository.GetAll()
-                .Include(so => so.Items)
-                .FirstOrDefaultAsync(so => so.Id == input.Id);
-                
-            if (order == null) throw new UserFriendlyException("Order not found");
-
-            order.Status = "Verified";
-            await _supplierOrderRepository.UpdateAsync(order);
-            await CurrentUnitOfWork.SaveChangesAsync();
-
-            return ObjectMapper.Map<Elicom.SupplierOrders.Dto.SupplierOrderDto>(order);
-        }
-
-        public async Task<List<Elicom.SupplierOrders.Dto.SupplierOrderDto>> GetAllForSupplier()
-        {
-            var orders = await _supplierOrderRepository.GetAll()
-                .Include(so => so.Items)
-                .OrderByDescending(so => so.CreationTime)
-                .ToListAsync();
-
-            return ObjectMapper.Map<List<Elicom.SupplierOrders.Dto.SupplierOrderDto>>(orders);
         }
 
         // Store/Admin marks order as delivered
@@ -359,6 +311,35 @@ namespace Elicom.Orders
                 {
                     Logger.Error("Email failed: " + ex.Message);
                 }
+            }
+
+            await _orderRepository.UpdateAsync(order);
+            await CurrentUnitOfWork.SaveChangesAsync();
+
+            return ObjectMapper.Map<OrderDto>(order);
+        }
+
+        // Admin can update order status to any valid status
+        public async Task<OrderDto> UpdateStatus(UpdateOrderStatusDto input)
+        {
+            var order = await _orderRepository.GetAll()
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.Id == input.Id);
+
+            if (order == null)
+                throw new UserFriendlyException("Order not found");
+
+            // Validate status
+            var validStatuses = new[] { "Pending", "Verified", "Processing", "Shipped", "Delivered", "Cancelled" };
+            if (!validStatuses.Contains(input.Status, StringComparer.OrdinalIgnoreCase))
+                throw new UserFriendlyException($"Invalid status. Valid statuses are: {string.Join(", ", validStatuses)}");
+
+            order.Status = input.Status;
+
+            // If marking as delivered, also update payment status
+            if (input.Status.Equals("Delivered", StringComparison.OrdinalIgnoreCase))
+            {
+                order.PaymentStatus = "Completed";
             }
 
             await _orderRepository.UpdateAsync(order);

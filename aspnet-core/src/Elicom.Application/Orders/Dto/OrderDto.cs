@@ -7,6 +7,8 @@ namespace Elicom.Orders.Dto
 {
     public class OrderDto : EntityDto<Guid>
     {
+        public Guid CustomerProfileId { get; set; }
+        public string SourcePlatform { get; set; }
         public string OrderNumber { get; set; }
         public string Status { get; set; }
         public string PaymentStatus { get; set; }

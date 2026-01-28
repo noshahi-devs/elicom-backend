@@ -121,6 +121,8 @@
                         </div>
                     </div>
                     <div class="pro-info">
+                        <span class="category-label" *ngIf="product.brand"
+                            style="color: #f85606; font-weight: bold; margin-right: 5px;">{{ product.brand }}</span>
                         <span class="category-label">{{ product.category }}</span>
                         <h3>{{ product.name }}</h3>
                         <div class="price-row">
@@ -205,6 +207,9 @@
                         </div>
                     </div>
                     <div class="pro-info">
+                        <span class="category-label" *ngIf="product.brand"
+                            style="color: #f85606; font-weight: bold; display: block; margin-bottom: 2px;">{{
+                            product.brand }}</span>
                         <span class="category-label">PRIME SELECTION</span>
                         <h3>{{ product.name }}</h3>
                         <div class="price-row">

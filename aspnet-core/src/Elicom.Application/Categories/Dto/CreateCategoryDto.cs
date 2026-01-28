@@ -10,6 +10,7 @@ namespace Elicom.Categories.Dto
 
     public class CreateCategoryDto
     {
+        public int? TenantId { get; set; }
         [Required]
         public string Name { get; set; }
 

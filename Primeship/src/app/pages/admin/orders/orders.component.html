@@ -74,12 +74,13 @@
     </button>
   </div>
 
-  <div class="table-container">
+  <app-game-loader *ngIf="isLoading"></app-game-loader>
+
+  <div class="table-container" *ngIf="!isLoading">
     <table class="simple-table">
       <thead>
         <tr>
           <th>Order</th>
-          <th>Customer</th>
           <th>Seller</th>
           <th>Date</th>
           <th>Status</th>
@@ -95,12 +96,6 @@
             <div class="muted">#{{ order.id }}</div>
           </td>
           <td>
-            <div class="customer">
-              <div class="name">{{ order.customerName }}</div>
-              <div class="muted">{{ order.phone }}</div>
-            </div>
-          </td>
-          <td>
             <div class="seller">
               <div class="name">{{ order.sellerName || 'Unknown' }}</div>
               <div class="muted">ID: {{ order.sellerId }}</div>
@@ -108,12 +103,14 @@
           </td>
           <td>{{ (order.creationTime || order.createdAt) | date: 'mediumDate' }}</td>
           <td>
-            <span class="status-badge" [ngClass]="order.status">{{ getStatusLabel(order.status) }}</span>
+            <span class="status-badge" [ngClass]="'status-' + (order.status | lowercase)">
+              {{ getStatusLabel(order.status) }}
+            </span>
           </td>
           <td class="total">{{ formatPrice(getOrderTotal(order)) }}</td>
           <td class="actions">
-            <button type="button" class="btn" (click)="openView(order)">
-              <i class="pi pi-eye"></i>
+            <button type="button" class="btn" (click)="openView(order)" title="View Details">
+              <i class="pi pi-info-circle"></i>
             </button>
             <button type="button" class="btn primary" (click)="openStatusUpdate(order)">
               <i class="pi pi-sync"></i>
@@ -134,15 +131,15 @@
     </table>
   </div>
 
-  <!-- View Order Modal -->
+  <!-- View Order Modal (Consolidated) -->
   <div class="modal-overlay" *ngIf="viewModalVisible" (click)="closeView()">
     <div class="modal-content" (click)="$event.stopPropagation()" *ngIf="selectedOrder">
       <div class="modal-header">
         <div class="modal-title">
-          <i class="pi pi-eye"></i>
+          <i class="pi pi-info-circle"></i>
           <h3>Order Details</h3>
         </div>
-        <button type="button" class="btn icon close-btn" (click)="closeView()" title="Close">
+        <button type="button" class="btn icon btn-close" (click)="closeView()" title="Close">
           <i class="pi pi-times"></i>
         </button>
       </div>
@@ -150,7 +147,8 @@
       <div class="modal-body custom-scrollbar">
         <!-- High-End Stepper -->
         <div class="order-stepper-3d">
-          <div class="stepper-item" [ngClass]="{'active': true, 'completed': selectedOrder.status !== 'pending'}">
+          <div class="stepper-item"
+            [ngClass]="{'active': true, 'completed': selectedOrder.status !== 'purchased' && selectedOrder.status !== 'pending'}">
             <div class="step-dot"><i class="pi pi-shopping-cart"></i></div>
             <div class="step-label">Ordered</div>
           </div>
@@ -221,6 +219,9 @@
               <tbody>
                 <tr *ngFor="let it of selectedOrder.items">
                   <td>
+                    <div class="brand-small" *ngIf="it.brandName"
+                      style="color: #f85606; font-size: 0.75rem; font-weight: 700; margin-bottom: 2px;">{{ it.brandName
+                      }}</div>
                     <div class="item-name-3d">{{ it.name }}</div>
                   </td>
                   <td class="text-center">{{ it.qty }}</td>
@@ -233,7 +234,8 @@
 
           <div class="invoice-footer">
             <div class="footer-note">
-              <span class="status-tag pulse" [ngClass]="selectedOrder.status">
+              <span class="status-badge" [ngClass]="'status-' + (selectedOrder.status | lowercase)">
+                <i class="pi" [ngClass]="getStatusIcon(selectedOrder.status)"></i>
                 Current Phase: {{ getStatusLabel(selectedOrder.status) }}
               </span>
             </div>
@@ -247,6 +249,28 @@
                 <span>{{ formatPrice(getOrderTotal(selectedOrder)) }}</span>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Integrated Status Update -->
+        <div class="integrated-status-update">
+          <div class="section-title">
+            <i class="pi pi-sync"></i> Update Status
+          </div>
+          <div class="update-controls">
+            <div class="styled-select-container">
+              <i class="pi select-icon" [ngClass]="getStatusIcon(selectedNewStatus)"></i>
+              <select [(ngModel)]="selectedNewStatus" class="minimal-select">
+                <option *ngFor="let status of availableStatuses" [value]="status">
+                  {{ getStatusLabel(status) }}
+                </option>
+              </select>
+            </div>
+            <button class="btn-update-inline" (click)="updateOrderStatus()"
+              [disabled]="selectedNewStatus === selectedOrder.status">
+              Update
+              <i class="pi pi-arrow-right"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -378,12 +402,9 @@
     <div class="modal-content status-update-modal" (click)="$event.stopPropagation()" *ngIf="orderForStatusUpdate">
       <div class="modal-header-gradient">
         <div class="modal-title">
-          <div class="title-icon">
-            <i class="pi pi-sync"></i>
-          </div>
           <div class="title-text">
-            <h3>Update Order Status</h3>
-            <p>Choose the new status for this order</p>
+            <h3>Update Status</h3>
+            <p>Order #{{ orderForStatusUpdate.orderNo || orderForStatusUpdate.referenceCode }}</p>
           </div>
         </div>
         <button type="button" class="btn-close" (click)="closeStatusUpdate()" title="Close">
@@ -393,64 +414,44 @@
 
       <div class="modal-body">
         <!-- Order Summary Card -->
-        <div class="order-summary-card">
-          <div class="order-header">
-            <div class="order-number">
-              <span class="label">Order #</span>
-              <span class="value">{{ orderForStatusUpdate.orderNo || orderForStatusUpdate.referenceCode }}</span>
-            </div>
-            <span class="status-badge current" [ngClass]="orderForStatusUpdate.status">
-              {{ getStatusLabel(orderForStatusUpdate.status) }}
-            </span>
+        <div class="order-summary-minimal">
+          <div class="summary-line">
+            <span class="label">Customer:</span>
+            <span class="value">{{ orderForStatusUpdate.customerName }}</span>
           </div>
-
-          <div class="order-details">
-            <div class="detail-item">
-              <i class="pi pi-user"></i>
-              <div>
-                <span class="detail-label">Customer</span>
-                <span class="detail-value">{{ orderForStatusUpdate.customerName }}</span>
-              </div>
-            </div>
-            <div class="detail-item">
-              <i class="pi pi-store"></i>
-              <div>
-                <span class="detail-label">Seller</span>
-                <span class="detail-value">{{ orderForStatusUpdate.sellerName || 'Unknown' }}</span>
-              </div>
-            </div>
-            <div class="detail-item">
-              <i class="pi pi-dollar"></i>
-              <div>
-                <span class="detail-label">Total Amount</span>
-                <span class="detail-value">{{ formatPrice(getOrderTotal(orderForStatusUpdate)) }}</span>
-              </div>
-            </div>
+          <div class="summary-line">
+            <span class="label">Total:</span>
+            <span class="value">{{ formatPrice(getOrderTotal(orderForStatusUpdate)) }}</span>
           </div>
         </div>
 
-        <!-- Status Selection -->
-        <div class="status-selection-section">
-          <div class="section-header">
-            <h4>Select New Status</h4>
-            <p>Click on a status to select it</p>
+        <!-- Sequential Status Flow -->
+        <div class="minimal-flow-section">
+          <div class="status-dropdown-wrapper">
+            <label>Current Phase:</label>
+            <div class="current-phase-box" [ngClass]="'status-' + (orderForStatusUpdate.status | lowercase)">
+              <i class="pi" [ngClass]="getStatusIcon(orderForStatusUpdate.status)"></i>
+              {{ getStatusLabel(orderForStatusUpdate.status) }}
+            </div>
+
+            <label>Update to:</label>
+            <div class="styled-select-container">
+              <i class="pi select-icon" [ngClass]="getStatusIcon(selectedNewStatus)"></i>
+              <select [(ngModel)]="selectedNewStatus" class="minimal-select">
+                <option *ngFor="let status of availableStatuses" [value]="status">
+                  {{ getStatusLabel(status) }}
+                </option>
+              </select>
+            </div>
           </div>
 
-          <div class="status-grid">
-            <div class="status-card" *ngFor="let status of availableStatuses"
-              [class.selected]="selectedNewStatus === status" [class.disabled]="status === orderForStatusUpdate.status"
-              (click)="selectedNewStatus = status">
-              <div class="status-icon">
-                <i class="pi" [ngClass]="getStatusIcon(status)"></i>
-              </div>
-              <div class="status-info">
-                <h5>{{ getStatusLabel(status) }}</h5>
-                <p>{{ getStatusDescription(status) }}</p>
-              </div>
-              <div class="status-indicator">
-                <i class="pi pi-check-circle"></i>
-              </div>
-            </div>
+          <div class="cancel-option-minimal"
+            *ngIf="orderForStatusUpdate.status.toLowerCase() !== 'delivered' && orderForStatusUpdate.status.toLowerCase() !== 'cancelled'">
+            <div class="divider"><span>OR</span></div>
+            <button type="button" class="btn-cancel-link" (click)="selectedNewStatus = 'cancelled'"
+              [class.active]="selectedNewStatus === 'cancelled'">
+              <i class="pi pi-times-circle"></i> Cancel Order
+            </button>
           </div>
         </div>
       </div>
