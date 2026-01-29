@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CartService, CartItem } from '../../../services/cart';
+import { CartService, CartItem } from '../../../services/cart.service';
 
 @Component({
   selector: 'app-checkout-product',
@@ -13,7 +13,8 @@ export class CheckoutProduct {
   cartService = inject(CartService);
 
   get products(): CartItem[] {
-    return this.cartService.items().filter(item => item.isChecked);
+    // Explicitly using the CartItem type to avoid 'unknown' errors
+    return (this.cartService.items() as CartItem[]).filter((item: CartItem) => item.isChecked);
   }
 
   // Qty increase/decrease

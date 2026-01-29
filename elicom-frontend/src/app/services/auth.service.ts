@@ -154,6 +154,12 @@ export class AuthService {
         return this.http.post(url, data, { headers });
     }
 
+    registerSmartStoreSeller(data: RegisterSmartStoreInput): Observable<any> {
+        const url = `${this.baseUrl}/api/services/app/Account/RegisterSmartStoreSeller`;
+        const headers = { 'Abp-TenantId': '1' }; // Smart Store Tenant
+        return this.http.post(url, data, { headers });
+    }
+
     forgotPassword(email: string): Observable<any> {
         const url = `${this.baseUrl}/api/services/app/Account/ForgotPassword`;
         return this.http.post(url, null, { params: { email } });

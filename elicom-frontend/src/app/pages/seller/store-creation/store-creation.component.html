@@ -1,0 +1,128 @@
+<div class="wizard-container">
+    <!-- Progress Indicator -->
+    <div class="progress-steps">
+        <div class="step-item" [class.active]="currentStep === 1" [class.completed]="currentStep > 1">
+            <div class="step-icon">1</div>
+            <div class="step-label">Identify</div>
+        </div>
+        <div class="step-item" [class.active]="currentStep === 2" [class.completed]="currentStep > 2">
+            <div class="step-icon">2</div>
+            <div class="step-label">Details</div>
+        </div>
+        <div class="step-item" [class.active]="currentStep === 3" [class.completed]="currentStep > 3">
+            <div class="step-icon">3</div>
+            <div class="step-label">Social</div>
+        </div>
+        <div class="step-item" [class.active]="currentStep === 4">
+            <div class="step-icon"><i class="fas fa-check"></i></div>
+            <div class="step-label">Finish</div>
+        </div>
+    </div>
+
+    <!-- Wizard Card -->
+    <div class="wizard-card">
+        <form [formGroup]="storeForm">
+            <!-- Step 1: Identity -->
+            <div *ngIf="currentStep === 1" class="step-content">
+                <div class="step-header">
+                    <h2>Store Identity</h2>
+                    <p>Tell us the basic details of your new store.</p>
+                </div>
+                <div class="form-group">
+                    <label>Store Name</label>
+                    <input type="text" formControlName="name" class="form-control" placeholder="e.g. Noshahi Mart">
+                </div>
+                <div class="form-group">
+                    <label>Store URL Slug</label>
+                    <div class="slug-input-wrapper">
+                        <span class="prefix">smartstore.com/</span>
+                        <input type="text" formControlName="slug" class="form-control" placeholder="store-slug">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Primary Category</label>
+                    <div class="category-grid">
+                        <div *ngFor="let cat of categories" class="category-item"
+                            [class.selected]="selectedCategory === cat.id" (click)="selectCategory(cat.id)">
+                            <i [class]="cat.icon"></i>
+                            <span>{{cat.name}}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Details -->
+            <div *ngIf="currentStep === 2" class="step-content">
+                <div class="step-header">
+                    <h2>Tell us more</h2>
+                    <p>Provide a description for your customers.</p>
+                </div>
+                <div class="form-group">
+                    <label>Store Description</label>
+                    <textarea formControlName="description" class="form-control" rows="4"
+                        placeholder="What do you sell? Why should customers buy from you?"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Support Email</label>
+                    <input type="email" formControlName="supportEmail" class="form-control"
+                        placeholder="support@yourstore.com">
+                </div>
+            </div>
+
+            <!-- Step 3: Social -->
+            <div *ngIf="currentStep === 3" class="step-content">
+                <div class="step-header">
+                    <h2>Connect & Contact</h2>
+                    <p>Add your contact info and social media profiles.</p>
+                </div>
+                <div class="form-group">
+                    <label>Instagram Handle</label>
+                    <div class="input-with-icon">
+                        <i class="fab fa-instagram"></i>
+                        <input type="text" formControlName="instagram" class="form-control" placeholder="username">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>WhatsApp Number</label>
+                    <div class="input-with-icon">
+                        <i class="fab fa-whatsapp"></i>
+                        <input type="text" formControlName="whatsapp" class="form-control"
+                            placeholder="+92 300 0000000">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Finish -->
+            <div *ngIf="currentStep === 4" class="step-content finish-step">
+                <div class="step-header">
+                    <div class="success-icon">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <h2>Confirm Details</h2>
+                    <p>Everything looks good. Click finish to launch your store!</p>
+                </div>
+                <div class="summary-box">
+                    <div class="summary-item">
+                        <strong>Store Name:</strong> <span>{{storeForm.value.name}}</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>URL:</strong> <span>smartstore.com/{{storeForm.value.slug}}</span>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Category:</strong> <span>{{selectedCategory}}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="wizard-footer">
+                <button type="button" class="btn btn-prev" *ngIf="currentStep > 1" (click)="prevStep()">Back</button>
+                <div class="spacer"></div>
+                <button type="button" class="btn btn-next" [disabled]="isLoading" (click)="nextStep()">
+                    <i *ngIf="isLoading" class="fas fa-spinner fa-spin"></i>
+                    {{ currentStep === totalSteps ? (isLoading ? 'Creating...' : 'Launch Store') : 'Continue' }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

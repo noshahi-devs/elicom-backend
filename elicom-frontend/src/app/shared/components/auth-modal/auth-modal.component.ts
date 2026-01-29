@@ -16,6 +16,7 @@ export class AuthModalComponent {
     @Output() authenticated = new EventEmitter<void>();
 
     view: 'signin' | 'signup' = 'signin';
+    userRole: 'customer' | 'seller' = 'customer';
     signInForm: FormGroup;
     signUpForm: FormGroup;
 
@@ -152,7 +153,11 @@ export class AuthModalComponent {
             phoneNumber: this.signUpForm.value.phone
         };
 
-        this.authService.registerSmartStoreCustomer(data)
+        const registerMethod = this.userRole === 'seller'
+            ? this.authService.registerSmartStoreSeller(data)
+            : this.authService.registerSmartStoreCustomer(data);
+
+        registerMethod
             .subscribe({
                 next: () => {
                     // 1. Switch to Sign In view immediately

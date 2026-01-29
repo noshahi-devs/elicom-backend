@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../services/auth.service';
 import { ProductDetailDto } from '../../../services/product';
-import { CartService } from '../../../services/cart';
+import { CartService } from '../../../services/cart.service';
 import Swal from 'sweetalert2';
 
 export type AccordionType = 'desc' | 'sizefit' | null;
@@ -202,15 +202,25 @@ export class ProductInfo implements OnInit {
       this.selectedSize,
       this.selectedColorName,
       image
-    );
-
-    // Show success message (or auto-open cart done by header effect)
-    Swal.fire({
-      title: "Added to Cart!",
-      text: "Item has been added to your shopping bag.",
-      icon: "success",
-      timer: 2000,
-      showConfirmButton: false
+    ).subscribe({
+      next: () => {
+        // Show success message
+        Swal.fire({
+          title: "Added to Cart!",
+          text: "Item has been added to your shopping bag.",
+          icon: "success",
+          timer: 2000,
+          showConfirmButton: false
+        });
+      },
+      error: (err) => {
+        console.error('[ProductInfo] Add to cart failed:', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops...',
+          text: 'Failed to sync with your account cart.',
+        });
+      }
     });
     // Optionally trigger side cart here if header effect misses it
   }

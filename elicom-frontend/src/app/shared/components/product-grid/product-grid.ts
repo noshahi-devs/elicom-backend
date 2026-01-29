@@ -2,7 +2,7 @@ import { Component, Input, OnChanges, SimpleChanges, OnInit, ChangeDetectorRef, 
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ProductService, ProductCardDto } from '../../../services/product';
-import { CartService } from '../../../services/cart';
+import { CartService } from '../../../services/cart.service';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -296,7 +296,19 @@ export class ProductGridComponent implements OnInit, OnChanges {
 
     // ...
 
-    this.cartService.addToCart(product, 1, '', '', image);
-    Swal.fire("Good job!", "You clicked the button!", "success");
+    this.cartService.addToCart(product, 1, '', '', image).subscribe({
+      next: () => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Added to Cart!',
+          text: `${this.getTitle(product)} added to your bag.`,
+          timer: 2000,
+          showConfirmButton: false
+        });
+      },
+      error: (err) => {
+        console.error('[ProductGrid] Add to cart failed:', err);
+      }
+    });
   }
 }

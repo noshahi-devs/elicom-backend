@@ -1,7 +1,7 @@
 import { Component, signal, ElementRef, ViewChild, inject, effect, HostListener, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
-import { CartService, CartItem } from '../../services/cart';
+import { CartService, CartItem } from '../../services/cart.service';
 import { SearchService } from '../../services/search.service';
 import { AuthService } from '../../services/auth.service';
 import { FormsModule } from '@angular/forms';

@@ -23,5 +23,6 @@ export const routes: Routes = [
       { path: 'profile', loadComponent: () => import('./pages/user-index/components/sections/my-profile/my-profile.component').then(m => m.MyProfileComponent) },
       { path: 'orders', loadComponent: () => import('./pages/user-index/components/sections/my-orders/my-orders.component').then(m => m.MyOrdersComponent) }
     ]
-  }
+  },
+  { path: 'seller/store-creation', loadComponent: () => import('./pages/seller/store-creation/store-creation.component').then(m => m.StoreCreationComponent) }
 ];

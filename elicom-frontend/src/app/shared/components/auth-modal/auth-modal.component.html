@@ -50,7 +50,14 @@
         <div *ngIf="view === 'signup'" class="auth-view">
             <h2>Sign Up</h2>
 
-            <!-- Divider/Google Btn Removed -->
+            <div class="role-selector">
+                <button [class.active]="userRole === 'customer'" (click)="userRole = 'customer'">
+                    <i class="fas fa-user"></i> Customer
+                </button>
+                <button [class.active]="userRole === 'seller'" (click)="userRole = 'seller'">
+                    <i class="fas fa-store"></i> Seller
+                </button>
+            </div>
 
             <form [formGroup]="signUpForm" (ngSubmit)="onSignUp()">
                 <div class="form-row">

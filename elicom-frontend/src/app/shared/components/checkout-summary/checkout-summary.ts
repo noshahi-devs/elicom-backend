@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, Input, Output, EventEmitter } from '@angular/core';
-import { CartService } from '../../../services/cart';
+import { CartService, CartItem } from '../../../services/cart.service';
 
 @Component({
   selector: 'app-checkout-summary',
@@ -17,14 +17,14 @@ export class CheckoutSummary {
   @Output() placeOrder = new EventEmitter<void>();
 
   get itemsCount(): number {
-    return this.cartService.items()
+    return (this.cartService.items() as CartItem[])
       .filter(item => item.isChecked)
       .reduce((acc, item) => acc + item.quantity, 0);
   }
 
   /** Retail Price = Total of (oldPrice or price) * quantity for checked items */
   get retailPrice(): number {
-    return this.cartService.items()
+    return (this.cartService.items() as CartItem[])
       .filter(p => p.isChecked)
       .reduce((sum, p) => sum + (p.oldPrice || p.price) * p.quantity, 0);
   }

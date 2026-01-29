@@ -1,7 +1,7 @@
 import { Component, inject, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { CartService, CartItem as CartItemModel } from '../../../services/cart';
+import { CartService, CartItem as CartItemModel } from '../../../services/cart.service';
 import Swal from 'sweetalert2';
 
 @Component({

@@ -1,6 +1,6 @@
 import { Component, inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CartService } from '../../services/cart';
+import { CartService } from '../../services/cart.service';
 import { OrderService, CreateOrderDto } from '../../services/order.service';
 import { AuthService } from '../../services/auth.service';
 import { CustomerProfileService } from '../../services/customer-profile.service';
