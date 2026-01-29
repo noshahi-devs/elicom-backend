@@ -1,0 +1,35 @@
+.user-index-container {
+    background-color: #f7f7f7;
+    min-height: 80vh;
+    padding: 30px 0 60px 0;
+
+    .layout-grid {
+        display: flex;
+        gap: 30px;
+        align-items: flex-start;
+
+        @media (max-width: 900px) {
+            flex-direction: column;
+        }
+    }
+
+    .sidebar-col {
+        width: 260px;
+        flex-shrink: 0;
+
+        @media (max-width: 900px) {
+            width: 100%;
+        }
+    }
+
+    .content-col {
+        flex: 1;
+        min-width: 0;
+        background-color: #fff;
+        border-radius: 4px;
+        /* Slight rounded for Amazon feeling */
+        min-height: 500px;
+        /* Placeholder height */
+        /* box-shadow: 0 1px 3px rgba(0,0,0,0.1); Amazon style light shadow is optional */
+    }
+}

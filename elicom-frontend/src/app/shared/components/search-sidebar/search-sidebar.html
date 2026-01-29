@@ -1,0 +1,153 @@
+<div class="sidebar-section wrapper" [class.active]="isOpen">
+    <div class="searching" *ngIf="searchTerm || selectedFilters.length > 0">
+        <p>Search results for <span><b><i>“{{ searchTerm || (selectedFilters[0] || 'All Products') }}”</i></b></span>
+        </p>
+    </div>
+    <div class="sidebar" id="sidebar">
+
+        <div class="filter-header">
+            <h2>Filter</h2>
+            <span class="clear-all" *ngIf="selectedFilters.length > 0" (click)="clearAll()">Clear All</span>
+        </div>
+
+        <!-- Filter Dropdown Removed (Moved to Main Page) -->
+
+        <!-- Selected Filters -->
+        <div id="selectedFilters">
+            <div class="filter-chip" *ngFor="let filter of selectedFilters">
+                {{ filter }}
+                <span class="chip-close" (click)="removeChip(filter)">×</span>
+            </div>
+        </div>
+        <hr>
+
+        <!-- RADIO SECTION: Category -->
+        <div class="menu-section" *ngIf="categories.length > 0" [class.collapsed]="collapsedSections['category']">
+            <h3 (click)="toggleSection('category')">
+                Category
+                <span>
+                    <i class="fas" [class.fa-minus]="!collapsedSections['category']"
+                        [class.fa-plus]="collapsedSections['category']"></i>
+                </span>
+            </h3>
+            <ul [class.collapsed]="collapsedSections['category']">
+                <li *ngFor="let cat of categories">
+                    <label class="item-option">
+                        <input type="radio" name="cat" [value]="cat" (change)="onFilterChange($event, 'radio')">
+                        <span>{{ cat }}</span>
+                    </label>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Color -->
+        <div class="menu-section" *ngIf="colors.length > 0" [class.collapsed]="collapsedSections['color']">
+            <h3 (click)="toggleSection('color')">
+                Color
+                <span><i class="fas" [class.fa-minus]="!collapsedSections['color']"
+                        [class.fa-plus]="collapsedSections['color']"></i></span>
+            </h3>
+            <div class="options" [class.collapsed]="collapsedSections['color']">
+                <label class="color-item" *ngFor="let c of colors">
+                    <span class="dot" [style.background-color]="c.toLowerCase()"></span>
+                    <span class="color-name">{{ c }}</span>
+                    <input type="checkbox" [value]="c" (change)="onFilterChange($event, 'checkbox')">
+                </label>
+            </div>
+        </div>
+
+        <!-- Color ... (already there) -->
+
+        <!-- Type -->
+        <div class="menu-section" *ngIf="types && types.length > 0" [class.collapsed]="collapsedSections['type']">
+            <h3 (click)="toggleSection('type')">
+                Type
+                <span><i class="fas" [class.fa-minus]="!collapsedSections['type']"
+                        [class.fa-plus]="collapsedSections['type']"></i></span>
+            </h3>
+            <ul [class.collapsed]="collapsedSections['type']">
+                <li *ngFor="let item of types">
+                    <label class="item-option">
+                        <input type="checkbox" [value]="item" (change)="onFilterChange($event, 'checkbox')">
+                        <span>{{ item }}</span>
+                    </label>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Fit -->
+        <div class="menu-section" *ngIf="fits && fits.length > 0" [class.collapsed]="collapsedSections['fit']">
+            <h3 (click)="toggleSection('fit')">
+                Fit
+                <span><i class="fas" [class.fa-minus]="!collapsedSections['fit']"
+                        [class.fa-plus]="collapsedSections['fit']"></i></span>
+            </h3>
+            <ul [class.collapsed]="collapsedSections['fit']">
+                <li *ngFor="let item of fits">
+                    <label class="item-option">
+                        <input type="checkbox" [value]="item" (change)="onFilterChange($event, 'checkbox')">
+                        <span>{{ item }}</span>
+                    </label>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Length -->
+        <div class="menu-section" *ngIf="lengths && lengths.length > 0" [class.collapsed]="collapsedSections['length']">
+            <h3 (click)="toggleSection('length')">
+                Length
+                <span><i class="fas" [class.fa-minus]="!collapsedSections['length']"
+                        [class.fa-plus]="collapsedSections['length']"></i></span>
+            </h3>
+            <ul [class.collapsed]="collapsedSections['length']">
+                <li *ngFor="let item of lengths">
+                    <label class="item-option">
+                        <input type="checkbox" [value]="item" (change)="onFilterChange($event, 'checkbox')">
+                        <span>{{ item }}</span>
+                    </label>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Size -->
+        <div class="menu-section" *ngIf="sizes.length > 0" [class.collapsed]="collapsedSections['size']">
+            <h3 (click)="toggleSection('size')">
+                Size
+                <span><i class="fas" [class.fa-minus]="!collapsedSections['size']"
+                        [class.fa-plus]="collapsedSections['size']"></i></span>
+            </h3>
+            <div class="options size-checkbox" [class.collapsed]="collapsedSections['size']">
+                <ul class="item-list">
+                    <li *ngFor="let s of sizes">
+                        <label class="item-option">
+                            <input type="checkbox" [value]="s" (change)="onFilterChange($event, 'checkbox')">
+                            <span>{{ s }}</span>
+                        </label>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Price Range -->
+        <div class="menu-section">
+            <h3>Price Range (USD)</h3>
+            <div class="range-slider-container">
+                <div class="range-values">
+                    <span id="min-label">${{ minPrice }}</span>
+                    <span id="max-label">${{ maxPrice }}</span>
+                </div>
+                <div class="range-slider">
+                    <!-- Dynamic Max for Slider Track -->
+                    <div class="slider-track" [style.left.%]="(minPrice / (priceLimit.max || 10000)) * 100"
+                        [style.right.%]="100 - (maxPrice / (priceLimit.max || 10000)) * 100">
+                    </div>
+                    <input type="range" [min]="priceLimit.min" [max]="priceLimit.max" [(ngModel)]="minPrice"
+                        (input)="onPriceChange()">
+                    <input type="range" [min]="priceLimit.min" [max]="priceLimit.max" [(ngModel)]="maxPrice"
+                        (input)="onPriceChange()">
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

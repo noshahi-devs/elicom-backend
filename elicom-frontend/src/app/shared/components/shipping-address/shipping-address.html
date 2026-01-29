@@ -1,0 +1,142 @@
+<div class="container">
+
+  <!-- ================= FORM ================= -->
+  <form *ngIf="!showSummary" (submit)="submit($event)" novalidate>
+
+    <h1>Shipping Address</h1>
+
+    <!-- Location -->
+    <div class="field static" [class.error]="invalid('location')">
+      <label>Location*</label>
+      <select [value]="fields.location" (change)="set('location',$event)" (blur)="touch('location')">
+        <option value="" disabled>Select Location</option>
+        <option *ngFor="let c of countries" [value]="c.name">{{ c.name }}</option>
+      </select>
+    </div>
+    <div class="error-text" *ngIf="invalid('location')">Required</div>
+
+    <!-- First / Last -->
+    <div class="row">
+      <div class="col-6">
+        <div class="field floating" [class.active]="fields.firstName" [class.error]="invalid('firstName')">
+          <input [value]="fields.firstName" (input)="set('firstName',$event)" (blur)="touch('firstName')" />
+          <label>First Name*</label>
+        </div>
+        <div class="error-text" *ngIf="invalid('firstName')">Required</div>
+      </div>
+
+      <div class="col-6">
+        <div class="field floating" [class.active]="fields.lastName" [class.error]="invalid('lastName')">
+          <input [value]="fields.lastName" (input)="set('lastName',$event)" (blur)="touch('lastName')" />
+          <label>Last Name*</label>
+        </div>
+        <div class="error-text" *ngIf="invalid('lastName')">Required</div>
+      </div>
+    </div>
+
+    <!-- Phone & Email -->
+    <div class="row">
+      <div class="col-6">
+        <div class="field phone" [class.error]="invalid('phone')"
+          style="padding: 0; border: none; background: transparent;">
+          <div class="phone-input-group">
+            <div class="country-select">
+              <img [src]="selectedCountry.flag" alt="flag">
+              <i class="fas fa-chevron-down"></i>
+              <select (change)="onCountryChange($event)">
+                <option *ngFor="let c of countries" [value]="c.dial_code" [selected]="c.code === selectedCountry.code">
+                  {{c.name}} ({{c.dial_code}})
+                </option>
+              </select>
+            </div>
+            <div class="field floating" [class.active]="fields.phone" style="flex:1; margin-bottom: 0;">
+              <input [value]="fields.phone" (input)="set('phone',$event)" (blur)="touch('phone')" />
+              <label>Phone Number*</label>
+            </div>
+          </div>
+        </div>
+        <div class="error-text" *ngIf="invalid('phone')">Required</div>
+      </div>
+
+      <div class="col-6">
+        <div class="field floating" [class.active]="fields.email" [class.error]="invalid('email')">
+          <input [value]="fields.email" (input)="set('email',$event)" (blur)="touch('email')" />
+          <label>Email Address*</label>
+        </div>
+        <div class="error-text" *ngIf="invalid('email')">Required</div>
+      </div>
+    </div>
+
+    <!-- Address -->
+    <div class="field static" [class.error]="invalid('address1')">
+      <label>Address*</label>
+      <textarea [value]="fields.address1" (input)="set('address1',$event)" (blur)="touch('address1')"></textarea>
+    </div>
+    <div class="error-text" *ngIf="invalid('address1')">Required</div>
+
+    <!-- State / City -->
+    <div class="row">
+      <div class="col-6">
+        <div class="field static province" [class.error]="invalid('state')">
+          <label>State / Province*</label>
+          <select [value]="fields.state" (change)="set('state',$event)" (blur)="touch('state')">
+            <option value="" disabled selected>Select</option>
+            <option *ngFor="let s of states" [value]="s">{{ s }}</option>
+          </select>
+        </div>
+        <div class="error-text" *ngIf="invalid('state')">Required</div>
+      </div>
+
+      <div class="col-6">
+        <div class="field static province" [class.error]="invalid('city')">
+          <label>City*</label>
+          <!-- Dropdown dependent on State -->
+          <select [value]="fields.city" (change)="set('city',$event)" (blur)="touch('city')" [disabled]="!fields.state">
+            <option value="" disabled selected>Select</option>
+            <option *ngFor="let c of cities" [value]="c">{{ c }}</option>
+          </select>
+        </div>
+        <div class="error-text" *ngIf="invalid('city')">Required</div>
+      </div>
+    </div>
+
+    <!-- Zip -->
+    <div class="field floating" [class.active]="focused.zip || fields.zip" [class.error]="invalid('zip')">
+      <input [value]="fields.zip" (focus)="focus('zip')" (input)="set('zip',$event)" (blur)="blur('zip')" />
+      <label>Zip Code*</label>
+    </div>
+    <div class="error-text" *ngIf="invalid('zip')">Required</div>
+
+    <button class="save-btn">SAVE</button>
+  </form>
+
+  <!-- ================= SUMMARY ================= -->
+  <div class="section" *ngIf="showSummary">
+
+    <div class="shipping-head">
+      <h1>Shipping Address</h1>
+      <button class="change-btn" (click)="change()">Change</button>
+    </div>
+
+    <div class="address-box">
+      <div class="addr-text">
+        <div class="line-1">
+          <strong>{{ savedFields?.firstName }} {{ savedFields?.lastName }}</strong>
+          {{ savedFields?.phone }}
+        </div>
+        <div class="line-email" style="font-size: 14px; color: #666; margin-bottom: 4px;">{{ savedFields?.email }}</div>
+
+        <div class="line-2">{{ savedFields?.address1 }}</div>
+
+        <div class="line-3">
+          {{ savedFields?.location }},
+          {{ savedFields?.state }},
+          {{ savedFields?.city }} {{ savedFields?.zip }}
+        </div>
+      </div>
+
+      <button class="edit-address" (click)="edit()">Edit Address</button>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,43 @@
+<div class="checkout-wrapper">
+
+  <!-- Products Loop -->
+  <div class="checkout-container" *ngFor="let product of products">
+    <div class="product-card">
+      <img class="product-image" [src]="product.image" alt="product image">
+      <div class="product-details">
+        <div class="product-name" style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">{{ product.name }}
+        </div>
+        <div class="shop-name">{{ product.storeName }}</div>
+        <div class="variant-info" style="font-size: 12px; color: #666; margin-bottom: 8px;">
+          {{ product.color }} / {{ product.size }}
+        </div>
+
+        <div class="price-box">
+          <span class="current-price">${{ (product.price * product.quantity) | number:'1.2-2' }}</span>
+          <span class="old-price" *ngIf="product.oldPrice > product.price">${{ (product.oldPrice * product.quantity) |
+            number:'1.2-2' }}</span>
+          <span class="discount" *ngIf="product.discount > 0">-{{ product.discount }}%</span>
+        </div>
+
+        <div class="quantity-selector">
+          <button class="qty-btn" (click)="decrementQty(product)">-</button>
+          <input type="text" class="qty-input" [value]="product.quantity" readonly>
+          <button class="qty-btn" (click)="incrementQty(product)">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shipping info (single div for all products) -->
+  <div class="shipping-info">
+    <div class="shipping standard">
+      <strong>STANDARD SHIPPING</strong>
+      <p>{{ standardShipping }}</p>
+    </div>
+
+    <div class="shipping on-time">
+      <p>{{ onTimeDelivery }}</p>
+      <p>500 Points if Late</p>
+    </div>
+  </div>
+</div>

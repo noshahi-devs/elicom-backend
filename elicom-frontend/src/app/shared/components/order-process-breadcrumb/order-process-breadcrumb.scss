@@ -1,0 +1,37 @@
+.breadcrumb-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  background: transparent;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  color: #999;
+}
+
+.breadcrumb-step {
+  white-space: nowrap;
+  transition: color 0.2s ease;
+
+  &.clickable:hover {
+    color: #000;
+    text-decoration: underline;
+  }
+}
+
+.active-step {
+  color: #000;
+  font-weight: 600;
+}
+
+.separator {
+  font-size: 16px;
+  color: #999;
+  line-height: 1;
+}

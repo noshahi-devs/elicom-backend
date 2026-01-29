@@ -1,0 +1,105 @@
+/* GLOBAL SAFETY */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* ================= WRAPPER ================= */
+.checkout-wrapper {
+  background-color: #f5f5f5;
+  padding: 0 105px;
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  overflow-x: hidden;
+
+  @media (max-width: 1024px) {
+    padding: 0 24px;
+  }
+
+  @media (max-width: 768px) { 
+    padding: 0 12px;
+  }
+
+  /* ================= TOP BAR ================= */
+  .top-bar {
+    width: 100%;
+    max-width: 100%;
+    background-color: #eef7ee;
+    padding: 8px 0;
+    font-size: 14px;
+    font-family: Helvetica, sans-serif;
+    overflow-x: hidden;
+  }
+
+  .content {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    color: #2f6b2f;
+  }
+
+  .item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+  }
+
+  .dot {
+    margin: 0 10px;
+    color: #6fa36f;
+  }
+
+  .check {
+    color: #2faa5d;
+    font-size: 14px;
+    margin-right: 6px;
+  }
+
+  /* ================= CHECKOUT CONTENT ================= */
+  .checkout-content {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    padding-bottom: 15px;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* LEFT SIDE */
+    .lhs {
+      flex: 1;
+      max-width: 100%;
+      background: transparent;
+      
+    }
+
+    /* RIGHT SIDE */
+    .rhs {
+      width: 30%;
+      max-width: 100%;
+      background: transparent;
+      border-radius: 16px;
+      padding:0 16px;
+      position: relative;
+      z-index: 1;
+      transition: box-shadow 0.35s ease, transform 0.35s ease;
+
+    
+      @media (max-width: 768px) {
+        width: 100%;
+      }
+    }
+  }
+}
+
+/* EXTRA SAFETY */
+body {
+  overflow-x: hidden;
+}

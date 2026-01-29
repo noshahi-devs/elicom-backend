@@ -1,0 +1,95 @@
+<div class="summary">
+  <h3>Order Summary</h3>
+
+  <div class="row">
+    <div class="label">Retail Price: <span>{{ itemsCount }}</span> Items</div>
+    <div class="value">${{ retailPrice.toFixed(2) }}</div>
+  </div>
+
+  <div class="row">
+    <div class="label">Shipping Fee</div>
+    <div class="value">${{ shippingFee.toFixed(2) }}</div>
+  </div>
+
+  <div class="row">
+    <div class="label">On-Time Delivery Guarantee</div>
+    <div class="value free-text">{{ onTimeDeliveryText }}</div>
+  </div>
+
+  <div class="row">
+    <div class="label">Coupons</div>
+    <div class="value promo-text">- ${{ coupons.toFixed(2) }}</div>
+  </div>
+
+  <div class="row" *ngIf="totalSavings > 0">
+    <div class="label">Promotions</div>
+    <div class="value promo-text">- ${{ totalSavings.toFixed(2) }}</div>
+  </div>
+
+  <div class="row">
+    <div class="label">Sales Tax</div>
+    <div class="value">${{ salesTax.toFixed(2) }}</div>
+  </div>
+
+  <div class="row order-total">
+    <div class="label">Order Total:</div>
+    <div class="value">${{ orderTotal.toFixed(2) }}</div>
+  </div>
+</div>
+
+
+<!-- ================= CLUB AD ================= -->
+
+<div class="club-box" *ngIf="true">
+  <div class="club-top">
+    <span>{{ clubData.title }}</span>
+    <span class="benefits-text">{{ clubData.benefitsText }}</span>
+  </div>
+
+  <div class="save-text">{{ clubData.saveText }}</div>
+
+  <div class="club-mid">
+    <div>
+      <div class="limited">Limited</div>
+      <div>{{ clubData.shippingCoupons }}</div>
+    </div>
+    <div>
+      <div>{{ clubData.creditText }}</div>
+      <div>{{ clubData.freeGifts }}</div>
+      <div>{{ clubData.extraOff }}</div>
+    </div>
+  </div>
+
+  <div class="markdown">{{ clubData.markdownText }}</div>
+
+  <div class="club-bottom">
+    <span class="club-price">${{ clubData.price.toFixed(2) }}</span>
+    <span class="club-old">${{ clubData.oldPrice.toFixed(2) }}</span>
+    <button class="special-offer">
+      {{ clubData.specialOfferText }}
+    </button>
+  </div>
+</div>
+
+<div class="section-card">
+
+  <h4 class="section-heading">Coupon Code</h4>
+  <div class="input-row">
+    <input type="text" placeholder="Enter coupon code">
+    <button class="apply-btn">APPLY</button>
+  </div>
+
+  <h4 class="section-heading gift-header">Gift Card</h4>
+  <div class="input-row gift-row">
+    <input type="text" placeholder="0000 0000 0000 0000">
+    <input type="password" placeholder="0000">
+    <button class="apply-btn">LINK</button>
+  </div>
+
+  <button class="place-order" [disabled]="disablePlaceOrder" (click)="placeOrder.emit()">PLACE ORDER</button>
+
+  <div class="terms">
+    By continuing, you agree to SMART CART Terms & Conditions.
+  </div>
+
+</div>

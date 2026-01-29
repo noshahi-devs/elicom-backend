@@ -1,0 +1,25 @@
+<!-- ProductDetail Page -->
+
+
+<div class="home-wrapper">
+
+  <div *ngIf="isLoading" style="padding: 100px; text-align: center;">
+    <i class="fa-solid fa-spinner fa-spin fa-3x"></i>
+    <p>Loading Product Details...</p>
+  </div>
+
+  <div *ngIf="!isLoading && errorHappened" style="padding: 100px; text-align: center; color: red;">
+    <h3>Product Not Found</h3>
+    <p>The product you are looking for is not available or has been moved.</p>
+    <button class="btn btn-outline-primary" style="margin-top: 10px;" routerLink="/">Back to Home</button>
+  </div>
+
+  <div *ngIf="!isLoading && !errorHappened && productData">
+    <app-breadcrumb [items]="breadcrumbItems"></app-breadcrumb>
+    <div class="product-layout">
+      <app-product-gallery #gallery [productData]="productData"></app-product-gallery>
+      <app-product-info [productData]="productData" (colorSelected)="gallery.setMainImage($event)"></app-product-info>
+    </div>
+  </div>
+
+</div>
