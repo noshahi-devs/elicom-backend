@@ -1,14 +1,19 @@
 ﻿using Abp.Domain.Entities.Auditing;
+using Elicom.Authorization.Users;
+using System.ComponentModel.DataAnnotations.Schema;
 using System;
 using System.Collections.Generic;
+
+using Abp.Domain.Entities;
 
 namespace Elicom.Entities
 {
     public class Order : FullAuditedEntity<Guid>
     {
         // Customer info
-        public Guid CustomerProfileId { get; set; }
-        public virtual CustomerProfile CustomerProfile { get; set; }
+        public long UserId { get; set; }
+        [ForeignKey(nameof(UserId))]
+        public virtual User User { get; set; }
 
         // Order details
         public string OrderNumber { get; set; }

@@ -5,6 +5,7 @@ using Abp.UI;
 using Elicom.Entities;
 using Elicom.Homepage.Dto;
 using Microsoft.EntityFrameworkCore;
+using Abp.Domain.Uow;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,240 +37,255 @@ namespace Elicom.Homepage
             PagedAndSortedResultRequestDto input)
         {
             // 1️⃣ Base query (ONLY product-level filtering)
-            var baseQuery = _productRepository
-                .GetAll()
-                .Where(p => p.Status)
-                .Where(p => p.StoreProducts.Any()); // important
-
-            // 2️⃣ Correct total count (DISTINCT PRODUCTS)
-            var totalCount = await baseQuery.CountAsync();
-
-            // 3️⃣ Fetch paged products with required joins
-            var products = await baseQuery
-                .Include(p => p.Category)
-                .Include(p => p.StoreProducts)
-                    .ThenInclude(sp => sp.Store)
-                .OrderByDescending(p => p.CreatedAt)
-                .Skip(input.SkipCount)
-                .Take(input.MaxResultCount)
-                .ToListAsync();
-
-            // 4️⃣ Map to ProductCardDto
-            var items = products.Select(p =>
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
             {
-                // For now: pick first store listing
-                var storeProduct = p.StoreProducts.First();
+                var baseQuery = _productRepository
+                    .GetAll()
+                    .Where(p => p.Status)
+                    .Where(p => p.StoreProducts.Any()); // important
 
-                var images = p.Images?
-                    .Split(',', StringSplitOptions.RemoveEmptyEntries);
+                // 2️⃣ Correct total count (DISTINCT PRODUCTS)
+                var totalCount = await baseQuery.CountAsync();
 
-                var finalPrice =
-                    storeProduct.ResellerPrice *
-                    (1 - storeProduct.ResellerDiscountPercentage / 100m);
+                // 3️⃣ Fetch paged products with required joins
+                var products = await baseQuery
+                    .Include(p => p.Category)
+                    .Include(p => p.StoreProducts)
+                        .ThenInclude(sp => sp.Store)
+                    .OrderByDescending(p => p.CreatedAt)
+                    .Skip(input.SkipCount)
+                    .Take(input.MaxResultCount)
+                    .ToListAsync();
 
-                return new ProductCardDto
+                // 4️⃣ Map to ProductCardDto
+                var items = products.Select(p =>
                 {
-                    ProductId = p.Id,
-                    StoreProductId = storeProduct.Id,
+                    // For now: pick first store listing
+                    var storeProduct = p.StoreProducts.First();
 
-                    CategoryId = p.CategoryId,
-                    CategoryName = p.Category.Name,
+                    var images = p.Images?
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries);
 
-                    Title = p.Name,
+                    var finalPrice =
+                        storeProduct.ResellerPrice *
+                        (1 - storeProduct.ResellerDiscountPercentage / 100m);
 
-                    Image1 = images?.FirstOrDefault(),
-                    Image2 = images?.Skip(1).FirstOrDefault(),
+                    return new ProductCardDto
+                    {
+                        ProductId = p.Id,
+                        StoreProductId = storeProduct.Id,
 
-                    OriginalPrice = storeProduct.ResellerPrice,
-                    ResellerDiscountPercentage = storeProduct.ResellerDiscountPercentage,
-                    Price = finalPrice,
+                        CategoryId = p.CategoryId,
+                        CategoryName = p.Category.Name,
 
-                    StoreName = storeProduct.Store.Name,
-                    Slug = p.Slug
-                };
-            }).ToList();
+                        Title = p.Name,
 
-            // 5️⃣ Return paged result
-            return new PagedResultDto<ProductCardDto>(totalCount, items);
+                        Image1 = images?.FirstOrDefault(),
+                        Image2 = images?.Skip(1).FirstOrDefault(),
+
+                        OriginalPrice = storeProduct.ResellerPrice,
+                        ResellerDiscountPercentage = storeProduct.ResellerDiscountPercentage,
+                        Price = finalPrice,
+
+                        StoreName = storeProduct.Store.Name,
+                        Slug = p.Slug
+                    };
+                }).ToList();
+
+                // 5️⃣ Return paged result
+                return new PagedResultDto<ProductCardDto>(totalCount, items);
+            }
         }
 
         public async Task<ProductDetailDto> GetProductDetail(Guid productId, Guid storeProductId)
         {
-            var product = await _productRepository
-                .GetAll()
-                .Include(p => p.Category)
-                .Include(p => p.StoreProducts)
-                    .ThenInclude(sp => sp.Store)
-                .FirstOrDefaultAsync(p => p.Id == productId);
-
-            if (product == null)
-                throw new UserFriendlyException("Product not found.");
-
-            var storeProduct = product.StoreProducts.FirstOrDefault(sp => sp.Id == storeProductId);
-            if (storeProduct == null)
-                throw new UserFriendlyException("Product is not available in the selected store.");
-
-            // Other stores selling the same product
-            var otherStores = product.StoreProducts
-                .Where(sp => sp.Id != storeProductId)
-                .Select(sp => new OtherStoreDto
-                {
-                    StoreId = sp.StoreId,
-                    StoreName = sp.Store.Name,
-                    ResellerPrice = sp.ResellerPrice,
-                    ResellerDiscountPercentage = sp.ResellerDiscountPercentage,
-                    Price = sp.ResellerPrice * (1 - sp.ResellerDiscountPercentage / 100),
-                    StockQuantity = sp.StockQuantity
-                })
-                .ToList();
-
-            var images = product.Images?.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
-            var sizes = product.SizeOptions?.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
-            var colors = product.ColorOptions?.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
-
-            return new ProductDetailDto
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
             {
-                ProductId = product.Id,
-                Title = product.Name,
-                Slug = product.Slug,
-                Description = product.Description,
-                BrandName = product.BrandName,
-                Images = images,
-                SizeOptions = sizes,
-                ColorOptions = colors,
+                var product = await _productRepository
+                    .GetAll()
+                    .Include(p => p.Category)
+                    .Include(p => p.StoreProducts)
+                        .ThenInclude(sp => sp.Store)
+                    .FirstOrDefaultAsync(p => p.Id == productId);
 
-                Category = new CategoryInfoDto
+                if (product == null)
+                    throw new UserFriendlyException("Product not found.");
+
+                var storeProduct = product.StoreProducts.FirstOrDefault(sp => sp.Id == storeProductId);
+                if (storeProduct == null)
+                    throw new UserFriendlyException("Product is not available in the selected store.");
+
+                // Other stores selling the same product
+                var otherStores = product.StoreProducts
+                    .Where(sp => sp.Id != storeProductId)
+                    .Select(sp => new OtherStoreDto
+                    {
+                        StoreId = sp.StoreId,
+                        StoreName = sp.Store.Name,
+                        ResellerPrice = sp.ResellerPrice,
+                        ResellerDiscountPercentage = sp.ResellerDiscountPercentage,
+                        Price = sp.ResellerPrice * (1 - sp.ResellerDiscountPercentage / 100),
+                        StockQuantity = sp.StockQuantity
+                    })
+                    .ToList();
+
+                var images = product.Images?.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+                var sizes = product.SizeOptions?.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+                var colors = product.ColorOptions?.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+
+                return new ProductDetailDto
                 {
-                    CategoryId = product.CategoryId,
-                    Name = product.Category.Name,
-                    Slug = product.Category.Slug
-                },
+                    ProductId = product.Id,
+                    Title = product.Name,
+                    Slug = product.Slug,
+                    Description = product.Description,
+                    BrandName = product.BrandName,
+                    Images = images,
+                    SizeOptions = sizes,
+                    ColorOptions = colors,
 
-                Store = new StoreInfoDto
-                {
-                    StoreId = storeProduct.StoreId,
-                    StoreName = storeProduct.Store.Name,
-                    StoreDescription = storeProduct.Store.Description,
-                    StoreSlug = storeProduct.Store.Slug,
-                    ResellerPrice = storeProduct.ResellerPrice,
-                    ResellerDiscountPercentage = storeProduct.ResellerDiscountPercentage,
-                    Price = storeProduct.ResellerPrice * (1 - storeProduct.ResellerDiscountPercentage / 100),
-                    StockQuantity = storeProduct.StockQuantity
-                },
+                    Category = new CategoryInfoDto
+                    {
+                        CategoryId = product.CategoryId,
+                        Name = product.Category.Name,
+                        Slug = product.Category.Slug
+                    },
 
-                OtherStores = otherStores,
-                TotalOtherStores = otherStores.Count
-            };
+                    Store = new StoreInfoDto
+                    {
+                        StoreId = storeProduct.StoreId,
+                        StoreName = storeProduct.Store.Name,
+                        StoreDescription = storeProduct.Store.Description,
+                        StoreSlug = storeProduct.Store.Slug,
+                        ResellerPrice = storeProduct.ResellerPrice,
+                        ResellerDiscountPercentage = storeProduct.ResellerDiscountPercentage,
+                        Price = storeProduct.ResellerPrice * (1 - storeProduct.ResellerDiscountPercentage / 100),
+                        StockQuantity = storeProduct.StockQuantity
+                    },
+
+                    OtherStores = otherStores,
+                    TotalOtherStores = otherStores.Count
+                };
+            }
         }
 
         public async Task<List<HomepageCategoryDto>> GetCategoriesWithListedProducts()
         {
-            var categories = await _categoryRepository.GetAll()
-                .Where(c => c.Products.Any(p => p.Status && p.StoreProducts.Any()))
-                .Select(c => new HomepageCategoryDto
-                {
-                    CategoryId = c.Id,
-                    Name = c.Name,
-                    Slug = c.Slug,
-                    ImageUrl = c.ImageUrl,
-                    // Use SelectMany to flatten products and filter before counting
-                    TotalProducts = c.Products
-                        .Count(p => p.Status && p.StoreProducts.Any())
-                })
-                .ToListAsync();
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
+            {
+                var categories = await _categoryRepository.GetAll()
+                    .Where(c => c.Products.Any(p => p.Status && p.StoreProducts.Any()))
+                    .Select(c => new HomepageCategoryDto
+                    {
+                        CategoryId = c.Id,
+                        Name = c.Name,
+                        Slug = c.Slug,
+                        ImageUrl = c.ImageUrl,
+                        // Use SelectMany to flatten products and filter before counting
+                        TotalProducts = c.Products
+                            .Count(p => p.Status && p.StoreProducts.Any())
+                    })
+                    .ToListAsync();
 
-            return categories;
+                return categories;
+            }
         }
 
         public async Task<List<ProductCardDto>> GetProductListingsAcrossStores(Guid productId)
         {
-            // Fetch the product with its category
-            var product = await _productRepository
-                .GetAll()
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(p => p.Id == productId);
-
-            if (product == null)
-                throw new Abp.UI.UserFriendlyException("Product not found.");
-
-            // Fetch all store listings for this product
-            var storeProducts = await _storeProductRepository
-                .GetAll()
-                .Include(sp => sp.Store)
-                .Where(sp => sp.ProductId == productId && sp.Status)
-                .ToListAsync();
-
-            // Map each store product to ProductCardDto
-            var productCards = storeProducts.Select(sp =>
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
             {
-                var images = product.Images?.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                // Fetch the product with its category
+                var product = await _productRepository
+                    .GetAll()
+                    .Include(p => p.Category)
+                    .FirstOrDefaultAsync(p => p.Id == productId);
 
-                var finalPrice = sp.ResellerPrice * (1 - sp.ResellerDiscountPercentage / 100m);
+                if (product == null)
+                    throw new Abp.UI.UserFriendlyException("Product not found.");
 
-                return new ProductCardDto
+                // Fetch all store listings for this product
+                var storeProducts = await _storeProductRepository
+                    .GetAll()
+                    .Include(sp => sp.Store)
+                    .Where(sp => sp.ProductId == productId && sp.Status)
+                    .ToListAsync();
+
+                // Map each store product to ProductCardDto
+                var productCards = storeProducts.Select(sp =>
                 {
-                    ProductId = product.Id,
-                    StoreProductId = sp.Id,
-                    CategoryId = product.CategoryId,
-                    CategoryName = product.Category.Name,
+                    var images = product.Images?.Split(',', StringSplitOptions.RemoveEmptyEntries);
 
-                    Title = product.Name,
-                    Image1 = images?.FirstOrDefault(),
-                    Image2 = images?.Skip(1).FirstOrDefault(),
+                    var finalPrice = sp.ResellerPrice * (1 - sp.ResellerDiscountPercentage / 100m);
 
-                    OriginalPrice = sp.ResellerPrice,
-                    ResellerDiscountPercentage = sp.ResellerDiscountPercentage,
-                    Price = finalPrice,
+                    return new ProductCardDto
+                    {
+                        ProductId = product.Id,
+                        StoreProductId = sp.Id,
+                        CategoryId = product.CategoryId,
+                        CategoryName = product.Category.Name,
 
-                    StoreName = sp.Store.Name,
-                    Slug = product.Slug
-                };
-            }).ToList();
+                        Title = product.Name,
+                        Image1 = images?.FirstOrDefault(),
+                        Image2 = images?.Skip(1).FirstOrDefault(),
 
-            return productCards;
+                        OriginalPrice = sp.ResellerPrice,
+                        ResellerDiscountPercentage = sp.ResellerDiscountPercentage,
+                        Price = finalPrice,
+
+                        StoreName = sp.Store.Name,
+                        Slug = product.Slug
+                    };
+                }).ToList();
+
+                return productCards;
+            }
         }
 
 
         public async Task<List<ProductCardDto>> GetProductsByStore(Guid storeId)
         {
-            // Fetch all store products for this store
-            var storeProducts = await _storeProductRepository
-                .GetAll()
-                .Include(sp => sp.Product)
-                    .ThenInclude(p => p.Category)
-                .Include(sp => sp.Store)
-                .Where(sp => sp.StoreId == storeId && sp.Status && sp.Product.Status)
-                .ToListAsync();
-
-            // Map to ProductCardDto
-            var products = storeProducts.Select(sp =>
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
             {
-                var product = sp.Product;
-                var images = product.Images?.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                // Fetch all store products for this store
+                var storeProducts = await _storeProductRepository
+                    .GetAll()
+                    .Include(sp => sp.Product)
+                        .ThenInclude(p => p.Category)
+                    .Include(sp => sp.Store)
+                    .Where(sp => sp.StoreId == storeId && sp.Status && sp.Product.Status)
+                    .ToListAsync();
 
-                var finalPrice = sp.ResellerPrice * (1 - sp.ResellerDiscountPercentage / 100m);
-
-                return new ProductCardDto
+                // Map to ProductCardDto
+                var products = storeProducts.Select(sp =>
                 {
-                    ProductId = product.Id,
-                    StoreProductId = sp.Id,
-                    CategoryId = product.CategoryId,
-                    CategoryName = product.Category.Name,
+                    var product = sp.Product;
+                    var images = product.Images?.Split(',', StringSplitOptions.RemoveEmptyEntries);
 
-                    Title = product.Name,
-                    Image1 = images?.FirstOrDefault(),
-                    Image2 = images?.Skip(1).FirstOrDefault(),
+                    var finalPrice = sp.ResellerPrice * (1 - sp.ResellerDiscountPercentage / 100m);
 
-                    OriginalPrice = sp.ResellerPrice,
-                    ResellerDiscountPercentage = sp.ResellerDiscountPercentage,
-                    Price = finalPrice,
+                    return new ProductCardDto
+                    {
+                        ProductId = product.Id,
+                        StoreProductId = sp.Id,
+                        CategoryId = product.CategoryId,
+                        CategoryName = product.Category.Name,
 
-                    StoreName = sp.Store.Name,
-                    Slug = product.Slug
-                };
-            }).ToList();
+                        Title = product.Name,
+                        Image1 = images?.FirstOrDefault(),
+                        Image2 = images?.Skip(1).FirstOrDefault(),
 
-            return products;
+                        OriginalPrice = sp.ResellerPrice,
+                        ResellerDiscountPercentage = sp.ResellerDiscountPercentage,
+                        Price = finalPrice,
+
+                        StoreName = sp.Store.Name,
+                        Slug = product.Slug
+                    };
+                }).ToList();
+
+                return products;
+            }
         }
 
 

@@ -5,7 +5,7 @@ namespace Elicom.Carts.Dto
 {
     public class CartItemDto : EntityDto<Guid>
     {
-        public Guid CustomerProfileId { get; set; }
+        public long UserId { get; set; }
         public Guid StoreProductId { get; set; }
         public int Quantity { get; set; }
 

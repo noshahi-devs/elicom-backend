@@ -72,7 +72,8 @@ export class AuthService {
 
     login(credentials: LoginDto): Observable<any> {
         const url = `${this.baseUrl}/api/TokenAuth/Authenticate`;
-        return this.http.post(url, credentials).pipe(
+        const headers = { 'Abp-TenantId': '1' }; // Smart Store Tenant
+        return this.http.post(url, credentials, { headers }).pipe(
             tap((response: any) => {
                 console.log('Login response:', response);
 
@@ -85,6 +86,7 @@ export class AuthService {
                     this.ensureCustomerProfile(response.result.userId, credentials.userNameOrEmailAddress);
 
                     this.updateCurrentUser({
+                        id: response.result.userId,
                         userName: credentials.userNameOrEmailAddress,
                         emailAddress: credentials.userNameOrEmailAddress
                     });
@@ -98,30 +100,45 @@ export class AuthService {
     private ensureCustomerProfile(userId: number, email: string) {
         const getUrl = `${this.baseUrl}/api/services/app/CustomerProfile/GetByUserId?userId=${userId}`;
 
-        // This request now uses AuthInterceptor, so headers are attached correctly!
         this.http.get(getUrl).subscribe({
-            next: (profile) => {
-                console.log('Customer Profile confirmed:', profile);
+            next: (response: any) => {
+                // If the profile doesn't exist, response.result will be null (or response itself depending on wrapper)
+                // ABP default wrapper: { result: ..., success: true, ... }
+                const profile = response?.result || response;
+
+                if (profile && profile.id) {
+                    console.log('Customer Profile confirmed:', profile);
+                    localStorage.setItem('customerProfileId', profile.id);
+                } else {
+                    console.log('Profile missing, creating now...');
+                    this.createInitialProfile(userId, email);
+                }
             },
             error: (err) => {
-                // Determine if 404 (Not Found) or other error
-                // If 404, we must create. If 401, interceptor might not be worked (caught earlier).
-                // Assuming 404 or just general failure to find, we try create.
+                console.warn('Profile check failed, attempting creation just in case.', err);
+                this.createInitialProfile(userId, email);
+            }
+        });
+    }
 
-                const createUrl = `${this.baseUrl}/api/services/app/CustomerProfile/Create`;
-                const newProfile = {
-                    userId: userId,
-                    fullName: 'Customer User', // Default name
-                    email: email,
-                };
+    private createInitialProfile(userId: number, email: string) {
+        const createUrl = `${this.baseUrl}/api/services/app/CustomerProfile/Create`;
+        const newProfile = {
+            userId: userId,
+            fullName: 'Customer User',
+            email: email,
+        };
 
-                this.http.post(createUrl, newProfile).subscribe({
-                    next: (res) => console.log('Customer Profile created successfully!', res),
-                    error: (createErr) => {
-                        // Critical: Do not block UI/App even if this fails.
-                        console.error('Failed to create customer profile. This might affect User Index.', createErr);
-                    }
-                });
+        this.http.post(createUrl, newProfile).subscribe({
+            next: (res: any) => {
+                const created = res?.result || res;
+                console.log('Customer Profile created successfully!', created);
+                if (created && created.id) {
+                    localStorage.setItem('customerProfileId', created.id);
+                }
+            },
+            error: (createErr) => {
+                console.error('Failed to create customer profile.', createErr);
             }
         });
     }
@@ -133,7 +150,8 @@ export class AuthService {
 
     registerSmartStoreCustomer(data: RegisterSmartStoreInput): Observable<any> {
         const url = `${this.baseUrl}/api/services/app/Account/RegisterSmartStoreCustomer`;
-        return this.http.post(url, data);
+        const headers = { 'Abp-TenantId': '1' }; // Smart Store Tenant
+        return this.http.post(url, data, { headers });
     }
 
     forgotPassword(email: string): Observable<any> {
@@ -169,6 +187,7 @@ export class AuthService {
 
     private setSession(token: string, userId: number) {
         localStorage.setItem('authToken', token);
+        localStorage.setItem('userId', userId.toString());
     }
 
     private updateCurrentUser(user: User) {

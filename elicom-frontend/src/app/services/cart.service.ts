@@ -19,22 +19,20 @@ export class CartService {
         private authService: AuthService
     ) { }
 
-    addToCart(product: any, quantity: number = 1, size?: string, color?: string, image?: string): Observable<any> {
+    addToCart(product: any, quantity: number = 1): Observable<any> {
         if (!this.authService.isAuthenticated) {
             this.authService.openAuthModal();
             return throwError(() => new Error('User not authenticated'));
         }
 
-        // Call API
-        // Need to verify exact payload for AddToCart, assuming standard DTO
+        const userId = Number(localStorage.getItem('userId') || JSON.parse(localStorage.getItem('currentUser') || '{}').id);
+
         const payload = {
-            productId: product.id || product.productId, // Handle different shapes
-            quantity: quantity,
-            size: size,
-            color: color,
-            image: image,
-            storeId: product.storeId // Assuming storeId might be needed
+            userId: Number(userId),
+            storeProductId: product.storeProductId || product.id,
+            quantity: quantity
         };
+        console.log('[CartService] 🛒 Calling AddToCart API...', payload);
 
         return this.http.post(`${this.baseUrl}/AddToCart`, payload);
     }

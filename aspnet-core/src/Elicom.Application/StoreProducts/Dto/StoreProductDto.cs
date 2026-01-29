@@ -21,6 +21,7 @@ namespace Elicom.StoreProducts.Dto
 
         public string ProductName { get; set; }
         public string ProductImage { get; set; }
+        public string BrandName { get; set; }
     }
 
 }

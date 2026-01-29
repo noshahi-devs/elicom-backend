@@ -3,8 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, map, catchError, of } from 'rxjs';
 
 export interface ProductCardDto {
-id: any|string;
-productName: any;
+    id: any | string;
+    productName: any;
     productId: string;
     storeProductId: string;
     categoryId: string;
@@ -21,6 +21,7 @@ productName: any;
 
 export interface ProductDetailDto {
     productId: string;
+    storeProductId?: string;
     title: string;
     slug: string;
     description: string;

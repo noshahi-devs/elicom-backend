@@ -13,6 +13,7 @@ export class CheckoutSummary {
   cartService = inject(CartService);
 
   @Input() disablePlaceOrder: boolean = false;
+  @Input() showPlaceOrder: boolean = true;
   @Output() placeOrder = new EventEmitter<void>();
 
   get itemsCount(): number {

@@ -1,6 +1,8 @@
 import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
+import { CartService } from '../../../services/cart.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-product-card',
@@ -11,6 +13,7 @@ import { Router, RouterLink } from '@angular/router';
 })
 export class ProductCard {
   private router = inject(Router);
+  private cartService = inject(CartService);
 
   @Input() products: any[] = [];
 
@@ -44,6 +47,30 @@ export class ProductCard {
   couponPrice(product: any): number {
     if (!product.couponDiscount) return product.price;
     return +(product.price - product.couponDiscount).toFixed(2);
+  }
+
+  addToCart(event: Event, product: any) {
+    event.stopPropagation();
+
+    this.cartService.addToCart(product).subscribe({
+      next: () => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Added to Cart',
+          text: `${product.title || 'Product'} has been added to your cart`,
+          timer: 1500,
+          showConfirmButton: false
+        });
+      },
+      error: (err) => {
+        console.error(err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops...',
+          text: 'Failed to add item to cart',
+        });
+      }
+    });
   }
 
   goToDetail(product: any) {

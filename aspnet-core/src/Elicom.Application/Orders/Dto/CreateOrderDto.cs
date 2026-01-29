@@ -5,7 +5,7 @@ namespace Elicom.Orders.Dto
 {
     public class CreateOrderDto
     {
-        public Guid CustomerProfileId { get; set; }
+        public long UserId { get; set; }
         public string PaymentMethod { get; set; }
 
         public string ShippingAddress { get; set; }

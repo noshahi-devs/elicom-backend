@@ -66,6 +66,9 @@ export class ProductDetail implements OnInit {
         Swal.close();
         console.log('ProductDetail Receive Result:', res);
         this.productData = res;
+        if (this.productData) {
+          this.productData.storeProductId = storeProductId;
+        }
         this.isLoading = false;
         if (res) {
           this.breadcrumbItems = ['Home', res.category?.name || 'Category', res.title];

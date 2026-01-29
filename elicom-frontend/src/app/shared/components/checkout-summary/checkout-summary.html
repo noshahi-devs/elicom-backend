@@ -86,7 +86,8 @@
     <button class="apply-btn">LINK</button>
   </div>
 
-  <button class="place-order" [disabled]="disablePlaceOrder" (click)="placeOrder.emit()">PLACE ORDER</button>
+  <button *ngIf="showPlaceOrder" class="place-order" [disabled]="disablePlaceOrder" (click)="placeOrder.emit()">PLACE
+    ORDER</button>
 
   <div class="terms">
     By continuing, you agree to SMART CART Terms & Conditions.

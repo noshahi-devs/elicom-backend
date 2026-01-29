@@ -10,8 +10,9 @@ namespace Elicom.Carts
     public interface ICartAppService : IApplicationService
     {
         Task<CartItemDto> AddToCart(CreateCartItemDto input);
-        Task<List<CartItemDto>> GetCartItems(Guid customerProfileId);
+        Task<List<CartItemDto>> GetCartItems(long userId);
         Task RemoveFromCart(Guid cartItemId);
-        Task ClearCart(Guid customerProfileId);
+        Task RemoveFromCartByProduct(long userId, Guid storeProductId);
+        Task ClearCart(long userId);
     }
 }

@@ -1,6 +1,7 @@
-import { Component, Output, EventEmitter } from '@angular/core';
+import { Component, Output, EventEmitter, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { CardService, CardValidationResultDto } from '../../../services/card.service';
 
 @Component({
   selector: 'app-payment-method',
@@ -10,15 +11,23 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './payment-method.scss',
 })
 export class PaymentMethod {
+  private cardService = inject(CardService);
+  private cdr = inject(ChangeDetectorRef);
 
-  @Output() paymentConfirmed = new EventEmitter<string>();
+  @Output() paymentConfirmed = new EventEmitter<{ method: string, details?: any }>();
+  @Output() stepComplete = new EventEmitter<void>();
 
-  // kis payment method par click hua (index)
-  activeIndex: number | null = null;
-  showCardModal = false;
-  selectedLabel = '';
+  selectedMethodId: string = 'card';
+  paymentMethods = [
+    { id: 'card', name: 'Credit/Debit Card', icon: 'assets/images/My Wallet.webp' },
+    { id: 'finora', name: 'Easy Finora', icon: 'assets/images/easyfinora_logo.png' },
+    { id: 'paypal', name: 'PayPal', icon: 'assets/images/paypal.png' },
+    { id: 'google_pay', name: 'Google Pay', icon: 'assets/images/google.png' },
+    { id: 'bank', name: 'Bank Transfer', icon: 'assets/images/bankofamerica.png' },
+  ];
 
   /* CARD FIELDS */
+
   card = {
     number: '', // stored with spaces
     expiry: '',
@@ -32,14 +41,21 @@ export class PaymentMethod {
     cvv: false
   };
 
-  setActive(index: number, label: string) {
-    this.activeIndex = index;
-    this.selectedLabel = label;
+  /* Verification State */
+  isVerifying: boolean = false;
+  verifiedBalance: number | null = null;
+  verificationMessage: string | null = null;
+  isVerified: boolean = false;
 
-    // Direct open card modal for ALL methods
-    this.showCardModal = true;
+  onMethodChange(methodId: string) {
+    console.log('[PaymentMethod] 💳 Selected Payment Method:', methodId);
+    this.selectedMethodId = methodId;
     this.resetCardForm();
+    this.isVerified = false;
+    this.verifiedBalance = null;
+    this.verificationMessage = null;
   }
+
 
   /* ================= CARD INPUT HANDLERS ================= */
 
@@ -128,13 +144,49 @@ export class PaymentMethod {
 
   // Removed onLoginSuccess()
 
-  confirmPayment() {
-    this.paymentConfirmed.emit(this.selectedLabel);
-    this.closeModals();
+  verifyFinora() {
+    const rawNum = this.card.number.replace(/\s/g, '');
+    if (rawNum.length !== 16 || this.card.expiry.length !== 5 || this.card.cvv.length !== 3) {
+      this.verificationMessage = "Please enter valid card details first.";
+      return;
+    }
+
+    this.isVerifying = true;
+    this.verificationMessage = null;
+
+    this.cardService.validateCard({
+      cardNumber: rawNum,
+      expiryDate: this.card.expiry,
+      cvv: this.card.cvv,
+      amount: 100 // Default amount to check
+    }).subscribe({
+      next: (res: CardValidationResultDto) => {
+        console.log('[PaymentMethod] 🔍 verifyFinora Result:', res);
+        this.isVerifying = false;
+        if (res.isValid) {
+          this.isVerified = true;
+          this.verifiedBalance = res.availableBalance;
+        } else {
+          this.verificationMessage = res.message;
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.isVerifying = false;
+        this.verificationMessage = "Connection error. Try again.";
+        this.cdr.detectChanges();
+      }
+    });
   }
 
-  closeModals() {
-    // this.showLoginModal = false;
-    this.showCardModal = false;
+  confirmPayment() {
+    this.paymentConfirmed.emit({
+      method: this.selectedMethodId,
+      details: this.card
+    });
+    this.stepComplete.emit();
   }
+
+
+
 }

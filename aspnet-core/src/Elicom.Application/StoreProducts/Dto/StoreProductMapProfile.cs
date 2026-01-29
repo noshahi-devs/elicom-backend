@@ -10,7 +10,9 @@ public class StoreProductMapProfile : Profile
             .ForMember(d => d.ProductName,
                 o => o.MapFrom(s => s.Product.Name))
             .ForMember(d => d.ProductImage,
-                o => o.MapFrom(s => s.Product.Images));
+                o => o.MapFrom(s => s.Product.Images))
+            .ForMember(d => d.BrandName,
+                o => o.MapFrom(s => s.Product.BrandName));
 
         CreateMap<CreateStoreProductDto, StoreProduct>();
         CreateMap<UpdateStoreProductDto, StoreProduct>();

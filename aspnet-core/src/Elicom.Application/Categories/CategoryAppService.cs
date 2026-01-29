@@ -2,6 +2,7 @@
 using Abp.Application.Services.Dto;
 using Abp.Authorization;
 using Abp.Domain.Repositories;
+using Abp.Domain.Uow;
 using AutoMapper;
 using Elicom.Authorization;
 using Elicom.Categories.Dto;
@@ -40,8 +41,11 @@ namespace Elicom.Categories
 
         public async Task<ListResultDto<CategoryDto>> GetAll()
         {
-            var categories = await _categoryRepository.GetAllListAsync();
-            return new ListResultDto<CategoryDto>(_mapper.Map<List<CategoryDto>>(categories));
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
+            {
+                var categories = await _categoryRepository.GetAllListAsync();
+                return new ListResultDto<CategoryDto>(_mapper.Map<List<CategoryDto>>(categories));
+            }
         }
 
         [AbpAuthorize(PermissionNames.Pages_Categories_Create)]
@@ -74,24 +78,27 @@ namespace Elicom.Categories
 
         public async Task<ListResultDto<CategoryLookupDto>> GetLookup()
         {
-            var categories = await _categoryRepository.GetAllListAsync();
-            
-            // Group by name to remove duplicates and project to DTO
-            var result = categories
-                .GroupBy(c => c.Name.Trim())
-                .Select(g => g.First())
-                .Select(c => {
-                    var dto = _mapper.Map<CategoryLookupDto>(c);
-                    // Fallback for missing or invalid slugs
-                    if (string.IsNullOrEmpty(dto.Slug) || dto.Slug == "string" || dto.Slug == "null")
-                    {
-                        dto.Slug = System.Text.RegularExpressions.Regex.Replace(c.Name.ToLower(), @"[^a-z0-9]+", "-").Trim('-');
-                    }
-                    return dto;
-                })
-                .ToList();
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
+            {
+                var categories = await _categoryRepository.GetAllListAsync();
 
-            return new ListResultDto<CategoryLookupDto>(result);
+                // Group by name to remove duplicates and project to DTO
+                var result = categories
+                    .GroupBy(c => c.Name.Trim())
+                    .Select(g => g.First())
+                    .Select(c => {
+                        var dto = _mapper.Map<CategoryLookupDto>(c);
+                        // Fallback for missing or invalid slugs
+                        if (string.IsNullOrEmpty(dto.Slug) || dto.Slug == "string" || dto.Slug == "null")
+                        {
+                            dto.Slug = System.Text.RegularExpressions.Regex.Replace(c.Name.ToLower(), @"[^a-z0-9]+", "-").Trim('-');
+                        }
+                        return dto;
+                    })
+                    .ToList();
+
+                return new ListResultDto<CategoryLookupDto>(result);
+            }
         }
 
         [AbpAuthorize(PermissionNames.Pages_Categories_Delete)]

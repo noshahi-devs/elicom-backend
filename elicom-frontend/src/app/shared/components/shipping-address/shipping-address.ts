@@ -134,9 +134,13 @@ export class ShippingAddress {
 
   /* ================= SAVE ================= */
 
-  submit(e: Event) {
-    e.preventDefault();
+  submit(e?: Event) {
+    if (e) e.preventDefault();
+    this.saveAddress();
+  }
 
+  saveAddress() {
+    console.log('[ShippingAddress] 🚚 Saving Address:', this.fields);
     (Object.keys(this.fields) as FieldKey[]).forEach(f => this.touch(f));
 
     // Re-run invalid check for all fields
@@ -178,6 +182,10 @@ export class ShippingAddress {
     this.focused = {};
     this.showSummary = false;
     this.cities = [];
+  }
+
+  getAddressData() {
+    return this.savedFields || this.fields;
   }
 }
 

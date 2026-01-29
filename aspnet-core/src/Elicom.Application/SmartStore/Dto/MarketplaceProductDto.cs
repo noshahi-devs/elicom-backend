@@ -13,6 +13,7 @@ namespace Elicom.SmartStore.Dto
         public decimal Price { get; set; }
         public int StockQuantity { get; set; }
         public string CategoryName { get; set; }
+        public string BrandName { get; set; }
         public Guid ProductId { get; set; }
     }
 }

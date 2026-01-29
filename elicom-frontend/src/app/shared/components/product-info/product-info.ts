@@ -195,6 +195,7 @@ export class ProductInfo implements OnInit {
       ? this.getImage(this.productData.images[0])
       : this.getImage('');
 
+    console.log('[ProductInfo] Adding to cart:', this.productData, this.quantity);
     this.cartService.addToCart(
       this.productData,
       this.quantity,

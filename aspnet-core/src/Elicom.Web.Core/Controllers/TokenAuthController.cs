@@ -95,14 +95,21 @@ namespace Elicom.Controllers
                     case "globalpay": prefix = "GP_"; break;
                     case "primeship": prefix = "PS_"; break;
                     case "default": prefix = "SS_"; break;
+                    case "smartstore": prefix = "SS_"; break;
                 }
 
                 if (!string.IsNullOrEmpty(prefix) && !usernameOrEmailAddress.StartsWith(prefix))
                 {
                     var prefixedLoginResult = await _logInManager.LoginAsync(prefix + usernameOrEmailAddress, password, tenancyName);
-                    if (prefixedLoginResult.Result != AbpLoginResultType.InvalidUserNameOrEmailAddress)
+                    if (prefixedLoginResult.Result == AbpLoginResultType.Success)
                     {
                         return prefixedLoginResult;
+                    }
+                    
+                    // If we found the user but password was wrong, keep that result for the final switch
+                    if (prefixedLoginResult.Result != AbpLoginResultType.InvalidUserNameOrEmailAddress)
+                    {
+                        loginResult = prefixedLoginResult;
                     }
                 }
             }
@@ -112,10 +119,15 @@ namespace Elicom.Controllers
             {
                 using (UnitOfWorkManager.Current.DisableFilter(Abp.Domain.Uow.AbpDataFilters.MayHaveTenant, Abp.Domain.Uow.AbpDataFilters.MustHaveTenant))
                 {
-                    // Use IgnoreQueryFilters to be absolutely sure we scan the whole table
-                    var user = await _userManager.Users
+                    // Prioritize current tenant if identifiable
+                    int? currentTenantId = _tenantCache.GetOrNull(tenancyName)?.Id;
+
+                    var users = await _userManager.Users
                         .IgnoreQueryFilters()
-                        .FirstOrDefaultAsync(u => u.EmailAddress == usernameOrEmailAddress || u.UserName == usernameOrEmailAddress);
+                        .Where(u => u.EmailAddress == usernameOrEmailAddress || u.UserName == usernameOrEmailAddress)
+                        .ToListAsync();
+
+                    var user = users.FirstOrDefault(u => u.TenantId == currentTenantId) ?? users.FirstOrDefault();
 
                     if (user != null)
                     {
@@ -123,10 +135,13 @@ namespace Elicom.Controllers
                         var targetTenancyName = tenant?.TenancyName; 
 
                         var globalLoginResult = await _logInManager.LoginAsync(user.UserName, password, targetTenancyName);
-                        if (globalLoginResult.Result != AbpLoginResultType.InvalidUserNameOrEmailAddress)
+                        if (globalLoginResult.Result == AbpLoginResultType.Success)
                         {
                             return globalLoginResult;
                         }
+
+                        // If user exists anywhere but login fails (e.g. wrong password), capture that result
+                        loginResult = globalLoginResult;
                     }
                 }
             }

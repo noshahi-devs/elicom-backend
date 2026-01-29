@@ -59,7 +59,7 @@ namespace Elicom.CustomerProfiles
 
             if (profile == null)
             {
-                throw new UserFriendlyException("Customer profile not found.");
+                return null;
             }
 
             return ObjectMapper.Map<CustomerProfileDto>(profile);

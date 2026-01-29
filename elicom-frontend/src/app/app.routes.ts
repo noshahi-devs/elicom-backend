@@ -13,6 +13,8 @@ export const routes: Routes = [
   { path: 'add-to-cart', component: AddToCart },
   { path: 'checkout', component: Checkout },
   { path: 'search-result', component: SearchResult },
+  { path: 'smartstore/login', loadComponent: () => import('./pages/auth/login-page.component').then(m => m.LoginPageComponent) },
+  { path: 'smartstore/signup', loadComponent: () => import('./pages/auth/login-page.component').then(m => m.LoginPageComponent) },
   {
     path: 'user/index',
     component: UserIndexComponent,

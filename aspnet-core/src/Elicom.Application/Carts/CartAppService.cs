@@ -26,6 +26,19 @@ namespace Elicom.Carts
 
         public async Task<CartItemDto> AddToCart(CreateCartItemDto input)
         {
+            // Check if item already exists in cart for this user
+            var existingItem = await _cartRepository.GetAll()
+                .FirstOrDefaultAsync(c => c.UserId == input.UserId && 
+                                         c.StoreProductId == input.StoreProductId && 
+                                         c.Status == "Active");
+
+            if (existingItem != null)
+            {
+                existingItem.Quantity += input.Quantity;
+                await _cartRepository.UpdateAsync(existingItem);
+                return ObjectMapper.Map<CartItemDto>(existingItem);
+            }
+
             var storeProduct = await _storeProductRepository
                 .GetAllIncluding(sp => sp.Product, sp => sp.Store)
                 .FirstOrDefaultAsync(sp => sp.Id == input.StoreProductId);
@@ -34,6 +47,7 @@ namespace Elicom.Carts
                 throw new Abp.UI.UserFriendlyException("Store product not found.");
 
             var cartItem = ObjectMapper.Map<CartItem>(input);
+            cartItem.Status = "Active";
 
             // Snapshot prices
             cartItem.OriginalPrice = storeProduct.ResellerPrice;
@@ -45,14 +59,14 @@ namespace Elicom.Carts
             return ObjectMapper.Map<CartItemDto>(cartItem);
         }
 
-        public async Task<List<CartItemDto>> GetCartItems(Guid customerProfileId)
+        public async Task<List<CartItemDto>> GetCartItems(long userId)
         {
             var items = await _cartRepository.GetAll()
                 .Include(c => c.StoreProduct)
                     .ThenInclude(sp => sp.Product)
                 .Include(c => c.StoreProduct)
                     .ThenInclude(sp => sp.Store)
-                .Where(c => c.CustomerProfileId == customerProfileId && c.Status == "Active")
+                .Where(c => c.UserId == userId && c.Status == "Active")
                 .ToListAsync();
 
             return ObjectMapper.Map<List<CartItemDto>>(items);
@@ -63,9 +77,20 @@ namespace Elicom.Carts
             await _cartRepository.DeleteAsync(cartItemId);
         }
 
-        public async Task ClearCart(Guid customerProfileId)
+        public async Task RemoveFromCartByProduct(long userId, Guid storeProductId)
         {
-            var items = await _cartRepository.GetAllListAsync(c => c.CustomerProfileId == customerProfileId);
+            var item = await _cartRepository.GetAll()
+                .FirstOrDefaultAsync(c => c.UserId == userId && c.StoreProductId == storeProductId && c.Status == "Active");
+
+            if (item != null)
+            {
+                await _cartRepository.DeleteAsync(item);
+            }
+        }
+
+        public async Task ClearCart(long userId)
+        {
+            var items = await _cartRepository.GetAllListAsync(c => c.UserId == userId);
 
             foreach (var item in items)
             {

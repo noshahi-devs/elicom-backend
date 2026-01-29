@@ -1,145 +1,94 @@
-<!-- Payment Method -->
-<div class="section">
+<div class="section payment-container">
   <h2 class="section-title">Payment Method</h2>
 
-  <label class="pay-option" [class.active]="activeIndex === 1" (click)="setActive(1, 'EasyFinora')">
-    <input type="radio" name="pay" />
-    <!-- Updated Logo Path (Mocked as if we moved the artifact or just point to it) -->
-    <!-- Ideally we copy the generated image to assets, but for now assuming user handles asset move or using a placeholder if needed. 
-    Since the previous image was assets/images/easyfinora.png, I will assume the name remains similar or I use the new one. 
-     For this turn I will keep the existing name BUT usually I would move the artifact. 
-    User asked specifically: "easy finora ki img ma koi khud hi img lga do". 
-    I will use the generated artifact path directly in src for now or assuming I should ask user to move it?
-    Actually I can't write to src/assets. I will assume using the old path triggers the user to update or I leave it.
-    Wait, I generated 'easyfinora_logo.png'. I should try to use that relative path if possible or just use a generic placeholder.
-    I'll update the src to a new name and let the user know to place the file. -->
-    <img src="assets/images/easyfinora_logo.png" height="28" alt="Easy Finora">
-    <span class="pay-label">Easy Finora</span>
-  </label>
-
-  <label class="pay-option" [class.active]="activeIndex === 2" (click)="setActive(2, 'Credit/Debit Card')">
-    <input type="radio" name="pay" checked>
-    <img src="assets/images/My Wallet.webp" height="22">
-    <span class="pay-label">Credit/Debit Card</span>
-  </label>
-
-  <label class="pay-option" [class.active]="activeIndex === 3" (click)="setActive(3, 'PayPal')">
-    <input type="radio" name="pay" />
-    <img src="assets/images/paypal.png" height="22">
-    <span class="pay-label">PayPal</span>
-  </label>
-
-  <label class="pay-option" [class.active]="activeIndex === 4" (click)="setActive(2, 'Apple Pay')">
-    <input type="radio" name="pay">
-    <img src="assets/images/Applepay.png" height="22">
-    <span class="pay-label">Apple Pay</span>
-  </label>
-
-  <label class="pay-option" [class.active]="activeIndex === 5" (click)="setActive(3, 'Venmo')">
-    <input type="radio" name="pay">
-    <img src="assets/images/venmo.png" height="18">
-    <span class="pay-label">Venomo</span>
-  </label>
-
-  <label class="pay-option" [class.active]="activeIndex === 6" (click)="setActive(4, 'Cash App Pay')">
-    <input type="radio" name="pay">
-    <img src="assets/images/cashpay.png" height="18">
-    <span class="pay-label">Cash App Pay</span>
-  </label>
-
-  <label class="pay-option" [class.active]="activeIndex === 7" (click)="setActive(5, 'Google Pay')">
-    <input type="radio" name="pay">
-    <img src="assets/images/google.png" height="22">
-    <span class="pay-label">Google Pay</span>
-  </label>
-
-  <label class="pay-option" [class.active]="activeIndex === 8" (click)="setActive(6, 'Bank of America')">
-    <input type="radio" name="pay">
-    <img src="assets/images/bankofamerica.png" height="18">
-    <span class="pay-label">Bank of America</span>
-  </label>
-
-  <label class="pay-option" [class.active]="activeIndex === 9" (click)="setActive(7, 'Afterpay')">
-    <input type="radio" name="pay">
-    <img src="assets/images/Visa.png" height="10" width="40">
-    <span class="pay-label">Visa</span>
-  </label>
-
-  <label class="pay-option" [class.active]="activeIndex === 18" (click)="setActive(8, 'Easypaisa')">
-    <input type="radio" name="pay">
-    <img src="assets/images/easypaisa.png" height="18">
-    <span class="pay-label">Easypaisa</span>
-  </label>
-
-  <label class="pay-option" [class.active]="activeIndex === 11" (click)="setActive(9, 'Jazz Cash')">
-    <input type="radio" name="pay">
-    <img src="assets/images/jazzcash.png" height="18">
-    <span class="pay-label">Jazz Cash</span>
-  </label>
-
-  <label class="pay-option" [class.active]="activeIndex === 12" (click)="setActive(10, 'Afirm')">
-    <input type="radio" name="pay">
-    <img src="assets/images/affirm.png" height="18">
-    <span class="pay-label">Afirm</span>
-  </label>
-
-  <label class="pay-option" [class.active]="activeIndex === 13" (click)="setActive(11, 'zip')">
-    <input type="radio" name="pay">
-    <img src="assets/images/zip.png" height="18">
-    <span class="pay-label">zip</span>
-  </label>
-
-  <label class="pay-option" [class.active]="activeIndex === 14" (click)="setActive(12, 'Chase')">
-    <input type="radio" name="pay">
-    <img src="assets/images/mastercard.png" height="20">
-    <span class="pay-label">Mastercard</span>
-  </label>
-
-</div>
-
-<!-- CARD INFORMATION MODAL -->
-<div class="modal-overlay" *ngIf="showCardModal">
-  <div class="modal-content card-modal">
-    <button class="close-btn" (click)="closeModals()">&times;</button>
-    <div class="modal-header">
-      <h3>{{ selectedLabel }} Information</h3>
+  <!-- Custom Dropdown -->
+  <div class="method-selector">
+    <label class="field-label">Select Payment Method</label>
+    <div class="custom-select-wrapper">
+      <select class="form-select payment-dropdown" [(ngModel)]="selectedMethodId"
+        (change)="onMethodChange(selectedMethodId)">
+        <option *ngFor="let method of paymentMethods" [value]="method.id">
+          {{ method.name }}
+        </option>
+      </select>
+      <div class="selected-icon">
+        <img [src]="paymentMethods[0].id === selectedMethodId ? paymentMethods[0].icon : 
+                   (paymentMethods[1].id === selectedMethodId ? paymentMethods[1].icon : 
+                   (paymentMethods[2].id === selectedMethodId ? paymentMethods[2].icon : 
+                   paymentMethods[3].icon))" height="20" *ngIf="selectedMethodId">
+      </div>
     </div>
-    <div class="modal-body">
-      <div class="card-inputs">
-        <!-- Card Number -->
-        <div class="input-group mb-3">
-          <label>Card Number</label>
+  </div>
+
+  <!-- Dynamic Payment Forms -->
+  <div class="payment-form-area mt-4 animate-fade-in"
+    *ngIf="selectedMethodId === 'card' || selectedMethodId === 'finora'">
+    <div class="card-inputs">
+      <div class="form-group mb-3">
+        <label class="field-label">Card Number</label>
+        <div class="input-wrapper">
+          <i class="pi pi-credit-card"></i>
           <input type="text" placeholder="0000 0000 0000 0000" class="form-control" [value]="card.number"
             (input)="formatCardNumber($event)" [class.error-border]="cardErrors.number">
-          <div class="error-msg" *ngIf="cardErrors.number">Must be 16 digits</div>
         </div>
+        <div class="error-msg" *ngIf="cardErrors.number">Must be 16 digits</div>
+      </div>
 
-        <div class="row">
-          <!-- Expiry -->
-          <div class="col-6">
-            <label>Expiry Date</label>
+      <div class="row">
+        <div class="col-6">
+          <div class="form-group mb-3">
+            <label class="field-label">Expiry Date</label>
             <input type="text" placeholder="MM/YY" class="form-control" [value]="card.expiry"
               (input)="formatExpiry($event)" [class.error-border]="cardErrors.expiry">
             <div class="error-msg" *ngIf="cardErrors.expiry">Invalid Date</div>
           </div>
-          <!-- CVV -->
-          <div class="col-6">
-            <label>CVV</label>
+        </div>
+        <div class="col-6">
+          <div class="form-group mb-3">
+            <label class="field-label">CVV</label>
             <input type="text" placeholder="123" class="form-control" [value]="card.cvv" (input)="formatCVV($event)"
               [class.error-border]="cardErrors.cvv">
             <div class="error-msg" *ngIf="cardErrors.cvv">3 digits</div>
           </div>
         </div>
-
-        <div class="input-group mt-3">
-          <label>Card Holder Name</label>
-          <input type="text" placeholder="John Doe" class="form-control" [(ngModel)]="card.holder">
-          <!-- Note: ngModel requires FormsModule, but here I used manual bindings before. 
-                      Safest to stick to [value] + (input) or just simple bind if possible. 
-                      I'll use (input) to be consistent with previous code style which didn't show FormsModule imports clearly. -->
-        </div>
       </div>
-      <button class="btn btn-dark w-100 mt-4" (click)="saveCard()">Save & Continue</button>
+
+      <div class="form-group mb-3">
+        <label class="field-label">Card Holder Name</label>
+        <input type="text" placeholder="Name on card" class="form-control" [(ngModel)]="card.holder">
+      </div>
+
+      <!-- Easy Finora Verification -->
+      <div class="finora-check mt-3" *ngIf="selectedMethodId === 'finora'">
+        <div class="alert alert-info d-flex align-items-center" *ngIf="isVerified">
+          <i class="pi pi-check-circle me-2"></i>
+          <div>
+            Verified! Available Balance: <strong class="text-success">${{ verifiedBalance | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+
+        <div class="alert alert-danger" *ngIf="verificationMessage">
+          {{ verificationMessage }}
+        </div>
+
+        <button type="button" class="btn btn-outline-primary w-100" (click)="verifyFinora()" [disabled]="isVerifying">
+          <span *ngIf="isVerifying"><i class="pi pi-spin pi-spinner"></i> Verifying...</span>
+          <span *ngIf="!isVerifying">Verify Card Balance</span>
+        </button>
+      </div>
     </div>
+  </div>
+
+  <div class="other-methods-msg mt-4 p-3 border rounded text-center animate-fade-in"
+    *ngIf="selectedMethodId !== 'card' && selectedMethodId !== 'finora'">
+    <i class="pi pi-info-circle mb-2" style="font-size: 2rem; color: #f85606"></i>
+    <p>You will be redirected to {{ selectedMethodId | uppercase }} secure checkout page after clicking <strong>Place
+        Order</strong>.</p>
+  </div>
+
+  <div class="actions mt-4">
+    <button class="btn btn-save-payment" (click)="saveCard()" [disabled]="selectedMethodId === 'finora' && !isVerified">
+      Confirm & Continue
+    </button>
   </div>
 </div>

@@ -115,7 +115,7 @@ namespace Elicom.Tests.Orders
                 // Add to Cart
                 UsingDbContext(context => {
                     context.CartItems.Add(new CartItem { 
-                        CustomerProfileId = Guid.NewGuid(), StoreProductId = storeProduct.Id, Price = 150, Quantity = 2, Status = "Active" 
+                        UserId = user.Id, StoreProductId = storeProduct.Id, Price = 150, Quantity = 2, Status = "Active", TenantId = 1
                     });
                     context.SaveChanges();
                 });
@@ -125,9 +125,8 @@ namespace Elicom.Tests.Orders
                 await uowManager.Current.SaveChangesAsync();
 
                 // 2. Act: Create Order
-                var customerProfileId = UsingDbContext(context => context.CartItems.First().CustomerProfileId);
-                await _orderAppService.Create(new CreateOrderDto {
-                    CustomerProfileId = customerProfileId,
+                var orderDto = await _orderAppService.Create(new CreateOrderDto {
+                    UserId = user.Id,
                     PaymentMethod = "Wallet",
                     ShippingCost = 10,
                     ShippingAddress = "123 Street"
@@ -136,8 +135,8 @@ namespace Elicom.Tests.Orders
                 await uowManager.Current.SaveChangesAsync();
 
                 // 3. Assert: Order exists
-                var order = UsingDbContext(context => context.Orders.First(o => o.CustomerProfileId == customerProfileId));
-                order.PaymentStatus.ShouldBe("Paid (Escrow)");
+                var order = UsingDbContext(context => context.Orders.First(o => o.Id == orderDto.Id));
+                order.PaymentStatus.ShouldBe("Held in Escrow");
 
                 // 4. Assert: Supplier Order created!
                 var supplierOrder = UsingDbContext(context => context.SupplierOrders.FirstOrDefault(so => so.OrderId == order.Id));
@@ -195,7 +194,7 @@ namespace Elicom.Tests.Orders
 
                 UsingDbContext(context => {
                     context.CartItems.Add(new CartItem { 
-                        CustomerProfileId = Guid.NewGuid(), StoreProductId = storeProduct.Id, Price = 150, Quantity = 1, Status = "Active" 
+                        UserId = user.Id, StoreProductId = storeProduct.Id, Price = 150, Quantity = 1, Status = "Active", TenantId = 1
                     });
                     context.SaveChanges();
                 });
@@ -203,9 +202,8 @@ namespace Elicom.Tests.Orders
                 await _walletManager.DepositAsync(user.Id, 1000, "DEP", "Deposit");
                 await uowManager.Current.SaveChangesAsync();
 
-                var customerProfileId = UsingDbContext(context => context.CartItems.First().CustomerProfileId);
                 var orderDto = await _orderAppService.Create(new CreateOrderDto {
-                    CustomerProfileId = customerProfileId,
+                    UserId = user.Id,
                     PaymentMethod = "Wallet",
                     ShippingCost = 0,
                     ShippingAddress = "123 Street"
@@ -279,17 +277,16 @@ namespace Elicom.Tests.Orders
                 });
 
                 // Add to Cart
-                var customerProfileId = Guid.NewGuid();
                 UsingDbContext(context => {
                     context.CartItems.Add(new CartItem { 
-                        CustomerProfileId = customerProfileId, StoreProductId = storeProduct.Id, Price = 40, Quantity = 1, Status = "Active" 
+                        UserId = user.Id, StoreProductId = storeProduct.Id, Price = 40, Quantity = 1, Status = "Active", TenantId = 1
                     });
                     context.SaveChanges();
                 });
 
                 // Act: Create Order for PrimeShip
                 await _orderAppService.Create(new CreateOrderDto {
-                    CustomerProfileId = customerProfileId,
+                    UserId = user.Id,
                     PaymentMethod = "MasterCard",
                     ShippingCost = 5,
                     ShippingAddress = "456 Fashion Blvd",
@@ -301,7 +298,7 @@ namespace Elicom.Tests.Orders
                 await uowManager.Current.SaveChangesAsync();
 
                 // Assert: Order exists and source is PrimeShip
-                var order = UsingDbContext(context => context.Orders.First(o => o.CustomerProfileId == customerProfileId));
+                var order = UsingDbContext(context => context.Orders.First(o => o.UserId == user.Id));
                 order.SourcePlatform.ShouldBe("PrimeShip");
                 order.PaymentMethod.ShouldBe("MasterCard");
                 order.PaymentStatus.ShouldBe("Paid (External)");
@@ -400,10 +397,9 @@ namespace Elicom.Tests.Orders
                     return sp;
                 });
 
-                var customerProfileId = Guid.NewGuid();
                 UsingDbContext(context => {
                     context.CartItems.Add(new CartItem { 
-                        CustomerProfileId = customerProfileId, StoreProductId = storeProduct.Id, Price = 45, Quantity = 1, Status = "Active" 
+                        UserId = user.Id, StoreProductId = storeProduct.Id, Price = 45, Quantity = 1, Status = "Active", TenantId = 1
                     });
                     context.SaveChanges();
                 });
@@ -412,7 +408,7 @@ namespace Elicom.Tests.Orders
                 await uowManager.Current.SaveChangesAsync();
 
                 var orderDto = await _orderAppService.Create(new CreateOrderDto {
-                    CustomerProfileId = customerProfileId,
+                    UserId = user.Id,
                     PaymentMethod = "Wallet",
                     ShippingCost = 5,
                     ShippingAddress = "Test Address"
@@ -494,10 +490,9 @@ namespace Elicom.Tests.Orders
                     return sp;
                 });
 
-                var customerProfileId = Guid.NewGuid();
                 UsingDbContext(context => {
                     context.CartItems.Add(new CartItem { 
-                        CustomerProfileId = customerProfileId, StoreProductId = storeProduct.Id, Price = 30, Quantity = 1, Status = "Active" 
+                        UserId = user.Id, StoreProductId = storeProduct.Id, Price = 30, Quantity = 1, Status = "Active", TenantId = 1
                     });
                     context.SaveChanges();
                 });
@@ -506,7 +501,7 @@ namespace Elicom.Tests.Orders
                 await uowManager.Current.SaveChangesAsync();
 
                 var orderDto = await _orderAppService.Create(new CreateOrderDto {
-                    CustomerProfileId = customerProfileId,
+                    UserId = user.Id,
                     PaymentMethod = "Wallet",
                     ShippingCost = 5,
                     ShippingAddress = "Test Address"

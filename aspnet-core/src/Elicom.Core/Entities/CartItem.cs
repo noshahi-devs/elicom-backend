@@ -1,15 +1,18 @@
-﻿using Abp.Domain.Entities;
-using Abp.Domain.Entities.Auditing;
-using Elicom.Entities;
+﻿using Abp.Domain.Entities.Auditing;
+using Elicom.Authorization.Users;
+using System.ComponentModel.DataAnnotations.Schema;
 using System;
+
+using Abp.Domain.Entities;
 
 namespace Elicom.Entities
 {
     public class CartItem : FullAuditedEntity<Guid>
     {
-        // Link to customer profile
-        public Guid CustomerProfileId { get; set; }
-        public virtual CustomerProfile CustomerProfile { get; set; }
+        // Link to user
+        public long UserId { get; set; }
+        [ForeignKey(nameof(UserId))]
+        public virtual User User { get; set; }
 
         // Link to product-store
         public Guid StoreProductId { get; set; }

@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
@@ -20,8 +20,10 @@ export class OrderProcessBreadcrumb {
   ];
 
   @Input() activeStep: number = 0;
+  @Output() stepClick = new EventEmitter<number>();
 
   goToStep(index: number) {
+    this.stepClick.emit(index);
     if (index === 0) {
       this.router.navigate(['/add-to-cart']);
     }

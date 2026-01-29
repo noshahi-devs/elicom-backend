@@ -8,6 +8,7 @@ using Elicom.SupplierOrders.Dto;
 using Abp.Net.Mail;
 using Abp.Authorization;
 using Elicom.Authorization;
+using Abp.Domain.Uow;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -46,15 +47,26 @@ namespace Elicom.Orders
         // Create order from cart
         public async Task<OrderDto> Create(CreateOrderDto input)
         {
-            var cartItems = await _cartItemRepository.GetAll()
-                .Include(ci => ci.StoreProduct)
-                    .ThenInclude(sp => sp.Product)
-                .Include(ci => ci.StoreProduct)
-                    .ThenInclude(sp => sp.Store)
-                .Where(ci =>
-                    ci.CustomerProfileId == input.CustomerProfileId &&
-                    ci.Status == "Active")
-                .ToListAsync();
+            List<CartItem> cartItems;
+            using (CurrentUnitOfWork.DisableFilter(AbpDataFilters.MayHaveTenant))
+            {
+                Logger.Info($"[OrderAppService] Create Order for UserId: {input.UserId}");
+                
+                cartItems = await _cartItemRepository.GetAll()
+                    .Include(ci => ci.StoreProduct)
+                        .ThenInclude(sp => sp.Product)
+                    .Include(ci => ci.StoreProduct)
+                        .ThenInclude(sp => sp.Store)
+                    .Where(ci =>
+                        ci.UserId == input.UserId &&
+                        ci.Status == "Active")
+                    .ToListAsync();
+
+                Logger.Info($"[OrderAppService] Found {cartItems.Count} cart items for UserId: {input.UserId}");
+                foreach(var c in cartItems) {
+                    Logger.Info($" - CartItem: {c.Id}, StoreProductId: {c.StoreProductId}");
+                }
+            }
 
             if (!cartItems.Any())
                 throw new UserFriendlyException("Cart is empty");
@@ -63,7 +75,7 @@ namespace Elicom.Orders
 
             var order = new Order
             {
-                CustomerProfileId = input.CustomerProfileId,
+                UserId = input.UserId,
                 OrderNumber = $"ORD-{DateTime.Now:yyyyMMddHHmmss}",
                 PaymentMethod = input.PaymentMethod,
 
@@ -87,7 +99,11 @@ namespace Elicom.Orders
             var user = await GetCurrentUserAsync(); 
 
             // ESCROW TRANSACTION: Move money from Buyer to Platform Admin (Escrow Hold)
-            if (input.PaymentMethod == "Wallet" || order.SourcePlatform == "SmartStore")
+            // Skip wallet check if using external payment methods like "finora" or cards
+            var isExternalPayment = new[] { "finora", "mastercard", "discover", "amex", "visa", "bank_transfer", "crypto", "google_pay" }
+                .Any(p => input.PaymentMethod?.ToLower().Contains(p) == true);
+
+            if (input.PaymentMethod == "Wallet" || (order.SourcePlatform == "SmartStore" && !isExternalPayment))
             {
                 var balance = await _walletManager.GetBalanceAsync(user.Id);
                 if (balance < order.TotalAmount)
@@ -108,7 +124,7 @@ namespace Elicom.Orders
             {
                 // External Payment (Card, Crypto, etc.)
                 // In a real app, verify with gateway here
-                order.PaymentStatus = "Paid (External)";
+                order.PaymentStatus = input.PaymentMethod == "finora" ? "Paid (Easy Finora)" : "Paid (External)";
             }
 
             foreach (var ci in cartItems)
@@ -130,6 +146,32 @@ namespace Elicom.Orders
             foreach (var ci in cartItems)
             {
                 await _cartItemRepository.DeleteAsync(ci.Id);
+            }
+
+            // --- NOTIFICATION ---
+            try
+            {
+                var mail = new System.Net.Mail.MailMessage(
+                    "no-reply@primeshipuk.com",
+                    "noshahidevelopersinc@gmail.com"
+                )
+                {
+                    Subject = $"[SmartStore] New Retail Order: {order.OrderNumber}",
+                    Body = $@"A new retail order has been placed on Smart Store.
+
+Order Number: {order.OrderNumber}
+Total Amount: {order.TotalAmount} {order.PaymentMethod}
+User ID: {order.UserId}
+
+Please check the admin panel for details.",
+                    IsBodyHtml = false
+                };
+
+                await _emailSender.SendAsync(mail);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Failed to send retail order email notification", ex);
             }
 
             return ObjectMapper.Map<OrderDto>(order);
@@ -157,11 +199,11 @@ namespace Elicom.Orders
         }
 
         // Get all orders for customer
-        public async Task<List<OrderDto>> GetAllForCustomer(Guid customerProfileId)
+        public async Task<List<OrderDto>> GetAllForCustomer(long userId)
         {
             var orders = await _orderRepository.GetAll()
                 .Include(o => o.OrderItems)
-                .Where(o => o.CustomerProfileId == customerProfileId)
+                .Where(o => o.UserId == userId)
                 .ToListAsync();
 
             return ObjectMapper.Map<List<OrderDto>>(orders);

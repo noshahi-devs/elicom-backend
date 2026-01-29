@@ -90,11 +90,11 @@ namespace Elicom.EntityFrameworkCore
             {
                 b.ToTable("CartItems");
 
-                // Relationship with CustomerProfile
-                b.HasOne(c => c.CustomerProfile)
-                 .WithMany() // Or .WithMany(cp => cp.CartItems) if you add a collection to CustomerProfile
-                 .HasForeignKey(c => c.CustomerProfileId)
-                 .OnDelete(DeleteBehavior.Cascade); // If profile is deleted, delete cart
+                // Relationship with User
+                b.HasOne(c => c.User)
+                 .WithMany() 
+                 .HasForeignKey(c => c.UserId)
+                 .OnDelete(DeleteBehavior.Cascade);
 
                 // Relationship with StoreProduct
                 b.HasOne(c => c.StoreProduct)
@@ -141,6 +141,20 @@ namespace Elicom.EntityFrameworkCore
                  .OnDelete(DeleteBehavior.Restrict);
 
                 b.Property(wt => wt.Amount).HasColumnType("decimal(18,2)");
+            });
+
+            /* ---------------- Order Configuration ---------------- */
+            builder.Entity<Order>(b =>
+            {
+                b.HasOne(o => o.User)
+                 .WithMany()
+                 .HasForeignKey(o => o.UserId)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                b.Property(o => o.SubTotal).HasColumnType("decimal(18,2)");
+                b.Property(o => o.TotalAmount).HasColumnType("decimal(18,2)");
+                b.Property(o => o.ShippingCost).HasColumnType("decimal(18,2)");
+                b.Property(o => o.Discount).HasColumnType("decimal(18,2)");
             });
         }
     }
