@@ -1,0 +1,32 @@
+.customer-dashboard {
+    .x-small {
+        font-size: 11px;
+    }
+
+    .border-top-dark {
+        border-top: 3px solid #000 !important;
+    }
+
+    .hover-dark:hover {
+        background-color: #000 !important;
+        color: #fff !important;
+
+        i {
+            color: #fff !important;
+        }
+    }
+
+    .hover-bg-light:hover {
+        background-color: #f6f6f6 !important;
+    }
+
+    .avatar-circle {
+        border-radius: 50%;
+        overflow: hidden;
+    }
+}
+
+.sui-alert_background-warning {
+    background-color: #fff1d5;
+    border: 1px solid #ef9b00;
+}

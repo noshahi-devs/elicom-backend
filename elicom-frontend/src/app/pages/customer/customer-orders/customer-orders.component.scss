@@ -1,0 +1,13 @@
+.customer-orders {
+    .x-small {
+        font-size: 11px;
+    }
+
+    .uppercase {
+        text-transform: uppercase;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+}

@@ -1,0 +1,184 @@
+<div class="dashboard-content">
+    <!-- Top Header Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-4 p-4 rounded-4 dashboard-header-banner">
+        <div>
+            <h2 class="fw-bold mb-1" style="color:#0f172a;">
+                {{ currentUser?.storeName || 'My Store' }}
+                <span class="status-badge">Published</span>
+            </h2>
+            <p style="color:#64748b;">Here's what's happening in your store today.</p>
+        </div>
+
+        <div class="usa-time-widget">
+            <div class="flag-wrapper">
+                <img src="https://flagcdn.com/w160/us.png" alt="USA Flag">
+            </div>
+            <div class="ms-3 text-white">
+                <div class="time-text">30-Jan-2026 | 09:58 AM</div>
+                <div class="location-text">New York, USA (GMT-5)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stat Cards Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="stat-card-new bg-cyan">
+                <h5>NEW ORDERS</h5>
+                <h2>35,673</h2>
+                <span class="badge-soft">2.00% (30 days)</span>
+                <div class="icon-circle-bg"><i class="fa fa-cart-plus"></i></div>
+                <canvas id="chart1"></canvas>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="stat-card-new bg-green">
+                <h5>TOTAL INCOME</h5>
+                <h2>$14,966</h2>
+                <span class="badge-soft">Increased by 7.35%</span>
+                <div class="icon-circle-bg"><i class="fa fa-dollar-sign"></i></div>
+                <canvas id="chart2"></canvas>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="stat-card-new bg-blue">
+                <h5>TOTAL EXPENSE</h5>
+                <h2>26,526</h2>
+                <span class="badge-soft">Increased by 7.35%</span>
+                <div class="icon-circle-bg"><i class="fa fa-money-bill-wave"></i></div>
+                <canvas id="chart3"></canvas>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="stat-card-new bg-amber">
+                <h5>NEW USERS</h5>
+                <h2>32,566</h2>
+                <span class="badge-soft">54.1% less earnings</span>
+                <div class="icon-circle-bg"><i class="fa fa-users"></i></div>
+                <canvas id="chart4"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Stats -->
+    <div class="card p-4 mb-4 detail-stats-card">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <h5 class="fw-bold m-0">Detailed Statistics</h5>
+            <div class="btn-group btn-group-sm filter-group">
+                <button class="btn">Day</button>
+                <button class="btn active">Week</button>
+                <button class="btn">Month</button>
+            </div>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-3 col-6">
+                <div class="stat-sub-card bg-c-1">
+                    <div class="stat-label">Current Balance</div>
+                    <div class="stat-val">$5,240.50</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-sub-card bg-c-2">
+                    <div class="stat-label">Payout till now</div>
+                    <div class="stat-val">$28,150</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-sub-card bg-c-3">
+                    <div class="stat-label">Recent payout</div>
+                    <div class="stat-val">$1,840</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-sub-card bg-c-4">
+                    <div class="stat-label">A/C Reserve</div>
+                    <div class="stat-val">$450.00</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-sub-card bg-c-5">
+                    <div class="stat-label">Shipped Orders</div>
+                    <div class="stat-val">342</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-sub-card bg-c-6">
+                    <div class="stat-label">Units Ordered</div>
+                    <div class="stat-val">1,105</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-sub-card bg-c-7">
+                    <div class="stat-label">Avg units/order</div>
+                    <div class="stat-val">3.2</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-sub-card bg-c-8">
+                    <div class="stat-label">Orders > 5 Units</div>
+                    <div class="stat-val">24</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Growth Analysis Charts -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card p-4">
+                <h6 class="fw-bold mb-4 small text-uppercase text-muted">Revenue Growth ($)</h6>
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card p-4">
+                <h6 class="fw-bold mb-4 small text-uppercase text-muted">Daily Volume (Orders)</h6>
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="orderChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Orders Table -->
+    <div class="card overflow-hidden">
+        <div class="card-header bg-white py-3 border-bottom-0 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 fw-bold">Recent Bulk Orders</h6>
+            <button class="btn btn-sm btn-outline-primary rounded-pill px-3">View All</button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4">Order ID</th>
+                        <th>Customer</th>
+                        <th>Qty</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th class="text-end pe-4">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="ps-4"><strong>#ORD-10021</strong></td>
+                        <td>Ali Traders</td>
+                        <td>28 Units</td>
+                        <td class="fw-bold">$1,120</td>
+                        <td><span class="badge rounded-pill bg-light-orange text-warning">Pending</span></td>
+                        <td class="text-end pe-4"><button class="btn btn-sm btn-light border">Review</button></td>
+                    </tr>
+                    <tr>
+                        <td class="ps-4"><strong>#ORD-10018</strong></td>
+                        <td>Usman Store</td>
+                        <td>15 Units</td>
+                        <td class="fw-bold">$640</td>
+                        <td><span class="badge rounded-pill bg-light-green text-success">Shipped</span></td>
+                        <td class="text-end pe-4"><button class="btn btn-sm btn-light border">Track</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,114 @@
+<div class="admin-content">
+    <div class="row align-items-center mb-5">
+        <div class="col-md-8">
+            <h1 class="fw-bold mb-2">
+                <i class="fas fa-store text-primary me-3"></i> Store Approvals & KYC
+            </h1>
+            <p class="text-muted lead mb-0">Review store applications and verify seller identity documents.</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="stats-mini-badge">
+                <span class="dot pulse warning"></span>
+                <span>{{applications.length}} Pending Actions</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="admin-stat-card shadow-sm">
+                <div class="stat-icon bg-warning-subtle text-warning"><i class="fas fa-hourglass-half"></i></div>
+                <div class="stat-info">
+                    <h3>2</h3>
+                    <p>Pending Stores</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="admin-stat-card shadow-sm">
+                <div class="stat-icon bg-info-subtle text-info"><i class="fas fa-id-card"></i></div>
+                <div class="stat-info">
+                    <h3>1</h3>
+                    <p>Pending KYC</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="admin-stat-card shadow-sm">
+                <div class="stat-icon bg-success-subtle text-success"><i class="fas fa-check-double"></i></div>
+                <div class="stat-info">
+                    <h3>45</h3>
+                    <p>Verified Sellers</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Applications Table -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-header bg-white border-bottom py-3">
+            <h5 class="fw-bold mb-0">Store Applications</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Seller & Store</th>
+                        <th>Email</th>
+                        <th>Applied Date</th>
+                        <th>KYC Status</th>
+                        <th>Store Status</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let app of applications">
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm me-3 border">{{app.sellerName.charAt(0)}}</div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold">{{app.storeName}}</h6>
+                                    <small class="text-muted">{{app.sellerName}}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{app.email}}</td>
+                        <td>{{app.appliedDate | date:'mediumDate'}}</td>
+                        <td>
+                            <span class="badge rounded-pill" [ngClass]="{
+                                'bg-success-subtle text-success': app.kycStatus === 'verified',
+                                'bg-warning-subtle text-warning': app.kycStatus === 'pending',
+                                'bg-secondary-subtle text-secondary': app.kycStatus === 'unsubmitted'
+                            }">
+                                <i class="fas fa-id-card me-1"></i> {{app.kycStatus}}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="admin-status-pill" [ngClass]="app.status">
+                                {{app.status}}
+                            </span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="d-flex justify-content-end gap-2">
+                                <button *ngIf="app.kycStatus === 'pending'" (click)="verifyKYC(app)"
+                                    class="btn btn-sm btn-outline-info" title="Verify KYC">
+                                    <i class="fas fa-check-square"></i>
+                                </button>
+                                <button *ngIf="app.status === 'pending'" (click)="approveStore(app)"
+                                    class="btn btn-sm btn-success" title="Approve Store">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button *ngIf="app.status === 'pending'" (click)="rejectStore(app)"
+                                    class="btn btn-sm btn-danger" title="Reject Store">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                <button class="btn btn-sm btn-light border"><i class="fas fa-eye"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

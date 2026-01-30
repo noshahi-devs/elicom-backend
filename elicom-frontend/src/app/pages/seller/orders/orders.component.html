@@ -1,0 +1,126 @@
+<div class="orders-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark mb-1">Order Center</h2>
+            <p class="text-muted small mb-0">Track and manage your incoming customer orders.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary rounded-pill px-3 py-1 small">
+                <i class="fas fa-download me-2"></i>Export
+            </button>
+            <button class="btn btn-primary rounded-pill px-4">
+                <i class="fas fa-print me-2"></i>Bulk Print
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters Row -->
+    <div class="card border-0 shadow-sm mb-4 filter-card">
+        <div class="card-body p-0">
+            <div class="status-tabs d-flex">
+                <button (click)="filterOrders('All')" [class.active]="orderStatus === 'All'" class="tab-item">
+                    All Orders <span class="badge bg-indigo text-white">{{ getCount('All') }}</span>
+                </button>
+                <button (click)="filterOrders('Unshipped')" [class.active]="orderStatus === 'Unshipped'"
+                    class="tab-item">
+                    Unshipped <span class="badge bg-warning text-dark">{{ getCount('Unshipped') }}</span>
+                </button>
+                <button (click)="filterOrders('Shipped')" [class.active]="orderStatus === 'Shipped'" class="tab-item">
+                    Shipped <span class="badge bg-success">{{ getCount('Shipped') }}</span>
+                </button>
+                <button (click)="filterOrders('Cancelled')" [class.active]="orderStatus === 'Cancelled'"
+                    class="tab-item">
+                    Cancelled <span class="badge bg-danger">{{ getCount('Cancelled') }}</span>
+                </button>
+                <button (click)="filterOrders('Returned')" [class.active]="orderStatus === 'Returned'" class="tab-item">
+                    Returned <span class="badge bg-secondary">{{ getCount('Returned') }}</span>
+                </button>
+            </div>
+
+            <div class="p-3 d-flex gap-3 align-items-center flex-wrap border-top">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search Order ID, Customer Name...">
+                </div>
+                <input type="date" class="form-control w-auto rounded-3">
+                <select class="form-select w-auto rounded-3">
+                    <option>Payment: All</option>
+                    <option>Paid</option>
+                    <option>Pending</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Order ID</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let order of filteredOrders" (click)="viewOrderDetails(order)" style="cursor: pointer;">
+                        <td class="ps-4">
+                            <span class="fw-bold text-primary">{{ order.id }}</span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar-small">{{ order.avatar }}</div>
+                                <span>{{ order.customer }}</span>
+                            </div>
+                        </td>
+                        <td class="text-muted">{{ order.date }}</td>
+                        <td>{{ order.items }}</td>
+                        <td class="fw-bold">${{ order.total }}</td>
+                        <td>
+                            <span class="dot-status" [ngClass]="{
+                                'paid': order.payment === 'Paid',
+                                'pending': order.payment === 'Pending',
+                                'refunded': order.payment === 'Refunded'
+                            }"></span>
+                            {{ order.payment }}
+                        </td>
+                        <td>
+                            <span class="badge rounded-pill px-3" [ngClass]="{
+                                    'bg-warning-subtle text-warning': order.status === 'Unshipped', 
+                                    'bg-success-subtle text-success': order.status === 'Shipped',
+                                    'bg-danger-subtle text-danger': order.status === 'Cancelled',
+                                    'bg-secondary-subtle text-secondary': order.status === 'Returned'
+                                }">
+                                {{ order.status }}
+                            </span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-light border-0" title="View Details"
+                                    (click)="$event.stopPropagation(); viewOrderDetails(order)"><i
+                                        class="fas fa-eye text-primary"></i></button>
+                                <button *ngIf="order.status === 'Unshipped'" class="btn btn-sm btn-light border-0"
+                                    title="Ship Product" (click)="$event.stopPropagation()"><i
+                                        class="fas fa-truck text-success"></i></button>
+                                <button class="btn btn-sm btn-light border-0" title="More"
+                                    (click)="$event.stopPropagation()"><i class="fas fa-ellipsis-v"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr *ngIf="filteredOrders.length === 0">
+                        <td colspan="8" class="text-center py-5">
+                            <i class="fas fa-folder-open fa-3x text-muted mb-3 d-block"></i>
+                            <span class="text-muted">No orders found for "{{ orderStatus }}" status.</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

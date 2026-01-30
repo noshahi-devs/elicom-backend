@@ -1,0 +1,39 @@
+<div class="customer-orders sui-fade-in">
+    <div class="d-flex justify-content-between align-items-center border-bottom pb-4 mb-4">
+        <h2 class="fw-bold mb-0">MY ORDERS</h2>
+        <a href="#" class="text-dark text-decoration-none x-small fw-bold">
+            <i class="fas fa-box-open me-1"></i> PACKAGE TRACKING <i class="fas fa-chevron-right ms-1"></i>
+        </a>
+    </div>
+
+    <!-- Tabs -->
+    <div class="sui-tabs mb-4 overflow-auto no-scrollbar">
+        <div *ngFor="let tab of tabs" (click)="setTab(tab)" [class.active]="activeTab === tab"
+            class="sui-tab-item text-nowrap">
+            {{tab | uppercase}}
+        </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="orders-content py-5 text-center bg-light border">
+        <!-- Empty State -->
+        <div class="empty-state py-5">
+            <div class="mb-4 opacity-25">
+                <i class="fas fa-clipboard-list fa-4x text-muted"></i>
+            </div>
+            <h5 class="fw-bold text-muted mb-2">IT IS EMPTY HERE :-(</h5>
+            <p class="x-small text-muted mb-4 uppercase">You haven't placed any orders in this category yet.</p>
+            <button class="sui-btn sui-btn-primary">CONTINUE SHOPPING</button>
+        </div>
+    </div>
+
+    <!-- Help Section -->
+    <div class="sui-card border-0 bg-light mt-5 p-4">
+        <h6 class="fw-bold mb-3 uppercase">CAN'T FIND YOUR ORDER?</h6>
+        <p class="x-small text-muted mb-3">If you used guest checkout or can't see a recent order, please use our
+            recovery tool.</p>
+        <button class="sui-btn sui-btn-outline px-4">
+            FIND ORDER <i class="fas fa-chevron-right ms-2 x-small"></i>
+        </button>
+    </div>
+</div>

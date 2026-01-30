@@ -1,0 +1,131 @@
+<div class="add-product-container">
+    <!-- Page Header -->
+    <div class="page-header mb-5">
+        <i class="fas fa-store"></i>
+        <span>Add Product in Your Store Listing</span>
+    </div>
+
+    <!-- Floating Search Bar -->
+    <div class="search-section mb-5" *ngIf="!product">
+        <div class="search-wrapper d-flex align-items-center gap-3">
+            <span class="fs-4">🔍</span>
+            <input type="text" class="search-input" placeholder="Search by Product ID / Name / SKU"
+                [(ngModel)]="searchQuery" (keyup.enter)="onSearch()">
+            <button class="btn btn-primary rounded-3 px-4" (click)="onSearch()" [disabled]="isSearching">
+                <i class="fas" [class.fa-search]="!isSearching" [class.fa-spinner]="isSearching"
+                    [class.fa-spin]="isSearching"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Search Results (Horizontal Cards) -->
+    <div class="results-container mb-5" *ngIf="showResults && !product">
+        <h5 class="fw-bold mb-4 text-muted">Search Results</h5>
+        <div class="product-card d-flex align-items-center justify-content-between mb-4"
+            *ngFor="let res of searchResults">
+            <div class="d-flex align-items-center gap-4">
+                <img [src]="res.images[0]" class="product-img" />
+                <div>
+                    <h5 class="mb-2 fw-semibold">{{res.name}}</h5>
+                    <div class="badge-group">
+                        <span class="badge-soft">ID: {{res.id}}</span>
+                        <span class="badge-soft">Category: {{res.category}}</span>
+                        <span class="badge-soft">Brand: {{res.brand}}</span>
+                    </div>
+                    <span class="price-badge">${{res.wholesalePrice}}</span>
+                </div>
+            </div>
+
+            <div class="action-group">
+                <button class="add-btn" (click)="selectProduct(res)">Add to Store</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mapping Form (Appears when product is selected) -->
+    <div class="mapping-section animate__animated animate__fadeInUp" *ngIf="product">
+        <!-- Display Selected Product Core Info -->
+        <div class="card-wrapper">
+            <div class="product-mapping-info">
+                <div class="gallery">
+                    <div class="main-image">
+                        <img [src]="selectedImage" alt="Product Image">
+                    </div>
+                    <div class="thumbs">
+                        <div class="thumb" *ngFor="let img of product.images" [class.active]="selectedImage === img"
+                            (click)="selectImage(img)">
+                            <img [src]="img">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-content">
+                    <div class="product-title">{{product.name}}</div>
+                    <div class="info-row">
+                        <div class="pill"><i class="fas fa-hashtag"></i> ID: {{product.id}}</div>
+                        <div class="pill"><i class="fas fa-tag"></i> Category: {{product.category}}</div>
+                        <div class="pill"><i class="fas fa-copyright"></i> Brand: {{product.brand}}</div>
+                    </div>
+                    <div class="price"><i class="fas fa-tag"></i> ${{product.wholesalePrice}}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attribute Setting Card -->
+        <div class="attribute-card">
+            <div class="attribute-title">
+                <i class="fas fa-sliders-h"></i>
+                Set Attributes For Store Listing
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label><i class="fas fa-arrow-up"></i> Your Profit Markup ($)</label>
+                    <div class="input-box">
+                        <input type="number" [(ngModel)]="markupValue" (input)="calculatePrice()"
+                            [disabled]="isViewOnly">
+                        <button [disabled]="isViewOnly"><i class="fas fa-dollar-sign"></i></button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-balance-scale"></i> Customer Retail Price</label>
+                    <div class="input-box bg-light">
+                        <input type="number" [value]="retailPrice" readonly class="text-success fw-bold">
+                        <button class="bg-success"><i class="fas fa-tag"></i></button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-clock"></i> Handling Time</label>
+                    <div class="input-box">
+                        <input type="number" [(ngModel)]="handlingTime" min="1" max="30" [disabled]="isViewOnly">
+                        <button [disabled]="isViewOnly">Days</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-boxes"></i> Max Order Quantity</label>
+                    <div class="input-box">
+                        <input type="number" [(ngModel)]="maxOrderQty" min="1" max="100" [disabled]="isViewOnly">
+                        <button [disabled]="isViewOnly">Units</button>
+                    </div>
+                </div>
+
+                <div class="form-group full">
+                    <label><i class="fas fa-sticky-note"></i> Note For Customer</label>
+                    <textarea [(ngModel)]="customerNote"
+                        placeholder="Add any special instructions or notes for customers..."
+                        [disabled]="isViewOnly"></textarea>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-cancel" (click)="cancelSearch()"><i class="fas fa-times"></i> {{ isViewOnly ?
+                    'Back to Listings' : 'Cancel' }}</button>
+                <button class="btn btn-primary" (click)="publishToStore()" *ngIf="!isViewOnly"><i
+                        class="fas fa-check-circle"></i> Publish to Store</button>
+            </div>
+        </div>
+    </div>
+</div>

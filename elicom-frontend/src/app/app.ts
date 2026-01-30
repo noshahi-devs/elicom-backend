@@ -19,7 +19,9 @@ export class App {
 
     return !(
       url.startsWith('/add-to-cart') ||
-      url.startsWith('/checkout')
+      url.startsWith('/checkout') ||
+      url.startsWith('/seller') ||
+      url.startsWith('/admin')
     );
   }
 }

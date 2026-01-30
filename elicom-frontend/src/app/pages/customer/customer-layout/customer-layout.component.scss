@@ -1,0 +1,92 @@
+.container {
+    max-width: 1200px;
+}
+
+.sui-customer-content {
+    min-height: 800px;
+}
+
+.sidebar-nav {
+    .sui-menu-group-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #222;
+        text-transform: none; // Based on screenshot it is mixed case but bold
+        letter-spacing: 0;
+
+        i {
+            color: #999;
+            transition: transform 0.2s;
+        }
+
+        &:hover {
+            color: #000;
+        }
+    }
+
+    .nav-links {
+        .sui-menu-item {
+            color: #666;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+            transition: all 0.1s;
+            position: relative;
+
+            span {
+                font-size: 13px;
+                line-height: 2.2;
+            }
+
+            &:hover {
+                color: #000;
+                text-decoration: underline;
+            }
+
+            &.active {
+                color: #000;
+                font-weight: 700;
+
+                span {
+                    background-color: #f6f6f6;
+                    padding: 2px 8px;
+                    border-radius: 2px;
+                }
+
+                // Optional: add a small orange indicator if seen in screenshot
+                // &::after { content: 'POINTS'; font-size: 8px; background: #ff4500; color: #fff; padding: 0 4px; margin-left: 5px; border-radius: 2px; }
+            }
+        }
+    }
+}
+
+.sui-breadcrumb {
+    font-size: 12px;
+    color: #999;
+
+    a {
+        color: inherit;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    .active {
+        color: #222;
+    }
+
+    span {
+        margin: 0 8px;
+    }
+}
+
+.x-small {
+    font-size: 11px;
+}
+
+.uppercase {
+    text-transform: uppercase;
+}

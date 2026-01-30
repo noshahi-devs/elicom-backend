@@ -1,0 +1,78 @@
+<div class="seller-layout" [class.sidebar-collapsed]="isSidebarCollapsed">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-logo"><i class="fa fa-shop"></i></div>
+            <h5 class="fw-bold mb-0">Smart Cart</h5>
+        </div>
+
+        <a routerLink="/seller/dashboard" routerLinkActive="active" class="nav-link nav-dashboard">
+            <i class="fa-solid fa-chart-line"></i> <span>Dashboard</span>
+        </a>
+        <a routerLink="/seller/add-product" routerLinkActive="active" class="nav-link nav-add">
+            <i class="fa-solid fa-file-circle-plus"></i> <span>Add Products</span>
+        </a>
+
+        <a routerLink="/seller/listings" routerLinkActive="active" class="nav-link nav-listings">
+            <i class="fa-solid fa-boxes-stacked"></i> <span>Store Listing</span>
+        </a>
+
+        <a routerLink="/seller/orders" routerLinkActive="active" class="nav-link nav-orders">
+            <i class="fa-solid fa-shopping-bag"></i> <span>Order Center</span>
+        </a>
+
+        <a routerLink="/seller/logistics" routerLinkActive="active" class="nav-link nav-logistics">
+            <i class="fa-solid fa-truck-fast"></i> <span>Logistics</span>
+        </a>
+        <a routerLink="/seller/warehouse" routerLinkActive="active" class="nav-link nav-warehouse">
+            <i class="fa-solid fa-city"></i> <span>Warehouses</span>
+        </a>
+
+        <a routerLink="/seller/finances/wallet" routerLinkActive="active" class="nav-link nav-wallet">
+            <i class="fa-solid fa-credit-card"></i> <span>My Wallet</span>
+        </a>
+        <a routerLink="/seller/finances/payouts" routerLinkActive="active" class="nav-link nav-payouts">
+            <i class="fa-solid fa-receipt"></i> <span>Payouts</span>
+        </a>
+
+        <a routerLink="/seller/settings" routerLinkActive="active" class="nav-link nav-settings">
+            <i class="fa-solid fa-user-gear"></i> <span>Settings</span>
+        </a>
+        <a href="javascript:void(0)" (click)="logout()" class="nav-link logout-link">
+            <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+        </a>
+    </aside>
+
+    <!-- Topbar -->
+    <div class="topbar" id="topbar">
+        <div class="d-flex align-items-center">
+            <i (click)="toggleSidebar()" class="fa fa-bars me-3 text-muted fs-5 cursor-pointer"></i>
+        </div>
+        <div class="search-container d-none d-md-block">
+            <div class="position-relative">
+                <i class="fa fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                <input type="text" class="search-input ps-5" placeholder="Search data...">
+            </div>
+        </div>
+        <div class="d-flex align-items-center">
+            <div class="position-relative me-4">
+                <i class="fa fa-bell text-muted fs-5"></i>
+                <span
+                    class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="text-end me-2 d-none d-sm-block">
+                    <p class="mb-0 fw-bold small">{{ currentUser?.name || 'Seller Admin' }}</p>
+                    <p class="mb-0 x-small text-muted" style="font-size: 10px;">Seller</p>
+                </div>
+                <img [src]="'https://ui-avatars.com/api/?name=' + (currentUser?.name || 'Seller') + '&background=4F46E5&color=fff'"
+                    class="rounded-circle" width="40" height="40" alt="DP">
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-wrapper" id="main-wrapper">
+        <router-outlet></router-outlet>
+    </div>
+</div>

@@ -1,0 +1,99 @@
+<div class="customer-support sui-fade-in">
+    <div class="sui-breadcrumb mb-4">
+        <a href="/">Home</a>
+        <span>/</span>
+        <span class="active">Customer Service</span>
+    </div>
+
+    <!-- Self Service -->
+    <section class="mb-5">
+        <h4 class="fw-bold mb-4 uppercase">SELF-SERVICE</h4>
+        <div class="row g-3 text-center">
+            <div class="col-6 col-md-3 col-lg-2">
+                <div class="sui-card p-3 cursor-pointer hover-dark h-100">
+                    <i class="fas fa-undo-alt fa-lg mb-2"></i>
+                    <p class="x-small fw-bold mb-0 uppercase">Return & Refund</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 col-lg-2">
+                <div class="sui-card p-3 cursor-pointer hover-dark h-100">
+                    <i class="fas fa-truck fa-lg mb-2"></i>
+                    <p class="x-small fw-bold mb-0 uppercase">Track Order</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 col-lg-2">
+                <div class="sui-card p-3 cursor-pointer hover-dark h-100">
+                    <i class="fas fa-file-invoice-dollar fa-lg mb-2"></i>
+                    <p class="x-small fw-bold mb-0 uppercase">View Invoice</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 col-lg-2">
+                <div class="sui-card p-3 cursor-pointer hover-dark h-100">
+                    <i class="fas fa-wallet fa-lg mb-2"></i>
+                    <p class="x-small fw-bold mb-0 uppercase">My Wallet</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 col-lg-2">
+                <div class="sui-card p-3 cursor-pointer hover-dark h-100">
+                    <i class="fas fa-coins fa-lg mb-2"></i>
+                    <p class="x-small fw-bold mb-0 uppercase">My Points</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-container sui-card p-0 overflow-hidden">
+        <div class="row g-0">
+            <aside class="col-md-3 border-end bg-light">
+                <div class="p-4 border-bottom d-flex justify-content-between align-items-center bg-white">
+                    <h6 class="fw-bold mb-0">FAQ</h6>
+                    <i class="fas fa-search x-small text-muted"></i>
+                </div>
+                <div class="category-list">
+                    <div *ngFor="let cat of categories" [class.active]="cat.active"
+                        class="sui-menu-item p-3 border-bottom d-flex justify-content-between align-items-center bg-transparent">
+                        <span class="x-small fw-bold uppercase px-3">{{cat.name}}</span>
+                        <i class="fas fa-chevron-right x-small opacity-25"></i>
+                    </div>
+                </div>
+            </aside>
+            <main class="col-md-9 p-4 bg-white">
+                <div class="faq-list">
+                    <div *ngFor="let faq of faqs; let i = index" class="faq-item border-bottom mb-2">
+                        <div (click)="toggleFaq(i)"
+                            class="faq-question py-3 d-flex justify-content-between align-items-center cursor-pointer">
+                            <span class="x-small fw-bold uppercase">{{faq.question}}</span>
+                            <i class="fas x-small" [class.fa-plus]="!faq.open" [class.fa-minus]="faq.open"></i>
+                        </div>
+                        <div *ngIf="faq.open" class="faq-answer pb-3 text-muted x-small sui-fade-in uppercase">
+                            {{faq.answer}}
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-4">
+                    <button class="btn btn-link text-dark text-decoration-none x-small fw-bold uppercase">VIEW MORE <i
+                            class="fas fa-chevron-down ms-1"></i></button>
+                </div>
+            </main>
+        </div>
+    </section>
+
+    <!-- Contact Support -->
+    <section class="contact-support mt-5 py-5 border text-center bg-light">
+        <h4 class="fw-bold mb-3 uppercase">NEED MORE HELP?</h4>
+        <p class="x-small text-muted mb-4 uppercase">Our support team is available 24/7 to help you.</p>
+        <div class="d-flex justify-content-center gap-3 mb-5">
+            <button class="sui-btn sui-btn-primary">CONTACT SERVICE</button>
+            <button class="sui-btn sui-btn-outline">LIVE CHAT</button>
+        </div>
+        <div class="social-support pt-4 border-top mx-5">
+            <p class="x-small mb-3 fw-bold uppercase text-muted">Available on social media</p>
+            <div class="d-flex justify-content-center gap-4">
+                <i class="fab fa-facebook-messenger fa-2x opacity-50 cursor-pointer hover-opacity-100"></i>
+                <i class="fab fa-whatsapp fa-2x opacity-50 cursor-pointer hover-opacity-100"></i>
+                <i class="fab fa-instagram fa-2x opacity-50 cursor-pointer hover-opacity-100"></i>
+            </div>
+        </div>
+    </section>
+</div>

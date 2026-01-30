@@ -1,0 +1,135 @@
+<div class="order-details-container animate__animated animate__fadeIn">
+    <!-- Header -->
+    <div class="page-header mb-4 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3">
+            <button class="btn btn-light rounded-circle shadow-sm" (click)="goBack()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div>
+                <h3 class="fw-bold text-dark mb-0">Order Details {{ order?.id }}</h3>
+                <p class="text-muted small mb-0">Placed on {{ order?.date }}</p>
+            </div>
+        </div>
+        <div class="status-badge" [ngClass]="order?.status.toLowerCase()">
+            {{ order?.status }}
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Order Items Card -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h5 class="fw-bold mb-0">Order Items</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead class="text-muted small">
+                                <tr>
+                                    <th>Product</th>
+                                    <th>SKU</th>
+                                    <th>Price</th>
+                                    <th>Quantity</th>
+                                    <th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let item of order?.orderItems">
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <img [src]="item.image" class="rounded-3" width="50" height="50">
+                                            <span class="fw-semibold text-dark">{{ item.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="text-muted">{{ item.sku }}</span></td>
+                                    <td>${{ item.price }}</td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td class="text-end fw-bold text-dark">${{ item.subtotal }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Totals Section -->
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-end">
+                        <div class="summary-box">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Subtotal:</span>
+                                <span class="fw-semibold">${{ order?.subtotal }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Shipping Fee:</span>
+                                <span class="fw-semibold">${{ order?.shippingFee }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Tax:</span>
+                                <span class="fw-semibold">${{ order?.tax }}</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <h4 class="fw-bold text-dark">Grand Total:</h4>
+                                <h4 class="fw-bold text-primary">${{ order?.grandTotal }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Info -->
+        <div class="col-lg-4">
+            <!-- Customer Info Card -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h5 class="fw-bold mb-0">Customer Information</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <div class="avatar-circle">
+                            {{ order?.customer.charAt(0) }}
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark">{{ order?.customer }}</h6>
+                            <span class="text-muted small">Customer ID: #CUST-9921</span>
+                        </div>
+                    </div>
+                    <div class="info-item mb-3">
+                        <label class="text-muted small d-block">Email</label>
+                        <span class="fw-semibold text-dark">{{ order?.email }}</span>
+                    </div>
+                    <div class="info-item mb-3">
+                        <label class="text-muted small d-block">Phone</label>
+                        <span class="fw-semibold text-dark">{{ order?.phone }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label class="text-muted small d-block">Shipping Address</label>
+                        <span class="fw-semibold text-dark">{{ order?.shippingAddress }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Update Status Card -->
+            <div class="card border-0 shadow-sm rounded-4 bg-indigo-subtle">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3 text-indigo">Update Order Status</h5>
+                    <div class="form-group mb-3">
+                        <select class="form-select border-0 shadow-sm" #statusSelect [value]="order?.status">
+                            <option *ngFor="let option of statusOptions" [value]="option">{{ option }}</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary w-100 py-2 fw-bold" [disabled]="updatingStatus"
+                        (click)="updateStatus(statusSelect.value)">
+                        <i class="fas fa-sync me-2" [class.fa-spin]="updatingStatus"></i>
+                        {{ updatingStatus ? 'Updating...' : 'Update Status' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

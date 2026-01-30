@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { UserSidebarComponent } from './components/sidebar/sidebar.component';
 
 @Component({
@@ -10,4 +10,14 @@ import { UserSidebarComponent } from './components/sidebar/sidebar.component';
     templateUrl: './user-index.component.html',
     styleUrls: ['./user-index.component.scss']
 })
-export class UserIndexComponent { }
+export class UserIndexComponent {
+    private router = inject(Router);
+
+    constructor() {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        const isSeller = currentUser.userName?.startsWith('SS_') && currentUser.userName?.includes('Seller');
+        if (isSeller) {
+            this.router.navigate(['/seller/dashboard']);
+        }
+    }
+}

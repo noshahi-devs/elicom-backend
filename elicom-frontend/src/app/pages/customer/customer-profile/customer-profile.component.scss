@@ -1,0 +1,28 @@
+.customer-profile {
+    .max-w-700 {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    .x-small {
+        font-size: 11px;
+    }
+
+    .uppercase {
+        text-transform: uppercase;
+    }
+
+    .avatar-circle.big {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+    }
+
+    .form-control,
+    .form-select {
+        &:focus {
+            box-shadow: none;
+            border-color: #000;
+        }
+    }
+}

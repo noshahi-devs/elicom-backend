@@ -1,0 +1,94 @@
+<div class="wallet-content">
+    <div class="dashboard-header mb-4">
+        <h1 class="fw-bold mb-2">
+            <i class="fas fa-wallet me-3 text-primary"></i>
+            Wallet Center
+        </h1>
+        <p class="lead mb-0 text-muted">
+            Track your transactions, monitor sales accruals, and manage your account balance.
+        </p>
+    </div>
+
+    <!-- Balance Overview -->
+    <div class="balance-grid mb-5">
+        <div class="balance-card primary">
+            <div class="card-glow"></div>
+            <div class="balance-info">
+                <span class="label">Total Available Balance</span>
+                <h2 class="amount">{{balance | currency}}</h2>
+                <div class="balance-actions mt-3">
+                    <button class="btn-balance-action"><i class="fas fa-arrow-down me-2"></i> Withdraw</button>
+                </div>
+            </div>
+            <div class="balance-icon"><i class="fas fa-vault"></i></div>
+        </div>
+
+        <div class="balance-card secondary">
+            <div class="balance-info">
+                <span class="label">Pending Transactions</span>
+                <h2 class="amount">{{pendingBalance | currency}}</h2>
+                <p class="mt-2 mb-0 opacity-75">Awaiting approval or clearance</p>
+            </div>
+            <div class="balance-icon"><i class="fas fa-clock"></i></div>
+        </div>
+    </div>
+
+    <!-- Transaction History -->
+    <div class="transactions-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold mb-0 text-primary">Transaction History</h3>
+            <div class="filter-actions">
+                <button class="btn-filter active">All</button>
+                <button class="btn-filter">Sales</button>
+                <button class="btn-filter">Withdrawals</button>
+            </div>
+        </div>
+
+        <div class="table-responsive-custom">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Reference</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let t of transactions">
+                        <td>
+                            <div class="date-cell">
+                                <span class="d-block fw-600">{{t.createdAt | date:'mediumDate'}}</span>
+                                <small class="text-muted">{{t.createdAt | date:'shortTime'}}</small>
+                            </div>
+                        </td>
+                        <td><span class="ref-badge">{{t.reference}}</span></td>
+                        <td>
+                            <div class="type-cell">
+                                <i class="fas {{getTypeIcon(t.type)}} me-2"></i>
+                                <span class="text-capitalize">{{t.type}}</span>
+                            </div>
+                        </td>
+                        <td><span class="desc-text">{{t.description}}</span></td>
+                        <td>
+                            <span class="amount-text" [class.negative]="t.amount < 0">
+                                {{t.amount | currency}}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-badge" [ngClass]="getStatusClass(t.status)">
+                                {{t.status}}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn-row-action"><i class="fas fa-ellipsis-v"></i></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

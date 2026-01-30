@@ -1,0 +1,27 @@
+.customer-support {
+    .x-small {
+        font-size: 11px;
+    }
+
+    .uppercase {
+        text-transform: uppercase;
+    }
+
+    .hover-dark:hover {
+        background-color: #000 !important;
+        color: #fff !important;
+
+        i {
+            color: #fff !important;
+        }
+    }
+
+    .hover-opacity-100:hover {
+        opacity: 1 !important;
+    }
+
+    .sui-menu-item.active {
+        background-color: #fff !important;
+        border-right: 3px solid #000;
+    }
+}

@@ -1,0 +1,47 @@
+<div class="container py-4">
+    <div class="sui-breadcrumb mb-4">
+        <a href="/">Home</a>
+        <span>/</span>
+        <span class="active">Personal Center</span>
+    </div>
+
+    <div class="row g-5">
+        <!-- Sidebar -->
+        <aside class="col-lg-3">
+            <div class="sidebar-header mb-4">
+                <h4 class="fw-bold mb-0">Personal Center</h4>
+            </div>
+
+            <div class="sidebar-nav">
+                <div *ngFor="let group of menuGroups" class="mb-3">
+                    <div (click)="toggleGroup(group)"
+                        class="sui-menu-group-title d-flex justify-content-between align-items-center cursor-pointer py-2">
+                        <span>{{group.title}}</span>
+                        <i class="fas" [class.fa-plus]="!group.expanded" [class.fa-minus]="group.expanded"
+                            style="font-size: 10px;"></i>
+                    </div>
+
+                    <div *ngIf="group.expanded" class="nav-links ps-2">
+                        <a *ngFor="let item of group.items" [routerLink]="item.path" routerLinkActive="active"
+                            class="sui-menu-item py-1">
+                            <span class="x-small">{{item.label}}</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="mt-5 border-top pt-4 mb-4">
+                    <div (click)="logout()" class="sui-menu-group-title text-dark cursor-pointer py-2">
+                        <span>Sign Out</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="col-lg-9">
+            <main class="sui-customer-content">
+                <router-outlet></router-outlet>
+            </main>
+        </div>
+    </div>
+</div>

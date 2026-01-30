@@ -1,0 +1,163 @@
+<div class="admin-content">
+    <div class="row align-items-center mb-5">
+        <div class="col-md-8">
+            <h1 class="fw-bold mb-2">
+                <i class="fas fa-money-bill-transfer text-primary me-3"></i> Financial Oversight
+            </h1>
+            <p class="text-muted lead mb-0">Audit seller transactions and process withdrawal (payout) requests.</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="stats-mini-badge bg-primary-subtle text-primary border border-primary-subtle">
+                <i class="fas fa-wallet me-2"></i>
+                <span>Pending Volume: <strong>{{totalPendingVolume | currency}}</strong></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payout Requests Table -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-5">
+        <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+            <h5 class="fw-bold mb-0">Withdrawal Requests</h5>
+            <div class="badge bg-warning-subtle text-warning">Awaiting Processing</div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Request ID</th>
+                        <th>Seller</th>
+                        <th>Amount</th>
+                        <th>Method</th>
+                        <th>Details</th>
+                        <th>Status</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let req of requests">
+                        <td class="ps-4 fw-bold text-primary">{{req.id}}</td>
+                        <td>{{req.sellerName}}</td>
+                        <td class="fw-bold">{{req.amount | currency}}</td>
+                        <td>
+                            <i class="fas"
+                                [ngClass]="req.method === 'PayPal' ? 'fa-brands fa-paypal text-info' : 'fa-university text-secondary'"></i>
+                            {{req.method}}
+                        </td>
+                        <td class="small">{{req.accountDetails}}</td>
+                        <td>
+                            <span class="admin-status-pill" [ngClass]="req.status">
+                                {{req.status}}
+                            </span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="d-flex justify-content-end gap-2" *ngIf="req.status === 'pending'">
+                                <button (click)="openReviewModal(req)" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-search-dollar me-1"></i> Review Payout
+                                </button>
+                            </div>
+                            <span *ngIf="req.status !== 'pending'" class="text-muted small italic">Processed</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Transaction Audit Log (Mock) -->
+    <div class="section-card">
+        <h5 class="fw-bold mb-4">Marketplace Transaction Audit Log</h5>
+        <div class="alert alert-info border-0 rounded-3">
+            <i class="fas fa-info-circle me-2"></i> Only transactions over $5,000 are shown in the immediate audit view.
+        </div>
+        <table class="table table-borderless table-sm small">
+            <thead class="text-muted text-uppercase">
+                <tr>
+                    <th>Ref</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Entity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="fw-600">TXN-001</td>
+                    <td>Jan 30, 2026</td>
+                    <td><span class="text-success">SALE Accrual</span></td>
+                    <td class="fw-bold">$8,240.00</td>
+                    <td>Tech Haven</td>
+                </tr>
+                <tr>
+                    <td class="fw-600">TXN-002</td>
+                    <td>Jan 29, 2026</td>
+                    <td><span class="text-danger">SYSTEM REVERSAL</span></td>
+                    <td class="fw-bold">-$12,000.00</td>
+                    <td>Admin Correction</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Payout Review Modal -->
+    <div class="modal fade shadow-lg" [class.show]="showReviewModal"
+        [style.display]="showReviewModal ? 'block' : 'none'" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 overflow-hidden" *ngIf="selectedRequest">
+                <div class="modal-header bg-primary text-white p-4">
+                    <h5 class="modal-title fw-bold">Review Payout Request</h5>
+                    <button type="button" class="btn-close btn-close-white" (click)="closeReviewModal()"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="p-3 bg-light rounded-3 mb-4">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="small text-muted d-block p-0">Request ID</label>
+                                <span class="fw-bold">{{selectedRequest.id}}</span>
+                            </div>
+                            <div class="col-6">
+                                <label class="small text-muted d-block p-0">Amount</label>
+                                <span class="fw-bold text-success fs-5">{{selectedRequest.amount | currency}}</span>
+                            </div>
+                            <div class="col-6">
+                                <label class="small text-muted d-block p-0">Seller</label>
+                                <span class="fw-bold">{{selectedRequest.sellerName}}</span>
+                            </div>
+                            <div class="col-6">
+                                <label class="small text-muted d-block p-0">Method</label>
+                                <span class="fw-bold">{{selectedRequest.method}}</span>
+                            </div>
+                            <div class="col-12">
+                                <label class="small text-muted d-block p-0">Account Details</label>
+                                <span class="fw-bold">{{selectedRequest.accountDetails}}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Approval/Rejection Comments
+                            (Optional)</label>
+                        <textarea class="form-control rounded-3" rows="3" [(ngModel)]="reviewComment"
+                            placeholder="Provide any instructions or reasoning for the seller..."></textarea>
+                    </div>
+
+                    <div class="alert alert-warning border-0 rounded-3 small">
+                        <i class="fas fa-exclamation-triangle me-2"></i> Approving this payout will immediately mark the
+                        funds as transferred and record an accrual reversal in the ledger.
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0 gap-2">
+                    <button type="button" class="btn btn-outline-danger px-4 rounded-pill flex-grow-1"
+                        (click)="rejectPayout()">
+                        <i class="fas fa-times-circle me-1"></i> Reject
+                    </button>
+                    <button type="button" class="btn btn-success px-4 rounded-pill flex-grow-1"
+                        (click)="approvePayout()">
+                        <i class="fas fa-check-double me-1"></i> Approve & Process
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop fade" [class.show]="showReviewModal" *ngIf="showReviewModal"></div>
+</div>

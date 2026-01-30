@@ -4,17 +4,17 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthModalComponent } from '../../shared/components/auth-modal/auth-modal.component';
 
 @Component({
-    selector: 'app-login-page',
-    standalone: true,
-    imports: [CommonModule, AuthModalComponent],
-    template: `
+  selector: 'app-login-page',
+  standalone: true,
+  imports: [CommonModule, AuthModalComponent],
+  template: `
     <div class="login-page-container">
       <div class="auth-box">
         <app-auth-modal (close)="onClose()" (authenticated)="onAuthenticated()"></app-auth-modal>
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .login-page-container {
       display: flex;
       justify-content: center;
@@ -38,18 +38,25 @@ import { AuthModalComponent } from '../../shared/components/auth-modal/auth-moda
   `]
 })
 export class LoginPageComponent implements OnInit {
-    private router = inject(Router);
-    private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
-    ngOnInit(): void {
-        // We can use query params to switch between signin/signup if needed
-    }
+  ngOnInit(): void {
+    // We can use query params to switch between signin/signup if needed
+  }
 
-    onClose() {
-        this.router.navigate(['/']);
-    }
+  onClose() {
+    this.router.navigate(['/']);
+  }
 
-    onAuthenticated() {
-        this.router.navigate(['/user/index']);
+  onAuthenticated() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const isSeller = currentUser.userName?.startsWith('SS_') && currentUser.userName?.includes('Seller');
+
+    if (isSeller) {
+      this.router.navigate(['/seller/dashboard']);
+    } else {
+      this.router.navigate(['/user/index']);
     }
+  }
 }
