@@ -29,6 +29,7 @@ namespace Elicom.EntityFrameworkCore
         public DbSet<WithdrawRequest> WithdrawRequests { get; set; }
         public DbSet<AppTransaction> AppTransactions { get; set; }
         public DbSet<SupportTicket> SupportTickets { get; set; }
+        public DbSet<Warehouse> Warehouses { get; set; }
 
         public ElicomDbContext(DbContextOptions<ElicomDbContext> options)
             : base(options)
@@ -155,6 +156,15 @@ namespace Elicom.EntityFrameworkCore
                 b.Property(o => o.TotalAmount).HasColumnType("decimal(18,2)");
                 b.Property(o => o.ShippingCost).HasColumnType("decimal(18,2)");
                 b.Property(o => o.Discount).HasColumnType("decimal(18,2)");
+            });
+
+            /* ---------------- Warehouse Configuration ---------------- */
+            builder.Entity<Warehouse>(b =>
+            {
+                b.HasOne(w => w.Store)
+                 .WithMany() // A store can have multiple warehouses
+                 .HasForeignKey(w => w.StoreId)
+                 .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

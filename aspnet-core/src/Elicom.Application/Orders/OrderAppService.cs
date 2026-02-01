@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Elicom.Cards;
 
 namespace Elicom.Orders
 {
@@ -25,6 +26,7 @@ namespace Elicom.Orders
         private readonly IRepository<StoreProduct, Guid> _storeProductRepository;
         private readonly IWalletManager _walletManager;
         private readonly IEmailSender _emailSender;
+        private readonly ICardAppService _cardAppService;
 
         private const long PlatformAdminId = 1; // The system account that holds Escrow funds
 
@@ -34,7 +36,8 @@ namespace Elicom.Orders
             IRepository<SupplierOrder, Guid> supplierOrderRepository,
             IRepository<StoreProduct, Guid> storeProductRepository,
             IWalletManager walletManager,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            ICardAppService cardAppService)
         {
             _orderRepository = orderRepository;
             _cartItemRepository = cartItemRepository;
@@ -42,6 +45,7 @@ namespace Elicom.Orders
             _storeProductRepository = storeProductRepository;
             _walletManager = walletManager;
             _emailSender = emailSender;
+            _cardAppService = cardAppService;
         }
 
         // Create order from cart
@@ -123,8 +127,41 @@ namespace Elicom.Orders
             else
             {
                 // External Payment (Card, Crypto, etc.)
-                // In a real app, verify with gateway here
-                order.PaymentStatus = input.PaymentMethod == "finora" ? "Paid (Easy Finora)" : "Paid (External)";
+                if (input.PaymentMethod?.ToLower().Contains("finora") == true)
+                {
+                    // Real verification using CardAppService
+                    var validationResult = await _cardAppService.ValidateCard(new ValidateCardInput
+                    {
+                        CardNumber = input.CardNumber,
+                        Cvv = input.Cvv,
+                        ExpiryDate = input.ExpiryDate,
+                        Amount = order.TotalAmount
+                    });
+
+                    if (!validationResult.IsValid)
+                    {
+                        throw new UserFriendlyException($"Finora Payment Failed: {validationResult.Message}");
+                    }
+
+                    // Process Payment
+                    await _cardAppService.ProcessPayment(new ProcessCardPaymentInput
+                    {
+                        CardNumber = input.CardNumber,
+                        Cvv = input.Cvv,
+                        ExpiryDate = input.ExpiryDate,
+                        Amount = order.TotalAmount,
+                        ReferenceId = order.OrderNumber,
+                        Description = $"Payment for Order {order.OrderNumber}"
+                    });
+
+                    order.PaymentStatus = "Paid (Easy Finora)";
+                }
+                else
+                {
+                    // Other External Payment (Card, Crypto, etc.)
+                    // In a real app, verify with gateway here
+                    order.PaymentStatus = "Paid (External)";
+                }
             }
 
             foreach (var ci in cartItems)
@@ -148,31 +185,8 @@ namespace Elicom.Orders
                 await _cartItemRepository.DeleteAsync(ci.Id);
             }
 
-            // --- NOTIFICATION ---
-            try
-            {
-                var mail = new System.Net.Mail.MailMessage(
-                    "no-reply@primeshipuk.com",
-                    "noshahidevelopersinc@gmail.com"
-                )
-                {
-                    Subject = $"[SmartStore] New Retail Order: {order.OrderNumber}",
-                    Body = $@"A new retail order has been placed on Smart Store.
-
-Order Number: {order.OrderNumber}
-Total Amount: {order.TotalAmount} {order.PaymentMethod}
-User ID: {order.UserId}
-
-Please check the admin panel for details.",
-                    IsBodyHtml = false
-                };
-
-                await _emailSender.SendAsync(mail);
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("Failed to send retail order email notification", ex);
-            }
+            // --- NOTIFICATIONS ---
+            await SendOrderPlacementEmails(order, cartItems);
 
             return ObjectMapper.Map<OrderDto>(order);
         }
@@ -204,6 +218,17 @@ Please check the admin panel for details.",
             var orders = await _orderRepository.GetAll()
                 .Include(o => o.OrderItems)
                 .Where(o => o.UserId == userId)
+                .ToListAsync();
+
+            return ObjectMapper.Map<List<OrderDto>>(orders);
+        }
+
+        public async Task<List<OrderDto>> GetByStore(Guid storeId)
+        {
+            var orders = await _orderRepository.GetAll()
+                .Include(o => o.OrderItems)
+                .Where(o => o.OrderItems.Any(oi => _storeProductRepository.GetAll().Any(sp => sp.Id == oi.StoreProductId && sp.StoreId == storeId)))
+                .OrderByDescending(o => o.CreationTime)
                 .ToListAsync();
 
             return ObjectMapper.Map<List<OrderDto>>(orders);
@@ -378,16 +403,89 @@ Please check the admin panel for details.",
 
             order.Status = input.Status;
 
+            if (!string.IsNullOrEmpty(input.DeliveryTrackingNumber))
+            {
+                order.DeliveryTrackingNumber = input.DeliveryTrackingNumber;
+            }
+
             // If marking as delivered, also update payment status
             if (input.Status.Equals("Delivered", StringComparison.OrdinalIgnoreCase))
             {
                 order.PaymentStatus = "Completed";
+                await FinalizeOrder(order);
             }
 
             await _orderRepository.UpdateAsync(order);
             await CurrentUnitOfWork.SaveChangesAsync();
 
             return ObjectMapper.Map<OrderDto>(order);
+        }
+
+        private async Task SendOrderPlacementEmails(Order order, List<CartItem> cartItems)
+        {
+            try
+            {
+                var customerEmail = (await GetCurrentUserAsync()).EmailAddress;
+                var adminEmail = "noshahidevelopersinc@gmail.com";
+                
+                // 1. Email to CUSTOMER
+                var customerBody = $@"
+                    <h2>Order Confirmed!</h2>
+                    <p>Dear Customer, your order <b>{order.OrderNumber}</b> has been placed successfully.</p>
+                    <p>Total Amount: {order.TotalAmount:C}</p>
+                    <p>We are processing your items and will notify you once shipped.</p>";
+                
+                await SendEmailAsync(customerEmail, $"Order Confirmed: {order.OrderNumber}", customerBody);
+
+                // 2. Email to ADMIN
+                var adminBody = $@"
+                    <h2>New Order Alert</h2>
+                    <p>Order <b>{order.OrderNumber}</b> has been placed on SmartStore.</p>
+                    <p>Amount: {order.TotalAmount:C}</p>
+                    <p>Check the admin dashboard for details.</p>";
+                
+                await SendEmailAsync(adminEmail, $"[ALERT] New Order: {order.OrderNumber}", adminBody);
+
+                // 3. Email to each SELLER
+                var storeGroups = cartItems.GroupBy(ci => ci.StoreProduct.StoreId);
+                foreach (var group in storeGroups)
+                {
+                    var store = group.First().StoreProduct.Store;
+                    var owner = await UserManager.FindByIdAsync(store.OwnerId.ToString());
+                    if (owner != null)
+                    {
+                        var sellerBody = $@"
+                            <h2>You have a New Order!</h2>
+                            <p>Store: <b>{store.Name}</b></p>
+                            <p>Order: <b>{order.OrderNumber}</b></p>
+                            <p>Please log in to your Seller Portal to fulfill this order.</p>";
+                        
+                        await SendEmailAsync(owner.EmailAddress, $"New Sale: {order.OrderNumber}", sellerBody);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Failed to send order placement emails", ex);
+            }
+        }
+
+        private async Task SendEmailAsync(string to, string subject, string body)
+        {
+            try
+            {
+                var mail = new System.Net.Mail.MailMessage("no-reply@primeshipuk.com", to)
+                {
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = true
+                };
+                await _emailSender.SendAsync(mail);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Email error to {to}: {ex.Message}");
+            }
         }
     }
 }

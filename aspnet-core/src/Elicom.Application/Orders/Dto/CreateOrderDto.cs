@@ -17,5 +17,10 @@ namespace Elicom.Orders.Dto
         public decimal ShippingCost { get; set; }
         public decimal Discount { get; set; }
         public string SourcePlatform { get; set; }
+
+        // Card details for Finora/External payment
+        public string CardNumber { get; set; }
+        public string Cvv { get; set; }
+        public string ExpiryDate { get; set; }
     }
 }

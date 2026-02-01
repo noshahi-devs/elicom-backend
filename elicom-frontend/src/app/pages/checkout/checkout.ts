@@ -11,7 +11,6 @@ import { ShippingAddress } from '../../shared/components/shipping-address/shippi
 import { CheckoutProduct } from '../../shared/components/checkout-product/checkout-product';
 import { PaymentMethod } from '../../shared/components/payment-method/payment-method';
 import { CheckoutSummary } from '../../shared/components/checkout-summary/checkout-summary';
-import { AddToCart } from '../add-to-cart/add-to-cart';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -24,8 +23,7 @@ import Swal from 'sweetalert2';
     ShippingAddress,
     CheckoutProduct,
     PaymentMethod,
-    CheckoutSummary,
-    AddToCart
+    CheckoutSummary
   ],
   templateUrl: './checkout.html',
   styleUrl: './checkout.scss',

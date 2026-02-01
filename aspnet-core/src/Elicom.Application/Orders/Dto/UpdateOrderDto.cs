@@ -7,5 +7,6 @@ namespace Elicom.Orders.Dto
     {
         public string Status { get; set; }
         public string PaymentStatus { get; set; }
+        public string DeliveryTrackingNumber { get; set; }
     }
 }

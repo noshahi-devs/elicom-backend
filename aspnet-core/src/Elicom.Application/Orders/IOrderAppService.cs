@@ -12,6 +12,7 @@ namespace Elicom.Orders
         Task<OrderDto> Get(Guid id);
         Task<List<OrderDto>> GetAll();
         Task<List<OrderDto>> GetAllForCustomer(long userId);
+        Task<List<OrderDto>> GetByStore(Guid storeId);
 
         Task<OrderDto> MarkAsProcessing(MarkOrderProcessingDto input);
         Task<OrderDto> LinkWholesaleOrder(LinkWholesaleOrderDto input);

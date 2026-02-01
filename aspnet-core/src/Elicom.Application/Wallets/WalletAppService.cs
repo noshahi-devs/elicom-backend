@@ -14,13 +14,16 @@ namespace Elicom.Wallets
     {
         private readonly IWalletManager _walletManager;
         private readonly IRepository<Wallet, Guid> _walletRepository;
+        private readonly IRepository<WalletTransaction, Guid> _transactionRepository;
 
         public WalletAppService(
             IWalletManager walletManager,
-            IRepository<Wallet, Guid> walletRepository)
+            IRepository<Wallet, Guid> walletRepository,
+            IRepository<WalletTransaction, Guid> transactionRepository)
         {
             _walletManager = walletManager;
             _walletRepository = walletRepository;
+            _transactionRepository = transactionRepository;
         }
 
         public async Task<WalletDto> GetMyWallet()
@@ -69,6 +72,22 @@ namespace Elicom.Wallets
                 receiver.Id,
                 input.Amount,
                 input.Description ?? "Wallet Transfer"
+            );
+        }
+
+        public async Task<ListResultDto<WalletTransactionDto>> GetTransactions()
+        {
+            var user = await GetCurrentUserAsync();
+            var wallet = await _walletRepository.FirstOrDefaultAsync(w => w.UserId == user.Id);
+            if (wallet == null) return new ListResultDto<WalletTransactionDto>();
+
+            var transactions = await _transactionRepository.GetAll()
+                .Where(t => t.WalletId == wallet.Id)
+                .OrderByDescending(t => t.CreationTime)
+                .ToListAsync();
+
+            return new ListResultDto<WalletTransactionDto>(
+                ObjectMapper.Map<List<WalletTransactionDto>>(transactions)
             );
         }
     }
