@@ -6,6 +6,8 @@ import { DealCardComponent } from '../../shared/components/deal-card/deal-card';
 import { ProductGridComponent } from '../../shared/components/product-grid/product-grid';
 import { ProductService, GlobalMarketplaceProduct } from '../../services/product';
 import { CategoryService, Category } from '../../services/category';
+import { AuthService } from '../../services/auth.service';
+import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -29,10 +31,18 @@ export class HomeComponent implements OnInit {
   constructor(
     private productService: ProductService,
     private categoryService: CategoryService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private authService: AuthService,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
+    if (this.authService.isAuthenticated) {
+      if (this.authService.isAdmin() || this.authService.isSeller()) {
+        this.authService.navigateToDashboard();
+        return;
+      }
+    }
     this.loadProducts();
     this.loadCategories();
   }

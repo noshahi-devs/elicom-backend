@@ -7,8 +7,9 @@ using Abp.Domain.Entities;
 
 namespace Elicom.Entities
 {
-    public class CartItem : FullAuditedEntity<Guid>
+    public class CartItem : FullAuditedEntity<Guid>, IMayHaveTenant
     {
+        public int? TenantId { get; set; }
         // Link to user
         public long UserId { get; set; }
         [ForeignKey(nameof(UserId))]

@@ -3,7 +3,7 @@
     <div class="progress-steps">
         <div class="step-item" [class.active]="currentStep === 1" [class.completed]="currentStep > 1">
             <div class="step-icon">1</div>
-            <div class="step-label">Identify</div>
+            <div class="step-label">Identity</div>
         </div>
         <div class="step-item" [class.active]="currentStep === 2" [class.completed]="currentStep > 2">
             <div class="step-icon">2</div>
@@ -11,9 +11,21 @@
         </div>
         <div class="step-item" [class.active]="currentStep === 3" [class.completed]="currentStep > 3">
             <div class="step-icon">3</div>
-            <div class="step-label">Social</div>
+            <div class="step-label">Personal</div>
         </div>
-        <div class="step-item" [class.active]="currentStep === 4">
+        <div class="step-item" [class.active]="currentStep === 4" [class.completed]="currentStep > 4">
+            <div class="step-icon">4</div>
+            <div class="step-label">Residence</div>
+        </div>
+        <div class="step-item" [class.active]="currentStep === 5" [class.completed]="currentStep > 5">
+            <div class="step-icon">5</div>
+            <div class="step-label">Verification</div>
+        </div>
+        <div class="step-item" [class.active]="currentStep === 6" [class.completed]="currentStep > 6">
+            <div class="step-icon">6</div>
+            <div class="step-label">Documents</div>
+        </div>
+        <div class="step-item" [class.active]="currentStep === 7">
             <div class="step-icon"><i class="fas fa-check"></i></div>
             <div class="step-label">Finish</div>
         </div>
@@ -22,94 +34,171 @@
     <!-- Wizard Card -->
     <div class="wizard-card">
         <form [formGroup]="storeForm">
-            <!-- Step 1: Identity -->
+            <!-- Step 1: Store Identity -->
             <div *ngIf="currentStep === 1" class="step-content">
                 <div class="step-header">
                     <h2>Store Identity</h2>
-                    <p>Tell us the basic details of your new store.</p>
+                    <p>Tell us the name of your new shopping world.</p>
                 </div>
                 <div class="form-group">
                     <label>Store Name</label>
-                    <input type="text" formControlName="name" class="form-control" placeholder="e.g. Noshahi Mart">
-                </div>
-                <div class="form-group">
-                    <label>Store URL Slug</label>
-                    <div class="slug-input-wrapper">
-                        <span class="prefix">smartstore.com/</span>
-                        <input type="text" formControlName="slug" class="form-control" placeholder="store-slug">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Primary Category</label>
-                    <div class="category-grid">
-                        <div *ngFor="let cat of categories" class="category-item"
-                            [class.selected]="selectedCategory === cat.id" (click)="selectCategory(cat.id)">
-                            <i [class]="cat.icon"></i>
-                            <span>{{cat.name}}</span>
-                        </div>
-                    </div>
+                    <input type="text" formControlName="name" class="form-control" placeholder="Success Mart">
                 </div>
             </div>
 
-            <!-- Step 2: Details -->
+            <!-- Step 2: Store Details -->
             <div *ngIf="currentStep === 2" class="step-content">
                 <div class="step-header">
-                    <h2>Tell us more</h2>
-                    <p>Provide a description for your customers.</p>
+                    <h2>Store Details</h2>
+                    <p>Describe your business to your future customers.</p>
                 </div>
                 <div class="form-group">
-                    <label>Store Description</label>
-                    <textarea formControlName="description" class="form-control" rows="4"
-                        placeholder="What do you sell? Why should customers buy from you?"></textarea>
+                    <label>Short Catchy Description</label>
+                    <input type="text" formControlName="shortDescription" class="form-control"
+                        placeholder="e.g. Premium handcrafted jewelry">
+                </div>
+                <div class="form-group">
+                    <label>Full Story (Long Description)</label>
+                    <textarea formControlName="longDescription" class="form-control" rows="3"
+                        placeholder="Tell the world about what you offer..."></textarea>
                 </div>
                 <div class="form-group">
                     <label>Support Email</label>
                     <input type="email" formControlName="supportEmail" class="form-control"
-                        placeholder="support@yourstore.com">
+                        placeholder="contact@yourstore.com">
                 </div>
             </div>
 
-            <!-- Step 3: Social -->
-            <div *ngIf="currentStep === 3" class="step-content">
-                <div class="step-header">
-                    <h2>Connect & Contact</h2>
-                    <p>Add your contact info and social media profiles.</p>
-                </div>
-                <div class="form-group">
-                    <label>Instagram Handle</label>
-                    <div class="input-with-icon">
-                        <i class="fab fa-instagram"></i>
-                        <input type="text" formControlName="instagram" class="form-control" placeholder="username">
+            <!-- KYC Form Group Wrapper -->
+            <div formGroupName="kyc">
+                <!-- Step 3: KYC Personal -->
+                <div *ngIf="currentStep === 3" class="step-content">
+                    <div class="step-header">
+                        <h2>Personal Info</h2>
+                        <p>Basic identification details for verification.</p>
+                    </div>
+                    <div class="form-group">
+                        <label>Full Legal Name</label>
+                        <input type="text" formControlName="fullName" class="form-control">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Date of Birth</label>
+                                <input type="date" formControlName="dob" class="form-control">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Phone Number</label>
+                                <input type="text" formControlName="phone" class="form-control">
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>WhatsApp Number</label>
-                    <div class="input-with-icon">
-                        <i class="fab fa-whatsapp"></i>
-                        <input type="text" formControlName="whatsapp" class="form-control"
-                            placeholder="+92 300 0000000">
+
+                <!-- Step 4: KYC Residence -->
+                <div *ngIf="currentStep === 4" class="step-content">
+                    <div class="step-header">
+                        <h2>Residence</h2>
+                        <p>Where are you operating from?</p>
                     </div>
+                    <div class="form-group">
+                        <label>Issue Country</label>
+                        <select formControlName="issueCountry" class="form-control">
+                            <option *ngFor="let country of countries" [value]="country.code">{{country.name}}</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Residential Address</label>
+                        <textarea formControlName="address" class="form-control" rows="2"
+                            placeholder="Full home or office address"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Zip/Post Code</label>
+                        <input type="text" formControlName="zipCode" class="form-control">
+                    </div>
+                </div>
+
+                <!-- Step 5: KYC Identity -->
+                <div *ngIf="currentStep === 5" class="step-content">
+                    <div class="step-header">
+                        <h2>Identity Verification</h2>
+                        <p>Identity document information (ID, Passport, SSN).</p>
+                    </div>
+                    <div class="form-group">
+                        <label>Identity Number</label>
+                        <input type="text" formControlName="cnic" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Document Expiry Date</label>
+                        <input type="date" formControlName="expiryDate" class="form-control">
+                    </div>
+                </div>
+
+                <!-- Step 6: KYC Documents -->
+                <div *ngIf="currentStep === 6" class="step-content">
+                    <div class="step-header">
+                        <h2>Document Upload</h2>
+                        <p>Upload clear photos of your identity document.</p>
+                    </div>
+                    <div class="id-upload-grid">
+                        <div class="id-card-upload" (click)="triggerFileSelect('frontFile')">
+                            <label>Card Front</label>
+                            <div class="image-preview">
+                                <img *ngIf="storeForm.get('kyc.frontImage')?.value"
+                                    [src]="storeForm.get('kyc.frontImage')?.value" alt="ID Front">
+                                <div class="upload-overlay" *ngIf="!storeForm.get('kyc.frontImage')?.value">
+                                    <i class="fas fa-camera"></i>
+                                    <span>Select Front</span>
+                                </div>
+                            </div>
+                            <input type="file" id="frontFile" style="display: none;"
+                                (change)="onFileSelected($event, 'frontImage')" accept="image/*">
+                        </div>
+                        <div class="id-card-upload" (click)="triggerFileSelect('backFile')">
+                            <label>Card Back</label>
+                            <div class="image-preview">
+                                <img *ngIf="storeForm.get('kyc.backImage')?.value"
+                                    [src]="storeForm.get('kyc.backImage')?.value" alt="ID Back">
+                                <div class="upload-overlay" *ngIf="!storeForm.get('kyc.backImage')?.value">
+                                    <i class="fas fa-camera"></i>
+                                    <span>Select Back</span>
+                                </div>
+                            </div>
+                            <input type="file" id="backFile" style="display: none;"
+                                (change)="onFileSelected($event, 'backImage')" accept="image/*">
+                        </div>
+                    </div>
+                    <p class="upload-hint"><i class="fas fa-info-circle"></i> Visible edges and clear text ensure faster
+                        approval.</p>
                 </div>
             </div>
 
-            <!-- Step 4: Finish -->
-            <div *ngIf="currentStep === 4" class="step-content finish-step">
+            <!-- Step 7: Finish -->
+            <div *ngIf="currentStep === 7" class="step-content finish-step">
                 <div class="step-header">
                     <div class="success-icon">
-                        <i class="fas fa-check"></i>
+                        <i class="fas fa-rocket"></i>
                     </div>
-                    <h2>Confirm Details</h2>
-                    <p>Everything looks good. Click finish to launch your store!</p>
+                    <h2>Review & Launch</h2>
+                    <p>Review your information before starting your journey.</p>
                 </div>
                 <div class="summary-box">
-                    <div class="summary-item">
-                        <strong>Store Name:</strong> <span>{{storeForm.value.name}}</span>
+                    <div class="summary-group">
+                        <h5>Store Info</h5>
+                        <div class="summary-item"><strong>Name:</strong> <span>{{storeForm.value.name}}</span></div>
+                        <div class="summary-item"><strong>Email:</strong> <span>{{storeForm.value.supportEmail}}</span>
+                        </div>
                     </div>
-                    <div class="summary-item">
-                        <strong>URL:</strong> <span>smartstore.com/{{storeForm.value.slug}}</span>
-                    </div>
-                    <div class="summary-item">
-                        <strong>Category:</strong> <span>{{selectedCategory}}</span>
+                    <div class="summary-group mt-3">
+                        <h5>Legal Info</h5>
+                        <div class="summary-item"><strong>Full Name:</strong>
+                            <span>{{storeForm.value.kyc?.fullName}}</span>
+                        </div>
+                        <div class="summary-item"><strong>Country:</strong>
+                            <span>{{storeForm.value.kyc?.issueCountry}}</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -120,7 +209,7 @@
                 <div class="spacer"></div>
                 <button type="button" class="btn btn-next" [disabled]="isLoading" (click)="nextStep()">
                     <i *ngIf="isLoading" class="fas fa-spinner fa-spin"></i>
-                    {{ currentStep === totalSteps ? (isLoading ? 'Creating...' : 'Launch Store') : 'Continue' }}
+                    {{ currentStep === totalSteps ? (isLoading ? 'Launching...' : 'Launch Store') : 'Continue' }}
                 </button>
             </div>
         </form>

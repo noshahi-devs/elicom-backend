@@ -134,6 +134,12 @@ public class TenantRoleAndUserBuilder
             GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_PrimeShip);
             GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_Reseller_Marketplace);
             GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_GlobalPay); // For wallet/card access
+
+            // Store permissions for Supplier
+            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_Stores);
+            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_Stores_Create);
+            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_Stores_Edit);
+            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_Supplier_Products);
         }
 
         var resellerRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Reseller);
@@ -143,6 +149,14 @@ public class TenantRoleAndUserBuilder
             GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_Reseller_Store);
             GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_SmartStore_Seller);
             GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_GlobalPay);
+
+            // Store management for Resellers
+            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_Stores);
+            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_Stores_Create);
+            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_Stores_Edit);
+            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_StoreProducts);
+            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_StoreProducts_Create);
+            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_StoreProducts_Edit);
         }
     }
 
@@ -171,6 +185,9 @@ public class TenantRoleAndUserBuilder
         // Determine test user based on tenant
         if (_tenantId == 1) // Smart Store
         {
+            // Create Admin
+            CreateUser("admin@worldcartus.com", "SS_admin@worldcartus.com", StaticRoleNames.Tenants.Admin, passwordHasher);
+
             // Create Seller
             testEmail = "noshahis@worldcart.com";
             userName = "SS_noshahis@worldcart.com";

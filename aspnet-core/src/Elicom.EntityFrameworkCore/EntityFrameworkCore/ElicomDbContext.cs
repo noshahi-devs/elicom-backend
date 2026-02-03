@@ -14,6 +14,7 @@ namespace Elicom.EntityFrameworkCore
         public DbSet<Category> Categories { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<Store> Stores { get; set; }
+        public DbSet<StoreKyc> StoreKycs { get; set; }
         public DbSet<StoreProduct> StoreProducts { get; set; }
         public DbSet<CustomerProfile> CustomerProfiles { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
@@ -56,6 +57,15 @@ namespace Elicom.EntityFrameworkCore
                  .WithMany() // one user can own multiple stores
                  .HasForeignKey(s => s.OwnerId)
                  .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            /* ---------------- Store ↔ StoreKyc (One-to-One) ---------------- */
+            builder.Entity<StoreKyc>(b =>
+            {
+                b.HasOne(k => k.Store)
+                 .WithOne(s => s.Kyc)
+                 .HasForeignKey<StoreKyc>(k => k.StoreId)
+                 .OnDelete(DeleteBehavior.Cascade);
             });
 
             /* ---------------- Store ↔ Product (Join Table) ---------------- */

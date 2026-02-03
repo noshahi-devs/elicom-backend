@@ -6,6 +6,7 @@ import { Checkout } from './pages/checkout/checkout';
 import { SearchResult } from './pages/search-result/search-result';
 import { UserIndexComponent } from './pages/user-index/user-index.component';
 import { PersonalCenterComponent } from './pages/user-index/components/sections/personal-center/personal-center.component';
+import { AuthGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -18,15 +19,17 @@ export const routes: Routes = [
   {
     path: 'user/index',
     component: UserIndexComponent,
+    canActivate: [AuthGuard],
     children: [
       { path: '', component: PersonalCenterComponent },
       { path: 'profile', loadComponent: () => import('./pages/user-index/components/sections/my-profile/my-profile.component').then(m => m.MyProfileComponent) },
       { path: 'orders', loadComponent: () => import('./pages/user-index/components/sections/my-orders/my-orders.component').then(m => m.MyOrdersComponent) }
     ]
   },
-  { path: 'seller/store-creation', loadComponent: () => import('./pages/seller/store-creation/store-creation.component').then(m => m.StoreCreationComponent) },
+  { path: 'seller/store-creation', loadComponent: () => import('./pages/seller/store-creation/store-creation.component').then(m => m.StoreCreationComponent), canActivate: [AuthGuard] },
   {
     path: 'seller',
+    canActivate: [AuthGuard],
     loadComponent: () => import('./pages/seller/seller-layout/seller-layout.component').then(m => m.SellerLayoutComponent),
     children: [
       { path: 'dashboard', loadComponent: () => import('./pages/seller/seller-dashboard/seller-dashboard.component').then(m => m.SellerDashboardComponent) },
@@ -45,6 +48,7 @@ export const routes: Routes = [
   },
   {
     path: 'admin',
+    canActivate: [AuthGuard],
     loadComponent: () => import('./pages/admin/admin-layout/admin-layout.component').then(m => m.AdminLayoutComponent),
     children: [
       { path: 'stores', loadComponent: () => import('./pages/admin/store-approvals/store-approvals.component').then(m => m.StoreApprovalsComponent) },
@@ -58,6 +62,7 @@ export const routes: Routes = [
   },
   {
     path: 'customer',
+    canActivate: [AuthGuard],
     loadComponent: () => import('./pages/customer/customer-layout/customer-layout.component').then(m => m.CustomerLayoutComponent),
     children: [
       { path: 'dashboard', loadComponent: () => import('./pages/customer/customer-dashboard/customer-dashboard.component').then(m => m.CustomerDashboardComponent) },

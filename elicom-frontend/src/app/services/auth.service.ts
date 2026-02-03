@@ -1,6 +1,6 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, of, throwError, BehaviorSubject } from 'rxjs';
+import { Observable, tap, of, throwError, BehaviorSubject, switchMap, map } from 'rxjs';
 import { Router } from '@angular/router';
 
 export interface User {
@@ -38,6 +38,8 @@ export interface RegisterSmartStoreInput {
     phoneNumber: string;
 }
 
+import { StoreService } from './store.service';
+
 @Injectable({
     providedIn: 'root'
 })
@@ -49,7 +51,7 @@ export class AuthService {
     private _currentUser = new BehaviorSubject<User | null>(this.getUserFromStorage());
     currentUser$ = this._currentUser.asObservable();
 
-    private _isAuthenticated = new BehaviorSubject<boolean>(!!this.getUserFromStorage());
+    private _isAuthenticated = new BehaviorSubject<boolean>(this.checkAuthStatus());
     isAuthenticated$ = this._isAuthenticated.asObservable();
 
     private _showAuthModal = new BehaviorSubject<boolean>(false);
@@ -57,8 +59,13 @@ export class AuthService {
 
     constructor(
         private http: HttpClient,
-        private router: Router
+        private router: Router,
+        private storeService: StoreService
     ) { }
+
+    private checkAuthStatus(): boolean {
+        return !!localStorage.getItem('authToken');
+    }
 
     private _customerProfileService: any; // Direct injection might cause cycle if not careful, but typically fine.
     // Ideally we inject it in constructor, but let's stick to HttpClient to avoid circular dep if AuthService is used in CustomerProfileService (unlikely but safe)
@@ -74,27 +81,104 @@ export class AuthService {
         const url = `${this.baseUrl}/api/TokenAuth/Authenticate`;
         const headers = { 'Abp-TenantId': '1' }; // Smart Store Tenant
         return this.http.post(url, credentials, { headers }).pipe(
-            tap((response: any) => {
+            switchMap((response: any) => {
                 console.log('Login response:', response);
 
-                // ABP wraps responses in {result: {...}, success: true, error: null}
                 if (response && response.result && response.result.accessToken) {
                     console.log('Login successful, setting session');
                     this.setSession(response.result.accessToken, response.result.userId);
 
-                    // Fetch or Create Customer Profile after login using the UserId from response
+                    // Fetch profile (asynchronous but we don't block for it as it's for customer details)
                     this.ensureCustomerProfile(response.result.userId, credentials.userNameOrEmailAddress);
 
-                    this.updateCurrentUser({
-                        id: response.result.userId,
-                        userName: credentials.userNameOrEmailAddress,
-                        emailAddress: credentials.userNameOrEmailAddress
-                    });
-                } else {
-                    console.error('Unexpected response format:', response);
+                    // Fetch full user info including roles - BLOCK until this is done
+                    return this.getCurrentLoginInformations().pipe(
+                        tap((info: any) => {
+                            if (info && info.result && info.result.user) {
+                                const user = info.result.user;
+                                console.log('Fetched login info:', info.result);
+                                this.updateCurrentUser({
+                                    id: user.id,
+                                    userName: user.userName,
+                                    emailAddress: user.emailAddress,
+                                    name: user.name,
+                                    surname: user.surname,
+                                    roleNames: user.roleNames || []
+                                });
+                            }
+                        }),
+                        map(() => response) // Return the original auth response so subscriber gets what it expects
+                    );
                 }
+                return of(response);
             })
         );
+    }
+
+    getCurrentLoginInformations(): Observable<any> {
+        const url = `${this.baseUrl}/api/services/app/Session/GetCurrentLoginInformations`;
+        return this.http.get(url);
+    }
+
+    isAdmin(): boolean {
+        const user = this._currentUser.value;
+        return !!user?.roleNames?.some(r => r.toLowerCase() === 'admin');
+    }
+
+    isSeller(): boolean {
+        const user = this._currentUser.value;
+        if (!user) return false;
+        const roleNames = user.roleNames || [];
+        const userName = user.userName || '';
+        return roleNames.some(r => r.toLowerCase() === 'seller') ||
+            userName.toLowerCase().startsWith('ss_');
+    }
+
+    isCustomer(): boolean {
+        const user = this._currentUser.value;
+        return !!user?.roleNames?.some(r => r.toLowerCase() === 'customer');
+    }
+
+    isSupplier(): boolean {
+        const user = this._currentUser.value;
+        return !!user?.roleNames?.some(r => r.toLowerCase() === 'supplier');
+    }
+
+    navigateToDashboard() {
+        console.log('Navigating to dashboard...');
+        if (!this.isAuthenticated) {
+            console.log('Not authenticated, going to login');
+            this.router.navigate(['/smartstore/login']);
+            return;
+        }
+
+        if (this.isAdmin()) {
+            console.log('Role: Admin');
+            this.router.navigate(['/admin/dashboard']);
+        } else if (this.isSeller()) {
+            console.log('Role: Seller, checking store...');
+            this.storeService.getMyStore().subscribe({
+                next: (res: any) => {
+                    if (res && res.result) {
+                        console.log('Store exists, dashboard bound');
+                        this.router.navigate(['/seller/dashboard']);
+                    } else {
+                        console.log('No store, creation bound');
+                        this.router.navigate(['/seller/store-creation']);
+                    }
+                },
+                error: () => {
+                    console.log('Store check failed, creation bound');
+                    this.router.navigate(['/seller/store-creation']);
+                }
+            });
+        } else if (this.isCustomer()) {
+            console.log('Role: Customer');
+            this.router.navigate(['/customer/dashboard']);
+        } else {
+            console.log('Role: Default/Other');
+            this.router.navigate(['/user/index']);
+        }
     }
 
     private ensureCustomerProfile(userId: number, email: string) {

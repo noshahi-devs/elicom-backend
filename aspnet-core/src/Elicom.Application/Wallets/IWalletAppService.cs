@@ -1,4 +1,5 @@
 using Abp.Application.Services;
+using Abp.Application.Services.Dto;
 using Elicom.Wallets.Dto;
 using System.Threading.Tasks;
 

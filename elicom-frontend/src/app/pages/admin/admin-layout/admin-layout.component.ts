@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
     selector: 'app-admin-layout',
@@ -11,6 +12,8 @@ import { RouterModule, Router } from '@angular/router';
 })
 export class AdminLayoutComponent implements OnInit {
     private router = inject(Router);
+    private authService = inject(AuthService);
+
     isSidebarCollapsed = false;
     currentUser: any = null;
 
@@ -24,8 +27,6 @@ export class AdminLayoutComponent implements OnInit {
     }
 
     logout() {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('currentUser');
-        this.router.navigate(['/smartstore/login']);
+        this.authService.logout();
     }
 }

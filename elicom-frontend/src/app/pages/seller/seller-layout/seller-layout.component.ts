@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
     selector: 'app-seller-layout',
@@ -11,16 +12,13 @@ import { RouterModule, Router } from '@angular/router';
 })
 export class SellerLayoutComponent implements OnInit {
     private router = inject(Router);
+    private authService = inject(AuthService);
+
     isSidebarCollapsed = false;
     currentUser: any = null;
 
     ngOnInit() {
         this.currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-        // Basic role check
-        const isSeller = this.currentUser.userName?.startsWith('SS_') && this.currentUser.userName?.includes('Seller');
-        if (!isSeller) {
-            // this.router.navigate(['/']); // Uncomment for strict enforcement
-        }
     }
 
     toggleSidebar() {
@@ -28,8 +26,6 @@ export class SellerLayoutComponent implements OnInit {
     }
 
     logout() {
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('accessToken');
-        this.router.navigate(['/']);
+        this.authService.logout();
     }
 }

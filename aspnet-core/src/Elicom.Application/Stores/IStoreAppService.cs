@@ -16,7 +16,8 @@ namespace Elicom.Stores
         Task<StoreDto> Create(CreateStoreDto input);
         Task<StoreDto> Update(UpdateStoreDto input);
         Task Delete(Guid id);
-        Task Approve(Guid id);
-        Task Reject(Guid id);
+        Task Approve(EntityDto<Guid> input);
+        Task Reject(EntityDto<Guid> input);
+        Task<StoreDto> GetMyStore();
     }
 }

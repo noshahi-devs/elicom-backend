@@ -1,6 +1,7 @@
 ﻿using Abp.Auditing;
 using Elicom.Sessions.Dto;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Elicom.Sessions;
@@ -27,7 +28,11 @@ public class SessionAppService : ElicomAppServiceBase, ISessionAppService
 
         if (AbpSession.UserId.HasValue)
         {
-            output.User = ObjectMapper.Map<UserLoginInfoDto>(await GetCurrentUserAsync());
+            var user = await GetCurrentUserAsync();
+            output.User = ObjectMapper.Map<UserLoginInfoDto>(user);
+
+            var roles = await UserManager.GetRolesAsync(user);
+            output.User.RoleNames = roles.ToArray();
         }
 
         return output;

@@ -9,7 +9,7 @@
         <div class="col-md-4 text-end">
             <div class="stats-mini-badge">
                 <span class="dot pulse warning"></span>
-                <span>{{applications.length}} Pending Actions</span>
+                <span>{{pendingStores}} Pending Actions</span>
             </div>
         </div>
     </div>
@@ -20,7 +20,7 @@
             <div class="admin-stat-card shadow-sm">
                 <div class="stat-icon bg-warning-subtle text-warning"><i class="fas fa-hourglass-half"></i></div>
                 <div class="stat-info">
-                    <h3>2</h3>
+                    <h3>{{pendingStores}}</h3>
                     <p>Pending Stores</p>
                 </div>
             </div>
@@ -29,7 +29,7 @@
             <div class="admin-stat-card shadow-sm">
                 <div class="stat-icon bg-info-subtle text-info"><i class="fas fa-id-card"></i></div>
                 <div class="stat-info">
-                    <h3>1</h3>
+                    <h3>{{pendingKyc}}</h3>
                     <p>Pending KYC</p>
                 </div>
             </div>
@@ -38,7 +38,7 @@
             <div class="admin-stat-card shadow-sm">
                 <div class="stat-icon bg-success-subtle text-success"><i class="fas fa-check-double"></i></div>
                 <div class="stat-info">
-                    <h3>45</h3>
+                    <h3>{{verifiedSellers}}</h3>
                     <p>Verified Sellers</p>
                 </div>
             </div>
@@ -66,49 +66,104 @@
                     <tr *ngFor="let app of applications">
                         <td class="ps-4">
                             <div class="d-flex align-items-center">
-                                <div class="avatar-sm me-3 border">{{app.sellerName.charAt(0)}}</div>
+                                <div class="avatar-sm me-3 border">{{(app?.name || '?').charAt(0)}}</div>
                                 <div>
-                                    <h6 class="mb-0 fw-bold">{{app.storeName}}</h6>
-                                    <small class="text-muted">{{app.sellerName}}</small>
+                                    <h6 class="mb-0 fw-bold">{{app?.name || 'Unknown Store'}}</h6>
+                                    <small class="text-muted">{{app?.kyc?.fullName || 'No KYC Info'}}</small>
                                 </div>
                             </div>
                         </td>
-                        <td>{{app.email}}</td>
-                        <td>{{app.appliedDate | date:'mediumDate'}}</td>
+                        <td>{{app.supportEmail || 'N/A'}}</td>
+                        <td>{{app.createdAt | date:'mediumDate'}}</td>
                         <td>
                             <span class="badge rounded-pill" [ngClass]="{
-                                'bg-success-subtle text-success': app.kycStatus === 'verified',
-                                'bg-warning-subtle text-warning': app.kycStatus === 'pending',
-                                'bg-secondary-subtle text-secondary': app.kycStatus === 'unsubmitted'
+                                'bg-success-subtle text-success': app.kyc?.status,
+                                'bg-warning-subtle text-warning': !app.kyc?.status
                             }">
-                                <i class="fas fa-id-card me-1"></i> {{app.kycStatus}}
+                                <i class="fas fa-id-card me-1"></i> {{app.kyc?.status ? 'Verified' : 'Pending'}}
                             </span>
                         </td>
                         <td>
-                            <span class="admin-status-pill" [ngClass]="app.status">
-                                {{app.status}}
+                            <span class="admin-status-pill" [ngClass]="app.status ? 'approved' : 'pending'">
+                                {{app.status ? 'Approved' : 'Pending'}}
                             </span>
                         </td>
                         <td class="text-end pe-4">
                             <div class="d-flex justify-content-end gap-2">
-                                <button *ngIf="app.kycStatus === 'pending'" (click)="verifyKYC(app)"
+                                <button *ngIf="app.kyc && !app.kyc.status" (click)="verifyKYC(app)"
                                     class="btn btn-sm btn-outline-info" title="Verify KYC">
                                     <i class="fas fa-check-square"></i>
                                 </button>
-                                <button *ngIf="app.status === 'pending'" (click)="approveStore(app)"
-                                    class="btn btn-sm btn-success" title="Approve Store">
+                                <button *ngIf="!app.status" (click)="approveStore(app)" class="btn btn-sm btn-success"
+                                    title="Approve Store">
                                     <i class="fas fa-check"></i>
                                 </button>
-                                <button *ngIf="app.status === 'pending'" (click)="rejectStore(app)"
-                                    class="btn btn-sm btn-danger" title="Reject Store">
+                                <button *ngIf="!app.status" (click)="rejectStore(app)" class="btn btn-sm btn-danger"
+                                    title="Reject Store">
                                     <i class="fas fa-times"></i>
                                 </button>
-                                <button class="btn btn-sm btn-light border"><i class="fas fa-eye"></i></button>
+                                <button (click)="viewStore(app)" class="btn btn-sm btn-light border"><i
+                                        class="fas fa-eye"></i></button>
                             </div>
                         </td>
                     </tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- Store View Modal -->
+    <div class="store-modal-backdrop" *ngIf="selectedStore" (click)="closeModal()">
+        <div class="store-modal-content" (click)="$event.stopPropagation()">
+            <div class="modal-header-custom">
+                <h4>Store Application Details</h4>
+                <button class="close-btn" (click)="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body-custom">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-section">
+                            <h6><i class="fas fa-university text-primary me-2"></i> Store Information</h6>
+                            <p><strong>Name:</strong> {{selectedStore.name}}</p>
+                            <p><strong>Email:</strong> {{selectedStore.supportEmail}}</p>
+                            <p><strong>Catchy Dec:</strong> {{selectedStore.shortDescription}}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-section">
+                            <h6><i class="fas fa-user-shield text-primary me-2"></i> Seller (KYC) Details</h6>
+                            <p><strong>Full Name:</strong> {{selectedStore.kyc?.fullName || 'N/A'}}</p>
+                            <p><strong>Phone:</strong> {{selectedStore.kyc?.phone || 'N/A'}}</p>
+                            <p><strong>ID Number:</strong> {{selectedStore.kyc?.cnic || 'N/A'}}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-section mt-4" *ngIf="selectedStore.kyc">
+                    <h6><i class="fas fa-file-invoice text-primary me-2"></i> Verification Documents</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6 text-center">
+                            <p class="mb-1 small fw-bold">ID Card Front</p>
+                            <img *ngIf="selectedStore.kyc.frontImage" [src]="selectedStore.kyc.frontImage"
+                                class="img-fluid rounded border shadow-sm">
+                            <div *ngIf="!selectedStore.kyc.frontImage" class="p-3 bg-light border rounded">Not Uploaded
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <p class="mb-1 small fw-bold">ID Card Back</p>
+                            <img *ngIf="selectedStore.kyc.backImage" [src]="selectedStore.kyc.backImage"
+                                class="img-fluid rounded border shadow-sm">
+                            <div *ngIf="!selectedStore.kyc.backImage" class="p-3 bg-light border rounded">Not Uploaded
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer-custom">
+                <button *ngIf="!selectedStore.status" (click)="approveStore(selectedStore)"
+                    class="btn btn-success px-4 me-2">Approve</button>
+                <button class="btn btn-secondary px-4" (click)="closeModal()">Close</button>
+            </div>
         </div>
     </div>
 </div>

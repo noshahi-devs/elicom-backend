@@ -303,82 +303,7 @@ namespace Elicom.Orders
             order.Status = "Delivered";
             order.PaymentStatus = "Completed";
 
-            // --- ESCROW RELEASE: Release funds from Admin to Seller ---
-            // 1. Group items by their Store Owner
-            var itemsWithStore = await _orderRepository.GetAll()
-                .Where(o => o.Id == order.Id)
-                .SelectMany(o => o.OrderItems)
-                .Select(oi => new 
-                {
-                    oi.PriceAtPurchase,
-                    oi.Quantity,
-                    oi.StoreProductId
-                })
-                .ToListAsync();
-
-            // We need to fetch the Store owners for these items
-            var sellerPayments = new Dictionary<long, decimal>();
-            foreach (var item in itemsWithStore)
-            {
-                var storeProduct = await _storeProductRepository.GetAll()
-                    .Include(sp => sp.Store)
-                    .FirstOrDefaultAsync(sp => sp.Id == item.StoreProductId);
-                
-                if (storeProduct != null && storeProduct.Store != null)
-                {
-                    var ownerId = storeProduct.Store.OwnerId;
-                    var amount = item.PriceAtPurchase * item.Quantity;
-                    
-                    if (sellerPayments.ContainsKey(ownerId))
-                        sellerPayments[ownerId] += amount;
-                    else
-                        sellerPayments[ownerId] = amount;
-                }
-            }
-
-            // 2. Transfer from Admin to each Seller
-            foreach (var sellerPay in sellerPayments)
-            {
-                await _walletManager.TransferAsync(
-                    PlatformAdminId,
-                    sellerPay.Key,
-                    sellerPay.Value,
-                    $"Escrow Release (Retail Sale): {order.OrderNumber}"
-                );
-            }
-
-            // --- SUPPLEIR SETTLEMENT (Internal Sync) ---
-            var supplierOrders = await _supplierOrderRepository.GetAll()
-                .Include(so => so.Items)
-                .Where(so => so.OrderId == order.Id)
-                .ToListAsync();
-
-            foreach (var so in supplierOrders)
-            {
-                // In the Manual Bridge model, the Seller already purchased/paid the Supplier in PrimeShip.
-                // We just mark this record as Settled to close the sync loop.
-                so.Status = "Settled";
-                await _supplierOrderRepository.UpdateAsync(so);
-
-                // Notify Admin
-                try
-                {
-                    var mail = new System.Net.Mail.MailMessage(
-                        "no-reply@primeshipuk.com",
-                        "noshahidevelopersinc@gmail.com"
-                    )
-                    {
-                        Subject = $"[SmartStore] Order Finalized: {order.OrderNumber}",
-                        Body = $"Retail order {order.OrderNumber} has been delivered and funds released to Seller(s).",
-                        IsBodyHtml = false
-                    };
-                    await _emailSender.SendAsync(mail);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error("Email failed: " + ex.Message);
-                }
-            }
+            await FinalizeOrder(order);
 
             await _orderRepository.UpdateAsync(order);
             await CurrentUnitOfWork.SaveChangesAsync();
@@ -485,6 +410,86 @@ namespace Elicom.Orders
             catch (Exception ex)
             {
                 Logger.Error($"Email error to {to}: {ex.Message}");
+            }
+        }
+
+        private async Task FinalizeOrder(Order order)
+        {
+            // --- ESCROW RELEASE: Release funds from Admin to Seller ---
+            // 1. Group items by their Store Owner
+            var itemsWithStore = await _orderRepository.GetAll()
+                .Where(o => o.Id == order.Id)
+                .SelectMany(o => o.OrderItems)
+                .Select(oi => new
+                {
+                    oi.PriceAtPurchase,
+                    oi.Quantity,
+                    oi.StoreProductId
+                })
+                .ToListAsync();
+
+            // We need to fetch the Store owners for these items
+            var sellerPayments = new Dictionary<long, decimal>();
+            foreach (var item in itemsWithStore)
+            {
+                var storeProduct = await _storeProductRepository.GetAll()
+                    .Include(sp => sp.Store)
+                    .FirstOrDefaultAsync(sp => sp.Id == item.StoreProductId);
+
+                if (storeProduct != null && storeProduct.Store != null)
+                {
+                    var ownerId = storeProduct.Store.OwnerId;
+                    var amount = item.PriceAtPurchase * item.Quantity;
+
+                    if (sellerPayments.ContainsKey(ownerId))
+                        sellerPayments[ownerId] += amount;
+                    else
+                        sellerPayments[ownerId] = amount;
+                }
+            }
+
+            // 2. Transfer from Admin to each Seller
+            foreach (var sellerPay in sellerPayments)
+            {
+                await _walletManager.TransferAsync(
+                    PlatformAdminId,
+                    sellerPay.Key,
+                    sellerPay.Value,
+                    $"Escrow Release (Retail Sale): {order.OrderNumber}"
+                );
+            }
+
+            // --- SUPPLEIR SETTLEMENT (Internal Sync) ---
+            var supplierOrders = await _supplierOrderRepository.GetAll()
+                .Include(so => so.Items)
+                .Where(so => so.OrderId == order.Id)
+                .ToListAsync();
+
+            foreach (var so in supplierOrders)
+            {
+                // In the Manual Bridge model, the Seller already purchased/paid the Supplier in PrimeShip.
+                // We just mark this record as Settled to close the sync loop.
+                so.Status = "Settled";
+                await _supplierOrderRepository.UpdateAsync(so);
+
+                // Notify Admin
+                try
+                {
+                    var mail = new System.Net.Mail.MailMessage(
+                        "no-reply@primeshipuk.com",
+                        "noshahidevelopersinc@gmail.com"
+                    )
+                    {
+                        Subject = $"[SmartStore] Order Finalized: {order.OrderNumber}",
+                        Body = $"Retail order {order.OrderNumber} has been delivered and funds released to Seller(s).",
+                        IsBodyHtml = false
+                    };
+                    await _emailSender.SendAsync(mail);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error("Email failed: " + ex.Message);
+                }
             }
         }
     }

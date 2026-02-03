@@ -20,42 +20,63 @@ export class StoreCreationComponent {
     private router = inject(Router);
 
     currentStep = 1;
-    totalSteps = 4;
+    totalSteps = 7;
     storeForm: FormGroup;
     isLoading = false;
 
-    categories = [
-        { id: 'fashion', name: 'Fashion', icon: 'fas fa-tshirt' },
-        { id: 'electronics', name: 'Electronics', icon: 'fas fa-laptop' },
-        { id: 'home', name: 'Home Decor', icon: 'fas fa-home' },
-        { id: 'health', name: 'Health', icon: 'fas fa-heartbeat' }
+    countries = [
+        { code: 'USA', name: 'United States' },
+        { code: 'CAN', name: 'Canada' },
+        { code: 'GBR', name: 'United Kingdom' },
+        { code: 'AUS', name: 'Australia' },
+        { code: 'UAE', name: 'United Arab Emirates' },
+        { code: 'PAK', name: 'Pakistan' },
+        { code: 'DEU', name: 'Germany' },
+        { code: 'FRA', name: 'France' }
     ];
-
-    selectedCategory = 'fashion';
 
     constructor() {
         this.storeForm = this.fb.group({
             name: ['', [Validators.required, Validators.minLength(3)]],
-            description: ['', Validators.required],
-            slug: ['', Validators.required],
+            shortDescription: ['', [Validators.required, Validators.maxLength(200)]],
+            longDescription: ['', Validators.required],
+            description: [''], // Legacy
             supportEmail: ['', [Validators.required, Validators.email]],
             instagram: [''],
-            whatsapp: ['']
+            whatsapp: [''],
+            kyc: this.fb.group({
+                fullName: ['', Validators.required],
+                cnic: ['', Validators.required],
+                expiryDate: ['', Validators.required],
+                issueCountry: ['USA', Validators.required],
+                dob: ['', Validators.required],
+                phone: ['', Validators.required],
+                address: ['', Validators.required],
+                zipCode: ['', Validators.required],
+                frontImage: [''],
+                backImage: ['']
+            })
         });
 
-        // Auto-generate slug from name
-        this.storeForm.get('name')?.valueChanges.subscribe(name => {
-            if (name) {
-                const slug = name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
-                this.storeForm.get('slug')?.setValue(slug, { emitEvent: false });
-            }
+        // Sync old description with longDescription
+        this.storeForm.get('longDescription')?.valueChanges.subscribe(val => {
+            this.storeForm.get('description')?.setValue(val, { emitEvent: false });
         });
     }
 
     nextStep() {
+        // Validation per step
         if (this.currentStep === 1) {
-            if (this.storeForm.get('name')?.invalid || this.storeForm.get('slug')?.invalid) {
+            if (this.storeForm.get('name')?.invalid) {
                 this.storeForm.get('name')?.markAsTouched();
+                return;
+            }
+        }
+        if (this.currentStep === 2) {
+            if (this.storeForm.get('shortDescription')?.invalid ||
+                this.storeForm.get('longDescription')?.invalid ||
+                this.storeForm.get('supportEmail')?.invalid) {
+                this.storeForm.markAllAsTouched();
                 return;
             }
         }
@@ -73,22 +94,43 @@ export class StoreCreationComponent {
         }
     }
 
-    selectCategory(catId: string) {
-        this.selectedCategory = catId;
+    triggerFileSelect(inputId: string) {
+        document.getElementById(inputId)?.click();
+    }
+
+    onFileSelected(event: any, fieldName: 'frontImage' | 'backImage') {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                this.storeForm.get(`kyc.${fieldName}`)?.setValue(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
     }
 
     submitStore() {
-        if (this.storeForm.invalid) return;
+        if (this.storeForm.invalid) {
+            Swal.fire('Error', 'Please fill all required fields correctly.', 'warning');
+            return;
+        }
 
         this.isLoading = true;
         const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        const storeName = this.storeForm.value.name;
+        const generatedSlug = storeName.toLowerCase().trim().replace(/ /g, '-').replace(/[^\w-]+/g, '');
 
         const payload = {
-            name: this.storeForm.value.name,
+            name: storeName,
+            shortDescription: this.storeForm.value.shortDescription,
+            longDescription: this.storeForm.value.longDescription,
             description: this.storeForm.value.description,
-            slug: this.storeForm.value.slug,
+            slug: generatedSlug,
             ownerId: currentUser.id,
-            status: true
+            supportEmail: this.storeForm.value.supportEmail,
+            status: false,
+            isActive: true,
+            kyc: this.storeForm.value.kyc
         };
 
         this.storeService.createStore(payload).subscribe({
@@ -96,15 +138,15 @@ export class StoreCreationComponent {
                 Swal.fire({
                     icon: 'success',
                     title: 'Store Created!',
-                    text: 'Your store is ready. Let\'s add some products!',
+                    text: 'Your application has been submitted for review.',
                     confirmButtonText: 'Go to Dashboard'
                 }).then(() => {
-                    this.router.navigate(['/user/index']);
+                    this.router.navigate(['/seller/dashboard']);
                 });
             },
             error: (err) => {
                 this.isLoading = false;
-                Swal.fire('Error', 'Failed to create store. Please try again.', 'error');
+                Swal.fire('Error', 'Failed to create store. Please check your information.', 'error');
             }
         });
     }

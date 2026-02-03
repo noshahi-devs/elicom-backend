@@ -211,4 +211,5 @@
   </div>
 
 </header>
-<app-auth-modal *ngIf="authModalOpen()" (close)="authModalOpen.set(false)"></app-auth-modal>
+<app-auth-modal *ngIf="authModalOpen()" (close)="authModalOpen.set(false)"
+  (authenticated)="authService.navigateToDashboard()"></app-auth-modal>

@@ -2,6 +2,8 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthModalComponent } from '../../shared/components/auth-modal/auth-modal.component';
+import { StoreService } from '../../services/store.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login-page',
@@ -40,23 +42,24 @@ import { AuthModalComponent } from '../../shared/components/auth-modal/auth-moda
 export class LoginPageComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private storeService = inject(StoreService);
+  private authService = inject(AuthService);
 
   ngOnInit(): void {
-    // We can use query params to switch between signin/signup if needed
+    if (this.authService.isAuthenticated) {
+      this.onAuthenticated();
+    }
   }
 
   onClose() {
-    this.router.navigate(['/']);
+    // Only navigate to home if they weren't authenticated (just closing the modal/page)
+    if (!this.authService.isAuthenticated) {
+      this.router.navigate(['/']);
+    }
   }
 
   onAuthenticated() {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-    const isSeller = currentUser.userName?.startsWith('SS_') && currentUser.userName?.includes('Seller');
-
-    if (isSeller) {
-      this.router.navigate(['/seller/dashboard']);
-    } else {
-      this.router.navigate(['/user/index']);
-    }
+    console.log('User authenticated at Login Page');
+    this.authService.navigateToDashboard();
   }
 }
