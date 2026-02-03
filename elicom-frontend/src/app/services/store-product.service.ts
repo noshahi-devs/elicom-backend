@@ -13,6 +13,10 @@ export class StoreProductService {
         return this.http.post(`${this.apiUrl}/Create`, input);
     }
 
+    mapProductToStore(input: any): Observable<any> {
+        return this.http.post(`${this.apiUrl}/MapProductToStore`, input);
+    }
+
     getByStore(storeId: string): Observable<any> {
         return this.http.get(`${this.apiUrl}/GetByStore`, { params: { storeId } });
     }

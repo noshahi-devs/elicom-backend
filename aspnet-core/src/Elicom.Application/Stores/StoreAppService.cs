@@ -173,11 +173,32 @@ namespace Elicom.Stores
         public async Task<StoreDto> GetMyStore()
         {
             var userId = AbpSession.UserId;
-            if (!userId.HasValue) return null;
+            Logger.Info($"GetMyStore: Input UserId from Session: {userId}");
+
+            if (!userId.HasValue) 
+            {
+                Logger.Warn("GetMyStore: AbpSession.UserId is null!");
+                return null;
+            }
+
+            // Debugging: Check count with and without filters
+            var countAll = await _storeRepo.GetAll().IgnoreQueryFilters().CountAsync(s => s.OwnerId == userId.Value);
+            Logger.Info($"GetMyStore: Total stores for user {userId} (IgnoreQueryFilters): {countAll}");
 
             var store = await _storeRepo.FirstOrDefaultAsync(s => s.OwnerId == userId.Value);
-            if (store == null) return null;
+            if (store == null) 
+            {
+                Logger.Warn($"GetMyStore: Store not found via standard query for user {userId}. (Is it soft deleted or tenant filtered?)");
+                // Fallback debug attempt
+                store = await _storeRepo.GetAll().IgnoreQueryFilters().FirstOrDefaultAsync(s => s.OwnerId == userId.Value);
+                if (store != null)
+                {
+                     Logger.Warn("GetMyStore: FOUND via IgnoreQueryFilters! There is a filter blocking it.");
+                }
+                return null;
+            }
 
+            Logger.Info($"GetMyStore: Successfully found store '{store.Name}' ({store.Id})");
             return ObjectMapper.Map<StoreDto>(store);
         }
     }

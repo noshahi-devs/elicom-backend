@@ -1,119 +1,118 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
+import { StoreService } from '../../../services/store.service';
+import { StoreProductService } from '../../../services/store-product.service';
+import { AlertService } from '../../../services/alert.service';
 
 @Component({
     selector: 'app-product-listing',
     standalone: true,
-    imports: [CommonModule, RouterModule],
+    imports: [CommonModule, RouterModule, FormsModule],
     templateUrl: './product-listing.component.html',
     styleUrls: ['./product-listing.component.scss']
 })
 export class ProductListingComponent implements OnInit {
-    constructor(private router: Router) { }
+    private storeService = inject(StoreService);
+    private storeProductService = inject(StoreProductService);
+    private alert = inject(AlertService);
+    private router = inject(Router);
+    private cdr = inject(ChangeDetectorRef);
 
-    products = [
-        {
-            id: "KU12345",
-            title: "Premium Kitchen Utensils Set 34PCS with Stainless Steel Material",
-            category: "Kitchen",
-            brand: "Umite Kitchen",
-            price: "$29.99",
-            image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500"
-        },
-        {
-            id: "CAM4567",
-            title: "Professional Camera 24MP DSLR with 4K Video Recording",
-            category: "Electronics",
-            brand: "Canon",
-            price: "$499.99",
-            image: "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=500"
-        },
-        {
-            id: "SW7890",
-            title: "Smart Watch Series 5 GPS with Heart Rate Monitor",
-            category: "Wearables",
-            brand: "Apple",
-            price: "$199.99",
-            image: "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=500"
-        },
-        {
-            id: "SG2345",
-            title: "Polarized Sunglasses UV400 Protection with Anti-Glare",
-            category: "Accessories",
-            brand: "Ray-Ban",
-            price: "$89.99",
-            image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=500"
-        },
-        {
-            id: "HP5678",
-            title: "Noise Cancelling Headphones Pro with 30 Hours Battery",
-            category: "Audio",
-            brand: "Sony",
-            price: "$149.99",
-            image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500"
-        },
-        {
-            id: "RS9012",
-            title: "Running Shoes Pro Max Air with Cushioned Sole",
-            category: "Footwear",
-            brand: "Nike",
-            price: "$79.99",
-            image: "https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=500"
-        },
-        {
-            id: "SP3456",
-            title: "Smartphone X Pro Max 256GB with Triple Camera",
-            category: "Mobile",
-            brand: "Apple",
-            price: "$899.99",
-            image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500"
-        },
-        {
-            id: "SN7890",
-            title: "Limited Edition Sneakers 2024 with Premium Leather",
-            category: "Collectible",
-            brand: "Adidas",
-            price: "$199.99",
-            image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500"
+    products: any[] = [];
+    filterText: string = '';
+    isLoading: boolean = true;
+    currentStore: any = null;
+
+    get filteredProducts() {
+        if (!this.filterText) return this.products;
+        const search = this.filterText.toLowerCase();
+        return this.products.filter(p =>
+            p.title.toLowerCase().includes(search) ||
+            p.brand.toLowerCase().includes(search) ||
+            p.category.toLowerCase().includes(search) ||
+            p.id.toLowerCase().includes(search)
+        );
+    }
+
+    ngOnInit() {
+        this.loadStoreAndProducts();
+    }
+
+    loadStoreAndProducts() {
+        this.isLoading = true;
+        this.storeService.getMyStore().subscribe({
+            next: (res) => {
+                this.currentStore = res.result;
+                if (this.currentStore) {
+                    this.loadMappings(this.currentStore.id);
+                } else {
+                    this.isLoading = false;
+                    this.cdr.detectChanges();
+                }
+            },
+            error: () => {
+                this.isLoading = false;
+                this.cdr.detectChanges();
+            }
+        });
+    }
+
+    loadMappings(storeId: string) {
+        this.storeProductService.getByStore(storeId).subscribe({
+            next: (res) => {
+                this.products = res.result.items.map((sp: any) => ({
+                    ...sp,
+                    id: sp.productId, // Use product ID for navigation
+                    title: sp.productName,
+                    price: sp.resellerPrice,
+                    image: this.parseFirstImage(sp.productImage),
+                    category: sp.categoryName || 'General',
+                    brand: sp.brandName || 'Generic'
+                }));
+                this.isLoading = false;
+                this.cdr.detectChanges();
+            },
+            error: (err) => {
+                console.error('Fetch Mappings Error:', err);
+                this.isLoading = false;
+                this.cdr.detectChanges();
+            }
+        });
+    }
+
+    parseFirstImage(imageJson: string): string {
+        try {
+            const images = JSON.parse(imageJson || '[]');
+            return images.length > 0 ? images[0] : 'https://picsum.photos/500/500?text=No+Image';
+        } catch {
+            return 'https://picsum.photos/500/500?text=No+Image';
         }
-    ];
+    }
 
-    ngOnInit() { }
-
-    smartTruncate(text: string, maxLength: number = 100): string {
+    smartTruncate(text: string, maxLength: number = 80): string {
+        if (!text) return '';
         if (text.length <= maxLength) return text;
-        const words = text.split(' ');
-        const firstPart = words.slice(0, 8).join(' ');
-        const lastPart = words.slice(-5).join(' ');
-        return `${firstPart} ... ${lastPart}`;
+        return text.substring(0, maxLength) + '...';
     }
 
     toggleActive(event: Event, type: 'heart' | 'cart') {
-        event.stopPropagation(); // Prevent card click
+        event.stopPropagation();
         const target = event.currentTarget as HTMLElement;
         target.classList.toggle('active');
-
-        if (type === 'cart' && target.classList.contains('active')) {
-            const icon = target.querySelector('i');
-            if (icon) icon.className = 'fas fa-check';
-            setTimeout(() => {
-                target.classList.remove('active');
-                if (icon) icon.className = 'fas fa-shopping-cart';
-            }, 2000);
-        }
     }
 
     viewProduct(p: any) {
-        // Map listing data to details format
+        // Prepare product object for the edit/view mapping page
         const productData = {
-            id: p.id,
-            name: p.title,
-            category: p.category,
-            brand: p.brand,
-            wholesalePrice: parseFloat(p.price.replace('$', '')),
-            sku: p.id, // Mock SKU
-            images: [p.image, p.image, p.image] // Mock gallery
+            id: p.productId,
+            name: p.productName,
+            categoryName: p.categoryName,
+            brandName: p.brandName,
+            supplierPrice: p.supplierPrice || (p.resellerPrice / 1.25), // Fallback if not in DTO
+            resellerPrice: p.resellerPrice,
+            images: this.parseImages(p.productImage)
         };
 
         this.router.navigate(['/seller/add-product'], {
@@ -122,5 +121,13 @@ export class ProductListingComponent implements OnInit {
                 viewOnly: true
             }
         });
+    }
+
+    parseImages(imageJson: string): string[] {
+        try {
+            return JSON.parse(imageJson || '[]');
+        } catch {
+            return [];
+        }
     }
 }

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AuthService, LoginDto, RegisterDto } from '../../../services/auth.service';
@@ -12,6 +12,7 @@ import Swal from 'sweetalert2';
     styleUrls: ['./auth-modal.component.scss']
 })
 export class AuthModalComponent {
+    private cdr = inject(ChangeDetectorRef);
     @Output() close = new EventEmitter<void>();
     @Output() authenticated = new EventEmitter<void>();
 
@@ -124,19 +125,35 @@ export class AuthModalComponent {
                 },
                 error: (err) => {
                     console.error('Login failed', err);
-                    // Use backend error message if available, otherwise fallback
-                    if (err.error && err.error.error && err.error.error.message) {
+                    this.isLoading = false; // Force stop loader immediately
+
+                    // Priority 1: ABP formatted error message
+                    if (err.error?.error?.message) {
                         this.errorMessage = err.error.error.message;
-                    } else if (err.error && err.error.message) {
-                        this.errorMessage = err.error.message;
-                    } else {
-                        this.errorMessage = 'Invalid email or password.';
+                        if (err.error.error.details) {
+                            this.errorMessage += ` (${err.error.error.details})`;
+                        }
                     }
+                    // Priority 2: Simple text message
+                    else if (err.error?.message) {
+                        this.errorMessage = err.error.message;
+                    }
+                    // Priority 3: Status text fallback
+                    else if (err.statusText && err.status !== 0) {
+                        this.errorMessage = `Error: ${err.statusText}`;
+                    }
+                    // Priority 4: Generic fallback
+                    else {
+                        this.errorMessage = 'Invalid email or password. Please try again.';
+                    }
+                    console.log('Error message set to:', this.errorMessage);
+                    this.cdr.detectChanges(); // Force UI update
                 }
             })
             .add(() => {
                 // Ensure loader stops in all cases
                 this.isLoading = false;
+                this.cdr.detectChanges();
             });
     }
 
@@ -176,10 +193,10 @@ export class AuthModalComponent {
                     // 3. Show Success Alert
                     Swal.fire({
                         icon: 'success',
-                        title: 'Registration Successful',
-                        text: 'Account created! Please log in.',
-                        timer: 2000, // Reduced timer
-                        showConfirmButton: false
+                        title: 'Signup Successful!',
+                        text: 'Please check your email to verify your account.',
+                        timer: 4000,
+                        showConfirmButton: true
                     });
                 },
                 error: (err) => {

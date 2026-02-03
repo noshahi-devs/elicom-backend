@@ -35,9 +35,7 @@
             <i class="fa-solid fa-receipt"></i> <span>Payouts</span>
         </a>
 
-        <a routerLink="/seller/settings" routerLinkActive="active" class="nav-link nav-settings">
-            <i class="fa-solid fa-user-gear"></i> <span>Settings</span>
-        </a>
+
         <a href="javascript:void(0)" (click)="logout()" class="nav-link logout-link">
             <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
         </a>
@@ -60,13 +58,13 @@
                 <span
                     class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
             </div>
-            <div class="d-flex align-items-center">
+            <div class="d-flex align-items-center cursor-pointer profile-section" (click)="openProfileModal()">
                 <div class="text-end me-2 d-none d-sm-block">
                     <p class="mb-0 fw-bold small">{{ currentUser?.name || 'Seller Admin' }}</p>
                     <p class="mb-0 x-small text-muted" style="font-size: 10px;">Seller</p>
                 </div>
-                <img [src]="'https://ui-avatars.com/api/?name=' + (currentUser?.name || 'Seller') + '&background=4F46E5&color=fff'"
-                    class="rounded-circle" width="40" height="40" alt="DP">
+                <img [src]="'https://ui-avatars.com/api/?name=' + (currentStore?.kyc?.fullName || currentUser?.name || 'Seller') + '&background=4F46E5&color=fff'"
+                    class="rounded-circle shadow-sm" width="40" height="40" alt="DP">
             </div>
         </div>
     </div>
@@ -74,5 +72,47 @@
     <!-- Main Content -->
     <div class="main-wrapper" id="main-wrapper">
         <router-outlet></router-outlet>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="profile-modal-overlay" *ngIf="showProfileModal" (click)="closeProfileModal()">
+        <div class="profile-modal-content" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h5 class="fw-bold m-0"><i class="fa fa-user-circle me-2"></i>My Profile</h5>
+                <i class="fa fa-times close-btn" (click)="closeProfileModal()"></i>
+            </div>
+
+            <div class="modal-body text-center py-4">
+                <div class="avatar-wrapper mb-3">
+                    <img [src]="'https://ui-avatars.com/api/?name=' + (currentStore?.kyc?.fullName || currentUser?.name || 'User') + '&background=4F46E5&color=fff&size=128'"
+                        class="rounded-circle shadow-lg" width="80" height="80" alt="Profile">
+                    <span class="status-dot"></span>
+                </div>
+
+                <h4 class="fw-bold mb-1">{{ currentStore?.kyc?.fullName || (currentUser?.name + ' ' +
+                    currentUser?.surname) }}</h4>
+                <p class="text-muted small mb-3">{{ currentUser?.emailAddress }}</p>
+                <span class="badge bg-primary-subtle text-primary mb-4 px-3 py-2 rounded-pill">
+                    {{ currentUser?.roleNames?.[0] || 'Seller' }}
+                </span>
+
+                <div class="info-grid text-start bg-light p-3 rounded-3 mb-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small">User ID</span>
+                        <span class="fw-bold small">#{{ currentUser?.id }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted small">Status</span>
+                        <span class="fw-bold text-success small">Active</span>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button class="btn btn-danger-soft rounded-pill btn-sm" (click)="logout()">
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

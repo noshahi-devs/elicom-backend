@@ -1,7 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { ProductService } from '../../../services/product.service';
+import { StoreProductService } from '../../../services/store-product.service';
+import { StoreService } from '../../../services/store.service';
+import { AlertService } from '../../../services/alert.service';
 
 @Component({
     selector: 'app-add-product-mapping',
@@ -11,67 +15,49 @@ import { Router } from '@angular/router';
     styleUrls: ['./add-product-mapping.component.scss']
 })
 export class AddProductMappingComponent implements OnInit {
-    constructor(private router: Router) { }
+    private productService = inject(ProductService);
+    private storeProductService = inject(StoreProductService);
+    private storeService = inject(StoreService);
+    private router = inject(Router);
+    private cdr = inject(ChangeDetectorRef);
+    private alert = inject(AlertService);
 
     searchQuery: string = '';
     isSearching: boolean = false;
     showResults: boolean = false;
     selectedProduct: any = null;
-
-    searchResults = [
-        {
-            id: 'dr81852159',
-            name: 'Silicone Cooking Utensils Set – 34PCS',
-            category: 'Kitchen Tools',
-            brand: 'Umite Kitchen',
-            wholesalePrice: 35.78,
-            sku: 'KITCH-SIL-34',
-            rating: 4.5,
-            reviews: 89,
-            images: [
-                'https://picsum.photos/500/500?random=1',
-                'https://picsum.photos/500/500?random=2',
-                'https://picsum.photos/500/500?random=3'
-            ]
-        },
-        {
-            id: 'hp-9921',
-            name: 'Premium Wireless Noise Cancelling Headphones',
-            category: 'Electronics > Audio',
-            brand: 'Sony',
-            wholesalePrice: 85.00,
-            sku: 'ELEC-HP-001',
-            rating: 4.8,
-            reviews: 156,
-            images: [
-                'https://picsum.photos/500/500?random=4',
-                'https://picsum.photos/500/500?random=5',
-                'https://picsum.photos/500/500?random=6'
-            ]
-        }
-    ];
+    searchResults: any[] = [];
+    currentStore: any = null;
 
     product: any = null;
     selectedImage: string = '';
-    markupValue: number = 0;
+    maxAllowedPrice: number = 0;
     retailPrice: number = 0;
     handlingTime: number = 2;
     maxOrderQty: number = 10;
-    customerNote: string = '';
     isViewOnly: boolean = false;
 
     ngOnInit() {
+        this.loadStore();
+
         // Check if we are in view-only mode from listing
         const state = window.history.state;
         if (state && state.product) {
             this.isViewOnly = !!state.viewOnly;
             this.selectProduct(state.product);
-            // If it's viewOnly, we might want to override some defaults
             if (this.isViewOnly) {
-                this.markupValue = state.product.markup || 15;
-                this.calculatePrice();
+                // If view only, price is already set in the mapped product
+                this.retailPrice = state.product.resellerPrice || state.product.supplierPrice;
             }
         }
+    }
+
+    loadStore() {
+        this.storeService.getMyStore().subscribe({
+            next: (res) => {
+                this.currentStore = res.result;
+            }
+        });
     }
 
     onSearch() {
@@ -80,28 +66,52 @@ export class AddProductMappingComponent implements OnInit {
             return;
         }
         this.isSearching = true;
-        // Simulate API call
-        setTimeout(() => {
-            this.isSearching = false;
-            this.showResults = true;
-        }, 600);
+        this.productService.search(this.searchQuery).subscribe({
+            next: (res) => {
+                this.isSearching = false;
+                console.log('Search Results:', res.result.items);
+                this.searchResults = res.result.items.map((p: any) => ({
+                    ...p,
+                    images: this.parseImages(p.images)
+                }));
+                this.showResults = true;
+                this.cdr.detectChanges();
+            },
+            error: (err) => {
+                console.error('Search Error:', err);
+                this.isSearching = false;
+                this.cdr.detectChanges();
+            }
+        });
+    }
+
+    parseImages(imageJson: string): string[] {
+        try {
+            return JSON.parse(imageJson || '[]');
+        } catch {
+            return ['https://picsum.photos/500/500?text=No+Image'];
+        }
     }
 
     selectProduct(prod: any) {
         this.product = prod;
         this.selectedProduct = prod;
-        this.selectedImage = prod.images[0];
-        this.markupValue = Math.round(prod.wholesalePrice * 0.25);
-        this.calculatePrice();
+        this.selectedImage = (prod.images && prod.images.length > 0) ? prod.images[0] : '';
+
+        // Calculate Max Allowed Price: ResellerMaxPrice OR 167% of SupplierPrice
+        const maxAllowedPrice = Number((prod.supplierPrice * 1.67).toFixed(2));
+
+        // Default retail price is supplier price
+        this.retailPrice = prod.supplierPrice;
+
         this.showResults = false;
+        this.maxAllowedPrice = maxAllowedPrice;
         this.searchQuery = '';
+        this.cdr.detectChanges();
     }
 
     calculatePrice() {
-        if (this.product) {
-            const price = Number(this.product.wholesalePrice) + Number(this.markupValue);
-            this.retailPrice = Number(price.toFixed(2));
-        }
+        // No longer used for markup calculation
     }
 
     selectImage(img: string) {
@@ -120,7 +130,38 @@ export class AddProductMappingComponent implements OnInit {
     }
 
     publishToStore() {
-        alert('Product published to store successfully!');
-        this.cancelSearch();
+        if (!this.currentStore) {
+            this.alert.error('Store details not loaded. Please try again.');
+            return;
+        }
+
+        if (this.retailPrice > this.maxAllowedPrice) {
+            this.alert.error(`Price exceeds the maximum allowed limit of $${this.maxAllowedPrice}`);
+            return;
+        }
+
+        if (this.retailPrice < this.product.supplierPrice) {
+            this.alert.error(`Price cannot be lower than the supplier price of $${this.product.supplierPrice}`);
+            return;
+        }
+
+        const mapping = {
+            storeId: this.currentStore.id,
+            productId: this.product.id,
+            resellerPrice: this.retailPrice,
+            stockQuantity: this.maxOrderQty,
+            status: true
+        };
+
+        this.alert.loading('PUBLISHING TO STORE...');
+        this.storeProductService.mapProductToStore(mapping).subscribe({
+            next: () => {
+                this.alert.success('Product mapped to your store successfully!');
+                this.router.navigate(['/seller/listings']);
+            },
+            error: (err) => {
+                this.alert.error(err?.error?.error?.message || 'Failed to map product.');
+            }
+        });
     }
 }

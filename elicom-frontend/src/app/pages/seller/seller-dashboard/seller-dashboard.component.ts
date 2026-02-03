@@ -1,7 +1,8 @@
-import { Component, OnInit, AfterViewInit, inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, AfterViewInit, inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
+import { StoreService } from '../../../services/store.service';
 
 declare var Chart: any;
 
@@ -15,12 +16,70 @@ declare var Chart: any;
 export class SellerDashboardComponent implements OnInit, AfterViewInit {
     private authService = inject(AuthService);
     private platformId = inject(PLATFORM_ID);
+    private cdr = inject(ChangeDetectorRef); // Inject CDR
 
+    private storeService = inject(StoreService);
+
+    // ... existing properties
     isSidebarCollapsed = false;
     currentUser: any = null;
+    currentStore: any = null;
+
+    // Clock
+    currentDate: string = '';
+    currentTime: string = '';
+    private timer: any;
 
     ngOnInit() {
         this.currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        this.loadMyStore();
+        this.startClock();
+    }
+
+    ngOnDestroy() {
+        if (this.timer) {
+            clearInterval(this.timer);
+        }
+    }
+
+    startClock() {
+        this.updateTime();
+        this.timer = setInterval(() => {
+            this.updateTime();
+        }, 1000);
+    }
+
+    updateTime() {
+        const now = new Date();
+        // Format: 30-Jan-2026
+        const optionsDate: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric' };
+        this.currentDate = now.toLocaleDateString('en-GB', optionsDate).replace(/ /g, '-');
+
+        // Format: 09:58 AM
+        const optionsTime: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', hour12: true };
+        this.currentTime = now.toLocaleTimeString('en-US', optionsTime);
+    }
+
+    loadMyStore() {
+        console.log('Loading my store...');
+        this.storeService.getMyStore().subscribe({
+            next: (res: any) => {
+                console.log('My Store API Response:', res);
+                // ABP wraps response in "result"
+                const store = res?.result || res;
+
+                if (store) {
+                    this.currentStore = store;
+                } else {
+                    console.warn('No store found for this user.');
+                }
+                this.cdr.detectChanges(); // Force UI update
+            },
+            error: (err) => {
+                console.error('Failed to load store:', err);
+                this.cdr.detectChanges();
+            }
+        });
     }
 
     ngAfterViewInit() {

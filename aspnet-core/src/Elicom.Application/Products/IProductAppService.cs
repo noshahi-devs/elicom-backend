@@ -13,6 +13,7 @@ namespace Elicom.Products
     {
         Task<ListResultDto<ProductDto>> GetAll();
         Task<ListResultDto<ProductDto>> GetByCategory(Guid categoryId);
+        Task<ListResultDto<ProductDto>> Search(string query);
         Task<ProductDto> Create(CreateProductDto input);
         Task<ProductDto> Update(UpdateProductDto input);
         Task Delete(Guid id);

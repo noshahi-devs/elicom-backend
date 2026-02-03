@@ -6,6 +6,7 @@ using Elicom.Authorization;
 using Elicom.Entities;
 using Elicom.Products.Dto;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,6 +42,33 @@ namespace Elicom.Products
                 .GetAllIncluding(p => p.Category)
                 .Where(p => p.CategoryId == categoryId)
                 .ToListAsync();
+
+            return new ListResultDto<ProductDto>(
+                ObjectMapper.Map<List<ProductDto>>(products)
+            );
+        }
+
+        [HttpGet]
+        public async Task<ListResultDto<ProductDto>> Search(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return new ListResultDto<ProductDto>();
+            }
+
+            var lowercaseQuery = query.ToLower();
+
+            // Ignore filters to see global wholesale products
+            List<Product> products;
+            using (CurrentUnitOfWork.DisableFilter(Abp.Domain.Uow.AbpDataFilters.MayHaveTenant, Abp.Domain.Uow.AbpDataFilters.MustHaveTenant))
+            {
+                products = await _productRepo
+                    .GetAllIncluding(p => p.Category)
+                    .Where(p => p.Name.ToLower().Contains(lowercaseQuery) ||
+                                (p.SKU != null && p.SKU.ToLower().Contains(lowercaseQuery)) ||
+                                (p.Description != null && p.Description.ToLower().Contains(lowercaseQuery)))
+                    .ToListAsync();
+            }
 
             return new ListResultDto<ProductDto>(
                 ObjectMapper.Map<List<ProductDto>>(products)

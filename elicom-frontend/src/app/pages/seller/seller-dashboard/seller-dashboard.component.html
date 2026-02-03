@@ -1,12 +1,28 @@
 <div class="dashboard-content">
     <!-- Top Header Bar -->
+    <!-- Top Header Bar -->
     <div class="d-flex justify-content-between align-items-center mb-4 p-4 rounded-4 dashboard-header-banner">
-        <div>
-            <h2 class="fw-bold mb-1" style="color:#0f172a;">
-                {{ currentUser?.storeName || 'My Store' }}
-                <span class="status-badge">Published</span>
-            </h2>
-            <p style="color:#64748b;">Here's what's happening in your store today.</p>
+        <div class="d-flex align-items-center gap-4">
+            <div class="store-header-icon shadow-sm">
+                <i class="fas fa-shopping-basket"></i>
+            </div>
+            <div>
+                <div class="d-flex align-items-center gap-3">
+                    <h2 class="fw-bold mb-0" style="color:#0f172a; font-size: 28px;">
+                        {{ currentStore?.name || currentUser?.storeName || 'My Store' }}
+                    </h2>
+
+                    <!-- Status Badge -->
+                    <span class="badge rounded-pill d-flex align-items-center gap-1 px-3 py-2"
+                        [ngClass]="currentStore?.status ? 'bg-success-subtle text-success border border-success' : 'bg-warning-subtle text-warning border border-warning'"
+                        style="font-size: 12px; font-weight: 600;">
+                        <i class="fas" [ngClass]="currentStore?.status ? 'fa-check-circle' : 'fa-clock'"></i>
+                        {{ currentStore?.status ? 'Verified Store' : 'Pending Approval' }}
+                    </span>
+                </div>
+                <p class="mt-1 mb-0" style="color:#64748b; font-size: 15px;">Here's what's happening in your store
+                    today.</p>
+            </div>
         </div>
 
         <div class="usa-time-widget">
@@ -14,7 +30,7 @@
                 <img src="https://flagcdn.com/w160/us.png" alt="USA Flag">
             </div>
             <div class="ms-3 text-white">
-                <div class="time-text">30-Jan-2026 | 09:58 AM</div>
+                <div class="time-text">{{ currentDate }} | {{ currentTime }}</div>
                 <div class="location-text">New York, USA (GMT-5)</div>
             </div>
         </div>

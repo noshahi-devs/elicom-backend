@@ -44,21 +44,33 @@ namespace Elicom.Controllers
         [HttpPost]
         public async Task<AuthenticateResultModel> Authenticate([FromBody] AuthenticateModel model)
         {
-            var loginResult = await GetLoginResultAsync(
-                model.UserNameOrEmailAddress,
-                model.Password,
-                GetTenancyNameOrNull()
-            );
-
-            var accessToken = CreateAccessToken(CreateJwtClaims(loginResult.Identity, loginResult.User));
-
-            return new AuthenticateResultModel
+            try
             {
-                AccessToken = accessToken,
-                EncryptedAccessToken = GetEncryptedAccessToken(accessToken),
-                ExpireInSeconds = (int)_configuration.Expiration.TotalSeconds,
-                UserId = loginResult.User.Id
-            };
+                var loginResult = await GetLoginResultAsync(
+                    model.UserNameOrEmailAddress,
+                    model.Password,
+                    GetTenancyNameOrNull()
+                );
+
+                var accessToken = CreateAccessToken(CreateJwtClaims(loginResult.Identity, loginResult.User));
+
+                return new AuthenticateResultModel
+                {
+                    AccessToken = accessToken,
+                    EncryptedAccessToken = GetEncryptedAccessToken(accessToken),
+                    ExpireInSeconds = (int)_configuration.Expiration.TotalSeconds,
+                    UserId = loginResult.User.Id
+                };
+            }
+            catch (Abp.UI.UserFriendlyException)
+            {
+                throw; // These are expected
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Authenticate failed", ex);
+                throw new Abp.UI.UserFriendlyException("An internal error occurred during login. Please contact support. Details: " + ex.Message);
+            }
         }
 
         private string GetTenancyNameOrNull()

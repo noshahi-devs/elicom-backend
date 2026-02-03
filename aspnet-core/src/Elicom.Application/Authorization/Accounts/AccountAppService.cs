@@ -15,6 +15,7 @@ using MimeKit;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace Elicom.Authorization.Accounts;
 
@@ -26,15 +27,75 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
     private readonly UserRegistrationManager _userRegistrationManager;
     private readonly IEmailSender _emailSender;
     private readonly UserManager _userManager;
+    private readonly IConfiguration _configuration;
 
     public AccountAppService(
         UserRegistrationManager userRegistrationManager,
         IEmailSender emailSender,
-        UserManager userManager)
+        UserManager userManager,
+        IConfiguration configuration)
     {
         _userRegistrationManager = userRegistrationManager;
         _emailSender = emailSender;
         _userManager = userManager;
+        _configuration = configuration;
+    }
+
+    [HttpGet]
+    public virtual async Task<ContentResult> VerifyEmail(long userId, string token, string platform = "Prime Ship")
+    {
+        Logger.Info($"VerifyEmail: Attempting to verify user {userId} for platform {platform}");
+
+        User user;
+        // Search directly using EF Core IgnoreQueryFilters to bypass all visibility rules
+        user = await _userManager.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == userId);
+        
+        if (user == null) 
+        {
+            Logger.Error($"VerifyEmail: User {userId} not found even with IgnoreQueryFilters.");
+            throw new UserFriendlyException("User not found");
+        }
+
+        Logger.Info($"VerifyEmail: User {userId} found. TenantId={user.TenantId}. Proceeding to confirm token.");
+
+        // Set the tenant context to the user's actual tenant (e.g., Tenant 3) for confirmation
+        using (UnitOfWorkManager.Current.SetTenantId(user.TenantId))
+        {
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+            if (result.Succeeded)
+            {
+                user.IsActive = true;
+                await _userManager.UpdateAsync(user);
+
+                // Get ClientRootAddress from config (e.g., http://localhost:4200/)
+                var clientRootAddress = _configuration["App:ClientRootAddress"]?.TrimEnd('/');
+                if (string.IsNullOrEmpty(clientRootAddress)) clientRootAddress = "http://localhost:4200";
+
+                string redirectPath = $"{clientRootAddress}/account/login";
+                if (platform == "Smart Store") redirectPath = $"{clientRootAddress}/smartstore/login";
+                if (platform == "Prime Ship") redirectPath = $"{clientRootAddress}/primeship/login";
+                if (platform == "Easy Finora" || platform == "Global Pay") redirectPath = $"{clientRootAddress}/auth";
+
+                return new ContentResult
+                {
+                    ContentType = "text/html",
+                    Content = $@"
+                        <html>
+                            <body style='text-align: center; font-family: sans-serif; padding-top: 100px;'>
+                                <h1 style='color: green;'>{platform} Account Verified!</h1>
+                                <p>You are being redirected to the login page...</p>
+                                <script>
+                                    setTimeout(function() {{
+                                        window.location.href = '{redirectPath}';
+                                    }}, 3000);
+                                </script>
+                            </body>
+                        </html>"
+                };
+            }
+        }
+
+        throw new UserFriendlyException("Invalid or expired verification token");
     }
 
     public async Task<IsTenantAvailableOutput> IsTenantAvailable(IsTenantAvailableInput input)
@@ -325,53 +386,6 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
         }
     }
 
-    [HttpGet]
-    public virtual async Task<ContentResult> VerifyEmail(long userId, string token, string platform = "Prime Ship")
-    {
-        User user;
-        // Use UnitOfWorkManager.Current to disable filters and find user across all tenants
-        using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
-        {
-            user = await _userManager.FindByIdAsync(userId.ToString());
-        }
-
-        if (user == null) throw new UserFriendlyException("User not found");
-
-        // Set the tenant context to the user's actual tenant (e.g., Tenant 3) for confirmation
-        using (UnitOfWorkManager.Current.SetTenantId(user.TenantId))
-        {
-            var result = await _userManager.ConfirmEmailAsync(user, token);
-            if (result.Succeeded)
-            {
-                user.IsActive = true;
-                await _userManager.UpdateAsync(user);
-
-                string redirectPath = "/account/login";
-                if (platform == "Smart Store") redirectPath = "/smartstore/login";
-                if (platform == "Prime Ship") redirectPath = "/primeship/login";
-                if (platform == "Easy Finora" || platform == "Global Pay") redirectPath = "/auth";
-
-                return new ContentResult
-                {
-                    ContentType = "text/html",
-                    Content = $@"
-                        <html>
-                            <body style='text-align: center; font-family: sans-serif; padding-top: 100px;'>
-                                <h1 style='color: green;'>{platform} Account Verified!</h1>
-                                <p>You are being redirected to the login page...</p>
-                                <script>
-                                    setTimeout(function() {{
-                                        window.location.href = '{redirectPath}';
-                                    }}, 3000);
-                                </script>
-                            </body>
-                        </html>"
-                };
-            }
-        }
-
-        throw new UserFriendlyException("Invalid or expired verification token");
-    }
 
     [HttpPost]
     public async Task ForgotPassword(string email)

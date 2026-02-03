@@ -28,11 +28,11 @@
                 <div>
                     <h5 class="mb-2 fw-semibold">{{res.name}}</h5>
                     <div class="badge-group">
-                        <span class="badge-soft">ID: {{res.id}}</span>
-                        <span class="badge-soft">Category: {{res.category}}</span>
-                        <span class="badge-soft">Brand: {{res.brand}}</span>
+                        <span class="badge-soft">ID: {{res.id.substring(0, 8)}}...</span>
+                        <span class="badge-soft">Category: {{res.categoryName}}</span>
+                        <span class="badge-soft">Brand: {{res.brandName || 'Generic'}}</span>
                     </div>
-                    <span class="price-badge">${{res.wholesalePrice}}</span>
+                    <span class="price-badge">${{res.supplierPrice}}</span>
                 </div>
             </div>
 
@@ -62,69 +62,75 @@
                 <div class="product-content">
                     <div class="product-title">{{product.name}}</div>
                     <div class="info-row">
-                        <div class="pill"><i class="fas fa-hashtag"></i> ID: {{product.id}}</div>
-                        <div class="pill"><i class="fas fa-tag"></i> Category: {{product.category}}</div>
-                        <div class="pill"><i class="fas fa-copyright"></i> Brand: {{product.brand}}</div>
+                        <div class="pill"><i class="fas fa-hashtag"></i> ID: {{product.id.substring(0, 8)}}...</div>
+                        <div class="pill"><i class="fas fa-tag"></i> Category: {{product.categoryName}}</div>
+                        <div class="pill"><i class="fas fa-copyright"></i> Brand: {{product.brandName || 'Generic'}}
+                        </div>
                     </div>
-                    <div class="price"><i class="fas fa-tag"></i> ${{product.wholesalePrice}}</div>
+                    <div class="price"><i class="fas fa-tag"></i> Supplier Price: ${{product.supplierPrice}}</div>
                 </div>
             </div>
         </div>
 
         <!-- Attribute Setting Card -->
         <div class="attribute-card">
-            <div class="attribute-title">
-                <i class="fas fa-sliders-h"></i>
-                Set Attributes For Store Listing
+            <div class="attribute-header mb-4">
+                <h4 class="fw-bold border-bottom pb-2 display-inline-block"
+                    style="border-width: 2px !important; border-color: #0f172a !important; display: inline-block;">Set
+                    Attributes For Store Listing</h4>
             </div>
 
             <div class="form-grid">
+                <!-- Maximum Price (Read-only Guide) -->
                 <div class="form-group">
-                    <label><i class="fas fa-arrow-up"></i> Your Profit Markup ($)</label>
-                    <div class="input-box">
-                        <input type="number" [(ngModel)]="markupValue" (input)="calculatePrice()"
-                            [disabled]="isViewOnly">
-                        <button [disabled]="isViewOnly"><i class="fas fa-dollar-sign"></i></button>
+                    <label class="fw-bold mb-2">Maximum Price</label>
+                    <div class="input-box custom-input-wrapper bg-light border-0">
+                        <span class="input-prefix fw-bold">$</span>
+                        <input type="number" [value]="maxAllowedPrice" readonly placeholder="0.00">
                     </div>
                 </div>
 
+                <!-- Standard Price (User Input) -->
                 <div class="form-group">
-                    <label><i class="fas fa-balance-scale"></i> Customer Retail Price</label>
-                    <div class="input-box bg-light">
-                        <input type="number" [value]="retailPrice" readonly class="text-success fw-bold">
-                        <button class="bg-success"><i class="fas fa-tag"></i></button>
+                    <label class="fw-bold mb-2">Standard Price</label>
+                    <div class="input-box custom-input-wrapper" [class.border-danger]="retailPrice > maxAllowedPrice">
+                        <span class="input-prefix fw-bold">$</span>
+                        <input type="number" [(ngModel)]="retailPrice" [disabled]="isViewOnly" placeholder="0.00">
+                    </div>
+                    <!-- Validation Message -->
+                    <div *ngIf="retailPrice > maxAllowedPrice" class="text-danger small mt-1">
+                        <i class="fas fa-exclamation-triangle"></i> Price exceeds the maximum allowed limit of
+                        ${{maxAllowedPrice}}
                     </div>
                 </div>
 
+                <!-- Handling Time -->
                 <div class="form-group">
-                    <label><i class="fas fa-clock"></i> Handling Time</label>
-                    <div class="input-box">
+                    <label class="fw-bold mb-2">Handling Time</label>
+                    <div class="input-box custom-input-wrapper">
+                        <span class="input-prefix text-muted fw-bold">Days</span>
                         <input type="number" [(ngModel)]="handlingTime" min="1" max="30" [disabled]="isViewOnly">
-                        <button [disabled]="isViewOnly">Days</button>
                     </div>
                 </div>
 
+                <!-- Max Order Quantity -->
                 <div class="form-group">
-                    <label><i class="fas fa-boxes"></i> Max Order Quantity</label>
-                    <div class="input-box">
+                    <label class="fw-bold mb-2">Max Order Quantity</label>
+                    <div class="input-box custom-input-wrapper">
+                        <span class="input-prefix text-muted fw-bold">Units</span>
                         <input type="number" [(ngModel)]="maxOrderQty" min="1" max="100" [disabled]="isViewOnly">
-                        <button [disabled]="isViewOnly">Units</button>
                     </div>
                 </div>
 
-                <div class="form-group full">
-                    <label><i class="fas fa-sticky-note"></i> Note For Customer</label>
-                    <textarea [(ngModel)]="customerNote"
-                        placeholder="Add any special instructions or notes for customers..."
-                        [disabled]="isViewOnly"></textarea>
-                </div>
             </div>
 
-            <div class="actions">
-                <button class="btn btn-cancel" (click)="cancelSearch()"><i class="fas fa-times"></i> {{ isViewOnly ?
-                    'Back to Listings' : 'Cancel' }}</button>
-                <button class="btn btn-primary" (click)="publishToStore()" *ngIf="!isViewOnly"><i
-                        class="fas fa-check-circle"></i> Publish to Store</button>
+            <div class="actions mt-4">
+                <button class="btn btn-cancel" (click)="cancelSearch()">
+                    <i class="fas fa-times"></i> {{ isViewOnly ? 'Back to Listings' : 'Cancel' }}
+                </button>
+                <button class="btn btn-primary px-4" (click)="publishToStore()" *ngIf="!isViewOnly">
+                    <i class="fas fa-check-circle"></i> Publish to Store
+                </button>
             </div>
         </div>
     </div>
