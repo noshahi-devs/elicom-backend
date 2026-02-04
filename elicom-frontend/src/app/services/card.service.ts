@@ -20,7 +20,7 @@ export interface CardValidationResultDto {
 })
 export class CardService {
     private http = inject(HttpClient);
-    private apiUrl = 'https://localhost:44311/api/services/app/Card';
+    private apiUrl = 'http://localhost:5050/api/services/app/Card';
 
     validateCard(input: ValidateCardInput): Observable<CardValidationResultDto> {
         return this.http.post<any>(`${this.apiUrl}/ValidateCard`, input).pipe(

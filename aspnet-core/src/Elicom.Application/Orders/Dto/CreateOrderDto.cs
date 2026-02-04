@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Elicom.OrderItems.Dto;
 
 namespace Elicom.Orders.Dto
 {
@@ -22,5 +23,6 @@ namespace Elicom.Orders.Dto
         public string CardNumber { get; set; }
         public string Cvv { get; set; }
         public string ExpiryDate { get; set; }
+        public List<OrderItemDto> Items { get; set; } = new List<OrderItemDto>();
     }
 }

@@ -10,9 +10,15 @@
             font-size: 14px;
             text-transform: uppercase;
 
-            &.unshipped {
+            &.unshipped,
+            &.pending {
                 background: #fee2e2;
                 color: #ef4444;
+            }
+
+            &.processing {
+                background: #eef2ff;
+                color: #4f46e5;
             }
 
             &.shipped {

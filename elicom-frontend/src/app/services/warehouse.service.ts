@@ -20,7 +20,7 @@ export interface WarehouseDto {
 })
 export class WarehouseService {
     private http = inject(HttpClient);
-    private baseUrl = 'https://localhost:44311/api/services/app/Warehouse';
+    private baseUrl = 'http://localhost:5050/api/services/app/Warehouse';
 
     create(input: any): Observable<WarehouseDto> {
         return this.http.post<any>(`${this.baseUrl}/Create`, input)

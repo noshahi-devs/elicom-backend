@@ -56,14 +56,17 @@ namespace Elicom.StoreProducts
 
         public async Task<ListResultDto<StoreProductDto>> GetByStore(Guid storeId)
         {
-            var list = await _storeProductRepo
-                .GetAllIncluding(sp => sp.Product)
-                .Where(sp => sp.StoreId == storeId && sp.Status)
-                .ToListAsync();
+            using (CurrentUnitOfWork.DisableFilter(Abp.Domain.Uow.AbpDataFilters.MayHaveTenant))
+            {
+                var list = await _storeProductRepo
+                    .GetAllIncluding(sp => sp.Product)
+                    .Where(sp => sp.StoreId == storeId && sp.Status)
+                    .ToListAsync();
 
-            return new ListResultDto<StoreProductDto>(
-                ObjectMapper.Map<System.Collections.Generic.List<StoreProductDto>>(list)
-            );
+                return new ListResultDto<StoreProductDto>(
+                    ObjectMapper.Map<System.Collections.Generic.List<StoreProductDto>>(list)
+                );
+            }
         }
 
         [AbpAuthorize(PermissionNames.Pages_StoreProducts_Edit)]

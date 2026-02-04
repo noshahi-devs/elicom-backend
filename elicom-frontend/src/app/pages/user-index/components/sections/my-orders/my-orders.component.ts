@@ -96,19 +96,10 @@ export class MyOrdersComponent implements OnInit {
   async loadOrders() {
     this.isLoading = true;
     try {
-      let profileId = localStorage.getItem('customerProfileId');
-      const userId = localStorage.getItem('userId');
-
-      if (!profileId && userId) {
-        const res = await this.profileService.getByUserId(parseInt(userId)).toPromise();
-        if (res && res.result) {
-          profileId = res.result.id;
-          if (profileId) localStorage.setItem('customerProfileId', profileId);
-        }
-      }
-
-      if (profileId) {
-        this.orderService.getCustomerOrders(profileId).subscribe(res => {
+      const userIdStr = localStorage.getItem('userId');
+      if (userIdStr) {
+        const userId = parseInt(userIdStr);
+        this.orderService.getCustomerOrders(userId).subscribe(res => {
           this.orders = res;
           this.filterOrders();
           this.isLoading = false;

@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { OrderService } from '../../../services/order.service';
+import { StoreService } from '../../../services/store.service';
 
 @Component({
     selector: 'app-seller-orders',
@@ -10,22 +12,68 @@ import { RouterModule, Router } from '@angular/router';
     styleUrls: ['./orders.component.scss']
 })
 export class SellerOrdersComponent implements OnInit {
-    constructor(private router: Router) { }
+    private router = inject(Router);
+    private orderService = inject(OrderService);
+    private storeService = inject(StoreService);
+    private cdr = inject(ChangeDetectorRef);
 
     orderStatus: string = 'All';
-
-    orders = [
-        { id: '#ORD-78452', date: 'Jan 28, 2026', customer: 'Ali Ahmed', avatar: 'AA', items: 3, total: 450, status: 'Unshipped', payment: 'Paid' },
-        { id: '#ORD-78453', date: 'Jan 27, 2026', customer: 'Sara Khan', avatar: 'SK', items: 1, total: 120, status: 'Shipped', payment: 'Paid' },
-        { id: '#ORD-78454', date: 'Jan 26, 2026', customer: 'John Doe', avatar: 'JD', items: 5, total: 890, status: 'Cancelled', payment: 'Refunded' },
-        { id: '#ORD-78455', date: 'Jan 25, 2026', customer: 'Fatima Zahra', avatar: 'FZ', items: 2, total: 340, status: 'Returned', payment: 'Refunded' },
-        { id: '#ORD-78456', date: 'Jan 24, 2026', customer: 'Usman Ali', avatar: 'UA', items: 1, total: 210, status: 'Unshipped', payment: 'Pending' },
-    ];
-
-    filteredOrders = this.orders;
+    isLoading = false;
+    orders: any[] = [];
+    filteredOrders: any[] = [];
 
     ngOnInit() {
-        this.filterOrders('All');
+        this.loadOrders();
+    }
+
+    loadOrders() {
+        this.isLoading = true;
+        this.storeService.getMyStore().subscribe({
+            next: (storeRes) => {
+                const storeId = storeRes?.result?.id;
+                if (storeId) {
+                    this.orderService.getOrdersByStore(storeId).subscribe({
+                        next: (res) => {
+                            console.log('[SellerOrders] 📥 Orders received:', res);
+                            this.orders = (res || []).map((o: any) => {
+                                // Map backend status to frontend display labels
+                                let displayStatus = o.status;
+                                if (o.status === 'Pending') displayStatus = 'Unshipped';
+
+                                return {
+                                    id: o.orderNumber,
+                                    guid: o.id,
+                                    date: o.creationTime ? new Date(o.creationTime).toLocaleDateString() : 'N/A',
+                                    customer: 'Retail Customer',
+                                    avatar: 'RC',
+                                    items: o.orderItems?.length || 0,
+                                    total: o.totalAmount,
+                                    status: displayStatus,
+                                    payment: o.paymentStatus || 'Paid',
+                                    original: o
+                                };
+                            });
+                            this.filterOrders(this.orderStatus);
+                            this.isLoading = false;
+                            this.cdr.detectChanges();
+                        },
+                        error: (err: any) => {
+                            console.error('Failed to load store orders', err);
+                            this.isLoading = false;
+                            this.cdr.detectChanges();
+                        }
+                    });
+                } else {
+                    this.isLoading = false;
+                    this.cdr.detectChanges();
+                }
+            },
+            error: (err: any) => {
+                console.error('Failed to load store information', err);
+                this.isLoading = false;
+                this.cdr.detectChanges();
+            }
+        });
     }
 
     getCount(status: string) {
@@ -43,8 +91,8 @@ export class SellerOrdersComponent implements OnInit {
     }
 
     viewOrderDetails(order: any) {
-        this.router.navigate(['/seller/orders/details', order.id], {
-            state: { order: order }
+        this.router.navigate(['/seller/orders/details', order.guid], {
+            state: { order: order.original || order }
         });
     }
 }

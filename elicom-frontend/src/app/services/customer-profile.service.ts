@@ -24,7 +24,7 @@ export interface CustomerProfileDto extends CreateCustomerProfileDto {
     providedIn: 'root'
 })
 export class CustomerProfileService {
-    private baseUrl = 'https://localhost:44311/api/services/app/CustomerProfile';
+    private baseUrl = 'http://localhost:5050/api/services/app/CustomerProfile';
 
     constructor(private http: HttpClient) { }
 

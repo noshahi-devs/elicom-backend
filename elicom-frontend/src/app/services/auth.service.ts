@@ -45,7 +45,7 @@ import { StoreService } from './store.service';
 })
 export class AuthService {
     // Using a simplified base URL, adjust if needed (e.g. from environment)
-    private baseUrl = 'https://localhost:44311';
+    private baseUrl = 'http://localhost:5050';
 
     // State
     private _currentUser = new BehaviorSubject<User | null>(this.getUserFromStorage());
@@ -129,14 +129,12 @@ export class AuthService {
         const user = this._currentUser.value;
         if (!user) return false;
         const roleNames = user.roleNames || [];
-        const userName = user.userName || '';
-        return roleNames.some(r => r.toLowerCase() === 'seller') ||
-            userName.toLowerCase().startsWith('ss_');
+        return roleNames.some(r => r.toLowerCase() === 'reseller' || r.toLowerCase() === 'seller');
     }
 
     isCustomer(): boolean {
         const user = this._currentUser.value;
-        return !!user?.roleNames?.some(r => r.toLowerCase() === 'customer');
+        return !!user?.roleNames?.some(r => r.toLowerCase() === 'buyer' || r.toLowerCase() === 'customer');
     }
 
     isSupplier(): boolean {
@@ -149,6 +147,16 @@ export class AuthService {
         if (!this.isAuthenticated) {
             console.log('Not authenticated, going to login');
             this.router.navigate(['/smartstore/login']);
+            return;
+        }
+
+        // Check for returnUrl in the current URL
+        const urlTree = this.router.parseUrl(this.router.url);
+        const returnUrl = urlTree.queryParams['returnUrl'];
+
+        if (returnUrl) {
+            console.log('Redirecting to returnUrl:', returnUrl);
+            this.router.navigateByUrl(returnUrl);
             return;
         }
 
@@ -173,7 +181,7 @@ export class AuthService {
                 }
             });
         } else if (this.isCustomer()) {
-            console.log('Role: Customer');
+            console.log('Role: Customer/Buyer');
             this.router.navigate(['/customer/dashboard']);
         } else {
             console.log('Role: Default/Other');

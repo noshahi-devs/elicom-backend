@@ -16,7 +16,7 @@ export interface SellerDashboardStats {
 })
 export class SellerDashboardService {
     private http = inject(HttpClient);
-    private apiUrl = 'https://localhost:44311/api/services/app/SellerDashboard';
+    private apiUrl = 'http://localhost:5050/api/services/app/SellerDashboard';
 
     getStats(storeId: string): Observable<any> {
         return this.http.get(`${this.apiUrl}/GetStats`, { params: { storeId } });

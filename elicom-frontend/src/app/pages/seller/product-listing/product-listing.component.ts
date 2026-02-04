@@ -64,7 +64,8 @@ export class ProductListingComponent implements OnInit {
             next: (res) => {
                 this.products = res.result.items.map((sp: any) => ({
                     ...sp,
-                    id: sp.productId, // Use product ID for navigation
+                    mappingId: sp.id, // Preserve the StoreProduct ID for editing
+                    id: sp.productId, // Use product ID for general info
                     title: sp.productName,
                     price: sp.resellerPrice,
                     image: this.parseFirstImage(sp.productImage),
@@ -103,22 +104,33 @@ export class ProductListingComponent implements OnInit {
         target.classList.toggle('active');
     }
 
+    editProduct(p: any, event: Event) {
+        event.stopPropagation();
+        this.navigateToMapping(p, false);
+    }
+
     viewProduct(p: any) {
+        this.navigateToMapping(p, true);
+    }
+
+    private navigateToMapping(p: any, viewOnly: boolean) {
         // Prepare product object for the edit/view mapping page
         const productData = {
             id: p.productId,
+            mappingId: p.mappingId,
             name: p.productName,
             categoryName: p.categoryName,
             brandName: p.brandName,
             supplierPrice: p.supplierPrice || (p.resellerPrice / 1.25), // Fallback if not in DTO
             resellerPrice: p.resellerPrice,
+            stockQuantity: p.stockQuantity,
             images: this.parseImages(p.productImage)
         };
 
         this.router.navigate(['/seller/add-product'], {
             state: {
                 product: productData,
-                viewOnly: true
+                viewOnly: viewOnly
             }
         });
     }

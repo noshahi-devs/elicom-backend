@@ -20,7 +20,7 @@ export interface UserDto {
 })
 export class UserService {
     private http = inject(HttpClient);
-    private baseUrl = 'https://localhost:44311/api/services/app/User';
+    private baseUrl = 'http://localhost:5050/api/services/app/User';
 
     getAll(skipCount: number = 0, maxResultCount: number = 100): Observable<any> {
         return this.http.get<any>(`${this.baseUrl}/GetAll`, {

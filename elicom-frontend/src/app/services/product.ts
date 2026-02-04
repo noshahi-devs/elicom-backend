@@ -64,8 +64,8 @@ export interface GlobalMarketplaceProduct {
     providedIn: 'root'
 })
 export class ProductService {
-    private apiUrl = 'https://localhost:44311/api/services/app/Homepage';
-    private publicApiUrl = 'https://localhost:44311/api/services/app/SmartStorePublic';
+    private apiUrl = 'http://localhost:5050/api/services/app/Homepage';
+    private publicApiUrl = 'http://localhost:5050/api/services/app/SmartStorePublic';
 
     constructor(private http: HttpClient) { }
 

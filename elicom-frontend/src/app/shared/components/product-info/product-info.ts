@@ -95,7 +95,7 @@ export class ProductInfo implements OnInit {
     }
 
     if (img.startsWith('http')) return img;
-    return `https://localhost:44311/images/products/${img}`;
+    return `http://localhost:5050/images/products/${img}`;
   }
 
   ngOnInit(): void {

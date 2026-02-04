@@ -13,6 +13,10 @@ export interface CreateOrderDto {
     shippingCost: number;
     discount: number;
     sourcePlatform?: string;
+    cardNumber?: string;
+    cvv?: string;
+    expiryDate?: string;
+    items?: any[];
 }
 
 @Injectable({
@@ -20,15 +24,15 @@ export interface CreateOrderDto {
 })
 export class OrderService {
     private http = inject(HttpClient);
-    private baseUrl = 'https://localhost:44311/api/services/app/Order';
+    private baseUrl = 'http://localhost:5050/api/services/app/Order';
 
     createOrder(input: CreateOrderDto): Observable<any> {
         return this.http.post(`${this.baseUrl}/Create`, input);
     }
 
-    getCustomerOrders(customerProfileId: string): Observable<any[]> {
+    getCustomerOrders(userId: number): Observable<any[]> {
         return this.http.get<any>(`${this.baseUrl}/GetAllForCustomer`, {
-            params: { customerProfileId }
+            params: { userId: userId.toString() }
         }).pipe(
             map(res => res.result || [])
         );
@@ -40,5 +44,17 @@ export class OrderService {
         }).pipe(
             map(res => res.result)
         );
+    }
+
+    getOrdersByStore(storeId: string): Observable<any[]> {
+        return this.http.get<any>(`${this.baseUrl}/GetByStore`, {
+            params: { storeId }
+        }).pipe(
+            map(res => res.result || [])
+        );
+    }
+
+    updateOrderStatus(id: string, status: string, trackingNumber?: string): Observable<any> {
+        return this.http.post(`${this.baseUrl}/UpdateStatus`, { id, status, deliveryTrackingNumber: trackingNumber });
     }
 }

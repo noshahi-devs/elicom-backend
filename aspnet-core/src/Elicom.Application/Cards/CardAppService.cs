@@ -61,10 +61,11 @@ namespace Elicom.Cards
             };
         }
 
+        [AbpAllowAnonymous]
         public async Task<CardValidationResultDto> ValidateCard(ValidateCardInput input)
         {
             // Clean card number (remove spaces)
-            var cleanCardNumber = input.CardNumber.Replace(" ", "");
+            var cleanCardNumber = input.CardNumber?.Replace(" ", "") ?? "";
 
             // Cross-tenant lookup: Ignore filters to find the card in any tenant (usually Tenant 3)
             using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
@@ -107,9 +108,10 @@ namespace Elicom.Cards
             }
         }
 
+        [AbpAllowAnonymous]
         public async Task ProcessPayment(ProcessCardPaymentInput input)
         {
-            var cleanCardNumber = input.CardNumber.Replace(" ", "");
+            var cleanCardNumber = input.CardNumber?.Replace(" ", "") ?? "";
 
             using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
             {

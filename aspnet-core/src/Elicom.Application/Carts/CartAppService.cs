@@ -1,5 +1,6 @@
 ﻿using Abp.Application.Services;
 using Abp.Domain.Repositories;
+using Abp.Domain.Uow;
 using AutoMapper;
 using Elicom.Entities;
 using Elicom.Carts.Dto;
@@ -8,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Elicom.Carts
 {
@@ -39,12 +41,22 @@ namespace Elicom.Carts
                 return ObjectMapper.Map<CartItemDto>(existingItem);
             }
 
-            var storeProduct = await _storeProductRepository
-                .GetAllIncluding(sp => sp.Product, sp => sp.Store)
-                .FirstOrDefaultAsync(sp => sp.Id == input.StoreProductId);
+            Logger.Info($"[CartAppService] AddToCart: UserId={input.UserId}, StoreProductId={input.StoreProductId}");
 
-            if (storeProduct == null)
+            StoreProduct storeProduct;
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
+            {
+                storeProduct = await _storeProductRepository
+                    .GetAllIncluding(sp => sp.Product, sp => sp.Store)
+                    .FirstOrDefaultAsync(sp => sp.Id == input.StoreProductId);
+            }
+
+            if (storeProduct == null) {
+                Logger.Error($"[CartAppService] StoreProduct {input.StoreProductId} NOT FOUND even with filters disabled.");
                 throw new Abp.UI.UserFriendlyException("Store product not found.");
+            }
+
+            Logger.Info($"[CartAppService] StoreProduct found: {storeProduct.Product.Name} from store {storeProduct.Store.Name}");
 
             var cartItem = ObjectMapper.Map<CartItem>(input);
             cartItem.Status = "Active";
@@ -61,15 +73,18 @@ namespace Elicom.Carts
 
         public async Task<List<CartItemDto>> GetCartItems(long userId)
         {
-            var items = await _cartRepository.GetAll()
-                .Include(c => c.StoreProduct)
-                    .ThenInclude(sp => sp.Product)
-                .Include(c => c.StoreProduct)
-                    .ThenInclude(sp => sp.Store)
-                .Where(c => c.UserId == userId && c.Status == "Active")
-                .ToListAsync();
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
+            {
+                var items = await _cartRepository.GetAll()
+                    .Include(c => c.StoreProduct)
+                        .ThenInclude(sp => sp.Product)
+                    .Include(c => c.StoreProduct)
+                        .ThenInclude(sp => sp.Store)
+                    .Where(c => c.UserId == userId && c.Status == "Active")
+                    .ToListAsync();
 
-            return ObjectMapper.Map<List<CartItemDto>>(items);
+                return ObjectMapper.Map<List<CartItemDto>>(items);
+            }
         }
 
         public async Task RemoveFromCart(Guid cartItemId)
@@ -77,6 +92,7 @@ namespace Elicom.Carts
             await _cartRepository.DeleteAsync(cartItemId);
         }
 
+        [HttpDelete]
         public async Task RemoveFromCartByProduct(long userId, Guid storeProductId)
         {
             var item = await _cartRepository.GetAll()
@@ -88,6 +104,7 @@ namespace Elicom.Carts
             }
         }
 
+        [HttpDelete]
         public async Task ClearCart(long userId)
         {
             var items = await _cartRepository.GetAllListAsync(c => c.UserId == userId);

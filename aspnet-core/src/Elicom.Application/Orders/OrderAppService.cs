@@ -52,7 +52,7 @@ namespace Elicom.Orders
         public async Task<OrderDto> Create(CreateOrderDto input)
         {
             List<CartItem> cartItems;
-            using (CurrentUnitOfWork.DisableFilter(AbpDataFilters.MayHaveTenant))
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
             {
                 Logger.Info($"[OrderAppService] Create Order for UserId: {input.UserId}");
                 
@@ -100,7 +100,9 @@ namespace Elicom.Orders
                 OrderItems = new List<OrderItem>()
             };
 
-            var user = await GetCurrentUserAsync(); 
+            var user = await UserManager.FindByIdAsync(input.UserId.ToString());
+            if (user == null)
+                throw new UserFriendlyException("User not found.");
 
             // ESCROW TRANSACTION: Move money from Buyer to Platform Admin (Escrow Hold)
             // Skip wallet check if using external payment methods like "finora" or cards
@@ -350,7 +352,8 @@ namespace Elicom.Orders
         {
             try
             {
-                var customerEmail = (await GetCurrentUserAsync()).EmailAddress;
+                var user = await UserManager.FindByIdAsync(order.UserId.ToString());
+                var customerEmail = user?.EmailAddress ?? "customer@example.com";
                 var adminEmail = "noshahidevelopersinc@gmail.com";
                 
                 // 1. Email to CUSTOMER

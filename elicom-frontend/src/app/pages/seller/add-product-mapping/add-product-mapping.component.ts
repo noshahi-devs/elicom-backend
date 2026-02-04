@@ -36,6 +36,7 @@ export class AddProductMappingComponent implements OnInit {
     handlingTime: number = 2;
     maxOrderQty: number = 10;
     isViewOnly: boolean = false;
+    currentMappingId: string | null = null;
 
     ngOnInit() {
         this.loadStore();
@@ -44,10 +45,15 @@ export class AddProductMappingComponent implements OnInit {
         const state = window.history.state;
         if (state && state.product) {
             this.isViewOnly = !!state.viewOnly;
+            this.currentMappingId = state.product.mappingId || null;
             this.selectProduct(state.product);
-            if (this.isViewOnly) {
-                // If view only, price is already set in the mapped product
-                this.retailPrice = state.product.resellerPrice || state.product.supplierPrice;
+
+            // If editing/viewing existing mapping
+            if (state.product.resellerPrice) {
+                this.retailPrice = state.product.resellerPrice;
+            }
+            if (state.product.stockQuantity) {
+                this.maxOrderQty = state.product.stockQuantity;
             }
         }
     }
@@ -85,7 +91,8 @@ export class AddProductMappingComponent implements OnInit {
         });
     }
 
-    parseImages(imageJson: string): string[] {
+    parseImages(imageJson: any): string[] {
+        if (Array.isArray(imageJson)) return imageJson;
         try {
             return JSON.parse(imageJson || '[]');
         } catch {
@@ -101,8 +108,10 @@ export class AddProductMappingComponent implements OnInit {
         // Calculate Max Allowed Price: ResellerMaxPrice OR 167% of SupplierPrice
         const maxAllowedPrice = Number((prod.supplierPrice * 1.67).toFixed(2));
 
-        // Default retail price is supplier price
-        this.retailPrice = prod.supplierPrice;
+        // Default retail price is supplier price if not already set (e.g. not from existing mapping)
+        if (!this.currentMappingId) {
+            this.retailPrice = prod.supplierPrice;
+        }
 
         this.showResults = false;
         this.maxAllowedPrice = maxAllowedPrice;
@@ -119,7 +128,7 @@ export class AddProductMappingComponent implements OnInit {
     }
 
     cancelSearch() {
-        if (this.isViewOnly) {
+        if (this.currentMappingId || this.isViewOnly) {
             this.router.navigate(['/seller/listings']);
             return;
         }
@@ -145,7 +154,7 @@ export class AddProductMappingComponent implements OnInit {
             return;
         }
 
-        const mapping = {
+        const mapping: any = {
             storeId: this.currentStore.id,
             productId: this.product.id,
             resellerPrice: this.retailPrice,
@@ -153,15 +162,29 @@ export class AddProductMappingComponent implements OnInit {
             status: true
         };
 
-        this.alert.loading('PUBLISHING TO STORE...');
-        this.storeProductService.mapProductToStore(mapping).subscribe({
-            next: () => {
-                this.alert.success('Product mapped to your store successfully!');
-                this.router.navigate(['/seller/listings']);
-            },
-            error: (err) => {
-                this.alert.error(err?.error?.error?.message || 'Failed to map product.');
-            }
-        });
+        if (this.currentMappingId) {
+            mapping.id = this.currentMappingId;
+            this.alert.loading('UPDATING LISTING...');
+            this.storeProductService.update(mapping).subscribe({
+                next: () => {
+                    this.alert.success('Listing updated successfully!');
+                    this.router.navigate(['/seller/listings']);
+                },
+                error: (err) => {
+                    this.alert.error(err?.error?.error?.message || 'Failed to update listing.');
+                }
+            });
+        } else {
+            this.alert.loading('PUBLISHING TO STORE...');
+            this.storeProductService.mapProductToStore(mapping).subscribe({
+                next: () => {
+                    this.alert.success('Product mapped to your store successfully!');
+                    this.router.navigate(['/seller/listings']);
+                },
+                error: (err) => {
+                    this.alert.error(err?.error?.error?.message || 'Failed to map product.');
+                }
+            });
+        }
     }
 }

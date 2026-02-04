@@ -10,6 +10,7 @@ namespace Elicom.Orders.Dto
         public long UserId { get; set; }
         public string SourcePlatform { get; set; }
         public string OrderNumber { get; set; }
+        public DateTime CreationTime { get; set; }
         public string Status { get; set; }
         public string PaymentStatus { get; set; }
         public string PaymentMethod { get; set; }

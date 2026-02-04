@@ -18,7 +18,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     if (token && !isPublic) {
         const cloned = req.clone({
             setHeaders: {
-                Authorization: `Bearer ${token}`
+                Authorization: `Bearer ${token}`,
+                'Abp-TenantId': '1' // Ensure tenant context is preserved
             }
         });
         return next(cloned);

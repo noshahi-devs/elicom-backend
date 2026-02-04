@@ -40,6 +40,7 @@ export class Checkout {
   showTopBar: boolean = true;
   isShippingAddressSaved: boolean = false;
   selectedPaymentMethod: string | null = null;
+  selectedPaymentDetails: any = null;
   isLoading: boolean = false;
 
   // Steps: 0: Cart, 1: Shipping, 2: Payment, 3: Success
@@ -62,6 +63,7 @@ export class Checkout {
 
   handlePaymentConfirmed(payment: { method: string, details?: any }) {
     this.selectedPaymentMethod = payment.method;
+    this.selectedPaymentDetails = payment.details;
     this.handlePlaceOrder();
   }
 
@@ -125,7 +127,17 @@ export class Checkout {
         postalCode: address.zip,
         shippingCost: 0,
         discount: 0,
-        sourcePlatform: 'SmartStore'
+        sourcePlatform: 'SmartStore',
+        cardNumber: this.selectedPaymentDetails?.number?.replace(/\s/g, ''),
+        cvv: this.selectedPaymentDetails?.cvv,
+        expiryDate: this.selectedPaymentDetails?.expiry,
+        items: this.cartService.items().map(item => ({
+          storeProductId: item.storeProductId,
+          quantity: item.quantity,
+          priceAtPurchase: item.price,
+          productName: item.name,
+          storeName: item.storeName
+        }))
       };
 
       console.log('[Checkout] 💳 Placing Order with Payload:', orderInput);

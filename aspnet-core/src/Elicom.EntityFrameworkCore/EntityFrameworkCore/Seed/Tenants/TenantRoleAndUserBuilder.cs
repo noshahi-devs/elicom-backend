@@ -71,12 +71,12 @@ public class TenantRoleAndUserBuilder
         var supplierRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Supplier);
         if (supplierRole == null)
         {
-            supplierRole = _context.Roles.Add(new Role(_tenantId, StaticRoleNames.Tenants.Supplier, StaticRoleNames.Tenants.Supplier) { IsStatic = true, IsDefault = true }).Entity;
+            supplierRole = _context.Roles.Add(new Role(_tenantId, StaticRoleNames.Tenants.Supplier, StaticRoleNames.Tenants.Supplier) { IsStatic = true }).Entity;
             _context.SaveChanges();
         }
-        else if (!supplierRole.IsDefault)
+        else if (supplierRole.IsDefault)
         {
-            supplierRole.IsDefault = true;
+            supplierRole.IsDefault = false;
             _context.SaveChanges();
         }
 
@@ -84,12 +84,12 @@ public class TenantRoleAndUserBuilder
         var resellerRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Reseller);
         if (resellerRole == null)
         {
-            resellerRole = _context.Roles.Add(new Role(_tenantId, StaticRoleNames.Tenants.Reseller, StaticRoleNames.Tenants.Reseller) { IsStatic = true, IsDefault = true }).Entity;
+            resellerRole = _context.Roles.Add(new Role(_tenantId, StaticRoleNames.Tenants.Reseller, StaticRoleNames.Tenants.Reseller) { IsStatic = true }).Entity;
             _context.SaveChanges();
         }
-        else if (!resellerRole.IsDefault)
+        else if (resellerRole.IsDefault)
         {
-            resellerRole.IsDefault = true;
+            resellerRole.IsDefault = false;
             _context.SaveChanges();
         }
 
