@@ -102,14 +102,16 @@
                         </td>
                         <td class="text-end pe-4">
                             <div class="btn-group">
-                                <button class="btn btn-sm btn-light border-0" title="View Details"
-                                    (click)="$event.stopPropagation(); viewOrderDetails(order)"><i
-                                        class="fas fa-eye text-primary"></i></button>
-                                <button *ngIf="order.status === 'Unshipped'" class="btn btn-sm btn-light border-0"
-                                    title="Ship Product" (click)="$event.stopPropagation()"><i
-                                        class="fas fa-truck text-success"></i></button>
-                                <button class="btn btn-sm btn-light border-0" title="More"
-                                    (click)="$event.stopPropagation()"><i class="fas fa-ellipsis-v"></i></button>
+                                <button *ngIf="order.status === 'Unshipped' || order.status === 'Pending'"
+                                    class="btn btn-sm btn-light border-0" title="Confirm Shipment"
+                                    (click)="$event.stopPropagation(); viewOrderDetails(order)">
+                                    <i class="fas fa-truck text-success"></i>
+                                </button>
+                                <button *ngIf="order.status === 'Unshipped' || order.status === 'Pending'"
+                                    class="btn btn-sm btn-light border-0" title="Cancel Order"
+                                    (click)="$event.stopPropagation(); cancelOrder(order)">
+                                    <i class="fas fa-times-circle text-danger"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>

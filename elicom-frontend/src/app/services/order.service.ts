@@ -24,7 +24,7 @@ export interface CreateOrderDto {
 })
 export class OrderService {
     private http = inject(HttpClient);
-    private baseUrl = 'http://localhost:5050/api/services/app/Order';
+    private baseUrl = 'https://localhost:44311/api/services/app/Order';
 
     createOrder(input: CreateOrderDto): Observable<any> {
         return this.http.post(`${this.baseUrl}/Create`, input);
@@ -54,7 +54,35 @@ export class OrderService {
         );
     }
 
+    getAllOrders(): Observable<any[]> {
+        return this.http.get<any>(`${this.baseUrl}/GetAll`).pipe(
+            map(res => res.result || [])
+        );
+    }
+
     updateOrderStatus(id: string, status: string, trackingNumber?: string): Observable<any> {
         return this.http.post(`${this.baseUrl}/UpdateStatus`, { id, status, deliveryTrackingNumber: trackingNumber });
+    }
+
+    fulfillOrder(input: { id: string, shipmentDate: string, carrierId: string, trackingCode: string }): Observable<any> {
+        return this.http.post(`${this.baseUrl}/Fulfill`, input);
+    }
+
+    verifyOrder(id: string): Observable<any> {
+        return this.http.post(`${this.baseUrl}/Verify`, { id });
+    }
+
+    deliverOrder(id: string): Observable<any> {
+        return this.http.post(`${this.baseUrl}/Deliver`, { id });
+    }
+
+    cancelOrder(id: string): Observable<any> {
+        return this.http.post(`${this.baseUrl}/Cancel`, { id });
+    }
+
+    getCarriers(): Observable<any[]> {
+        return this.http.get<any>(`${this.baseUrl}/GetCarriers`).pipe(
+            map(res => res.result || [])
+        );
     }
 }

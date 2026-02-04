@@ -56,6 +56,7 @@ export const routes: Routes = [
       { path: 'settings', loadComponent: () => import('./pages/admin/global-settings/global-settings.component').then(m => m.GlobalSettingsComponent) },
       { path: 'payouts', loadComponent: () => import('./pages/admin/financial-payouts/financial-payouts.component').then(m => m.FinancialPayoutsComponent) },
       { path: 'users', loadComponent: () => import('./pages/admin/user-management/user-management.component').then(m => m.UserManagementComponent) },
+      { path: 'orders', loadComponent: () => import('./pages/admin/admin-orders/admin-orders.component').then(m => m.AdminOrdersComponent) },
       { path: 'dashboard', loadComponent: () => import('./pages/admin/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]

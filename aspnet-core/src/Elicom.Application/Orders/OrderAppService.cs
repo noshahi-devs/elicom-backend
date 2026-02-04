@@ -24,6 +24,8 @@ namespace Elicom.Orders
         private readonly IRepository<CartItem, Guid> _cartItemRepository;
         private readonly IRepository<SupplierOrder, Guid> _supplierOrderRepository;
         private readonly IRepository<StoreProduct, Guid> _storeProductRepository;
+        private readonly IRepository<Carrier, int> _carrierRepository;
+        private readonly IRepository<AppTransaction, long> _appTransactionRepository;
         private readonly IWalletManager _walletManager;
         private readonly IEmailSender _emailSender;
         private readonly ICardAppService _cardAppService;
@@ -35,6 +37,8 @@ namespace Elicom.Orders
             IRepository<CartItem, Guid> cartItemRepository,
             IRepository<SupplierOrder, Guid> supplierOrderRepository,
             IRepository<StoreProduct, Guid> storeProductRepository,
+            IRepository<Carrier, int> carrierRepository,
+            IRepository<AppTransaction, long> appTransactionRepository,
             IWalletManager walletManager,
             IEmailSender emailSender,
             ICardAppService cardAppService)
@@ -43,6 +47,8 @@ namespace Elicom.Orders
             _cartItemRepository = cartItemRepository;
             _supplierOrderRepository = supplierOrderRepository;
             _storeProductRepository = storeProductRepository;
+            _carrierRepository = carrierRepository;
+            _appTransactionRepository = appTransactionRepository;
             _walletManager = walletManager;
             _emailSender = emailSender;
             _cardAppService = cardAppService;
@@ -99,6 +105,13 @@ namespace Elicom.Orders
                 SourcePlatform = input.SourcePlatform ?? "SmartStore",
                 OrderItems = new List<OrderItem>()
             };
+
+            // Generate ID manually so we can link SupplierOrders before final save if needed,
+            // or just insert early.
+            order.Id = Guid.NewGuid();
+            await _orderRepository.InsertAsync(order);
+            // We don't SaveChanges yet, we want the whole thing in one transaction if possible,
+            // but ABP's InsertAsync will already mark it for insertion.
 
             var user = await UserManager.FindByIdAsync(input.UserId.ToString());
             if (user == null)
@@ -166,20 +179,44 @@ namespace Elicom.Orders
                 }
             }
 
-            foreach (var ci in cartItems)
+            foreach (var group in cartItems.GroupBy(ci => ci.StoreProduct.Product.SupplierId))
             {
-                order.OrderItems.Add(new OrderItem
+                var supplierId = group.Key.GetValueOrDefault();
+                var supplierOrder = new SupplierOrder
                 {
-                    StoreProductId = ci.StoreProductId,
-                    ProductId = ci.StoreProduct.ProductId,
-                    Quantity = ci.Quantity,
-                    PriceAtPurchase = ci.Price,
-                    ProductName = ci.StoreProduct.Product.Name,
-                    StoreName = ci.StoreProduct.Store.Name
-                });
+                    SupplierId = supplierId,
+                    OrderId = order.Id,
+                    ReferenceCode = $"SUP-{DateTime.Now:yyyyMMddHHmmss}-{supplierId}",
+                    Status = "Purchased",
+                    TotalPurchaseAmount = group.Sum(ci => ci.StoreProduct.Product.SupplierPrice * ci.Quantity),
+                    CustomerName = user.Name,
+                    ShippingAddress = input.ShippingAddress,
+                    SourcePlatform = order.SourcePlatform,
+                    Items = new List<SupplierOrderItem>()
+                };
+
+                foreach (var ci in group)
+                {
+                    supplierOrder.Items.Add(new SupplierOrderItem
+                    {
+                        ProductId = ci.StoreProduct.ProductId,
+                        Quantity = ci.Quantity,
+                        PurchasePrice = ci.StoreProduct.Product.SupplierPrice
+                    });
+
+                    order.OrderItems.Add(new OrderItem
+                    {
+                        StoreProductId = ci.StoreProductId,
+                        ProductId = ci.StoreProduct.ProductId,
+                        Quantity = ci.Quantity,
+                        PriceAtPurchase = ci.Price,
+                        ProductName = ci.StoreProduct.Product.Name,
+                        StoreName = ci.StoreProduct.Store.Name
+                    });
+                }
+                await _supplierOrderRepository.InsertAsync(supplierOrder);
             }
 
-            await _orderRepository.InsertAsync(order);
             await CurrentUnitOfWork.SaveChangesAsync();
 
             foreach (var ci in cartItems)
@@ -236,17 +273,35 @@ namespace Elicom.Orders
             return ObjectMapper.Map<List<OrderDto>>(orders);
         }
 
-        public async Task<OrderDto> MarkAsProcessing(MarkOrderProcessingDto input)
+
+        public async Task<OrderDto> Fulfill(FulfillOrderDto input)
         {
             var order = await _orderRepository.GetAsync(input.Id);
             if (order == null)
                 throw new UserFriendlyException("Order not found");
 
             if (order.Status != "Pending")
-                throw new UserFriendlyException("Only pending orders can be processed");
+                throw new UserFriendlyException("Only pending orders can be fulfilled");
 
-            order.SupplierReference = input.SupplierReference;
-            order.Status = "Processing";
+            // Role Guard: Ensure only the order's seller can fulfill it
+            // (Simplification: Checking if ANY item in the order belongs to the seller)
+            var user = await GetCurrentUserAsync();
+            var sellerItems = await _orderRepository.GetAll()
+                .Where(o => o.Id == order.Id)
+                .SelectMany(o => o.OrderItems)
+                .Select(oi => oi.StoreProductId)
+                .ToListAsync();
+
+            var anySellerItem = await _storeProductRepository.GetAll()
+                .AnyAsync(sp => sellerItems.Contains(sp.Id) && sp.Store.OwnerId == user.Id);
+
+            if (!anySellerItem && !IsGranted(PermissionNames.Pages_PrimeShip_Admin))
+                 throw new UserFriendlyException("You are not authorized to fulfill this order.");
+
+            order.ShipmentDate = input.ShipmentDate;
+            order.CarrierId = input.CarrierId;
+            order.TrackingCode = input.TrackingCode;
+            order.Status = "PendingVerification";
 
             await _orderRepository.UpdateAsync(order);
             await CurrentUnitOfWork.SaveChangesAsync();
@@ -254,58 +309,103 @@ namespace Elicom.Orders
             return ObjectMapper.Map<OrderDto>(order);
         }
 
-        [AbpAuthorize(PermissionNames.Pages_SmartStore_Seller)]
-        public async Task<OrderDto> LinkWholesaleOrder(LinkWholesaleOrderDto input)
+        [AbpAuthorize(PermissionNames.Pages_PrimeShip_Admin)]
+        public async Task<OrderDto> Verify(VerifyOrderDto input)
         {
-            var user = await GetCurrentUserAsync();
-
-            // 1. Find the wholesale order (Prime Ship)
-            var wholesaleOrder = await _supplierOrderRepository.GetAll()
-                .FirstOrDefaultAsync(so => so.ReferenceCode == input.WholesaleReferenceCode);
-
-            if (wholesaleOrder == null)
-                throw new UserFriendlyException("Wholesale Reference Code not found in Prime Ship.");
-
-            if (wholesaleOrder.ResellerId != user.Id)
-                throw new UserFriendlyException("This wholesale order does not belong to you.");
-
-            // 2. Find the retail order (Smart Store)
-            var retailOrder = await _orderRepository.GetAsync(input.OrderId);
-            if (retailOrder == null)
-                throw new UserFriendlyException("Retail Order not found.");
-
-            // 3. Link them
-            retailOrder.SupplierReference = input.WholesaleReferenceCode;
-            retailOrder.Status = "Processing"; // Moving to processing since it's bought from warehouse
-
-            wholesaleOrder.OrderId = retailOrder.Id;
-            wholesaleOrder.Status = "LinkedToOrder";
-
-            await _orderRepository.UpdateAsync(retailOrder);
-            await _supplierOrderRepository.UpdateAsync(wholesaleOrder);
-            await CurrentUnitOfWork.SaveChangesAsync();
-
-            return ObjectMapper.Map<OrderDto>(retailOrder);
-        }
-
-        // Store/Admin marks order as delivered
-        public async Task<OrderDto> MarkAsDelivered(MarkOrderDeliveredDto input)
-        {
-            var order = await _orderRepository.GetAll()
-                .Include(o => o.OrderItems)
-                .FirstOrDefaultAsync(o => o.Id == input.Id);
-
+            var order = await _orderRepository.GetAsync(input.Id);
             if (order == null)
                 throw new UserFriendlyException("Order not found");
 
-            if (order.Status != "Processing")
-                throw new UserFriendlyException("Only processed orders can be delivered");
+            if (order.Status != "PendingVerification")
+                throw new UserFriendlyException("Order is not in PendingVerification state");
 
-            order.DeliveryTrackingNumber = input.DeliveryTrackingNumber;
+            order.Status = "Verified";
+
+            // Transaction Generation
+            var storeItems = await _orderRepository.GetAll()
+                .Where(o => o.Id == order.Id)
+                .SelectMany(o => o.OrderItems)
+                .Select(oi => new { oi.PriceAtPurchase, oi.Quantity, oi.StoreProductId })
+                .ToListAsync();
+
+            foreach (var item in storeItems)
+            {
+                var storeProduct = await _storeProductRepository.GetAll()
+                    .Include(sp => sp.Store)
+                    .FirstOrDefaultAsync(sp => sp.Id == item.StoreProductId);
+
+                if (storeProduct != null)
+                {
+                    var sellerAmount = item.PriceAtPurchase * item.Quantity;
+                    var feeAmount = sellerAmount * 0.1m; // 10% Platform Fee example
+
+                    // Seller Sale Transaction (Pending)
+                    await _appTransactionRepository.InsertAsync(new AppTransaction
+                    {
+                        UserId = storeProduct.Store.OwnerId,
+                        Amount = sellerAmount - feeAmount,
+                        TransactionType = "Credit",
+                        Category = "Sale",
+                        ReferenceId = order.OrderNumber,
+                        OrderId = order.Id,
+                        Status = "Pending",
+                        Description = $"Proceeds from Order {order.OrderNumber} (Less Fee)"
+                    });
+
+                    // Platform Fee Transaction (Approved/Internal)
+                    await _appTransactionRepository.InsertAsync(new AppTransaction
+                    {
+                        UserId = PlatformAdminId,
+                        Amount = feeAmount,
+                        TransactionType = "Credit",
+                        Category = "Fee",
+                        ReferenceId = order.OrderNumber,
+                        OrderId = order.Id,
+                        Status = "Approved",
+                        Description = $"Platform Fee from Order {order.OrderNumber}"
+                    });
+                }
+            }
+
+            await _orderRepository.UpdateAsync(order);
+            await CurrentUnitOfWork.SaveChangesAsync();
+
+            // Notify Seller
+            // (Implementation omitted for brevity, similar to SendOrderPlacementEmails)
+
+            return ObjectMapper.Map<OrderDto>(order);
+        }
+
+        [AbpAuthorize(PermissionNames.Pages_PrimeShip_Admin)]
+        public async Task<OrderDto> Deliver(Guid id)
+        {
+            var order = await _orderRepository.GetAsync(id);
+            if (order == null)
+                throw new UserFriendlyException("Order not found");
+
+            if (order.Status != "Verified")
+                throw new UserFriendlyException("Order must be Verified before it can be marked as Delivered");
+
             order.Status = "Delivered";
             order.PaymentStatus = "Completed";
 
-            await FinalizeOrder(order);
+            // Payment Release: Approve all Pending transactions for this OrderId
+            var pendingTransactions = await _appTransactionRepository.GetAll()
+                .Where(t => t.OrderId == id && t.Status == "Pending")
+                .ToListAsync();
+
+            foreach (var trans in pendingTransactions)
+            {
+                trans.Status = "Approved";
+                
+                // Also update the actual wallet balance
+                await _walletManager.DepositAsync(
+                    trans.UserId,
+                    trans.Amount,
+                    trans.ReferenceId,
+                    $"Payment Release: {trans.Description}"
+                );
+            }
 
             await _orderRepository.UpdateAsync(order);
             await CurrentUnitOfWork.SaveChangesAsync();
@@ -313,39 +413,41 @@ namespace Elicom.Orders
             return ObjectMapper.Map<OrderDto>(order);
         }
 
-        // Admin can update order status to any valid status
-        public async Task<OrderDto> UpdateStatus(UpdateOrderStatusDto input)
+        public async Task<OrderDto> Cancel(Guid id)
         {
-            var order = await _orderRepository.GetAll()
-                .Include(o => o.OrderItems)
-                .FirstOrDefaultAsync(o => o.Id == input.Id);
-
+            var order = await _orderRepository.GetAsync(id);
             if (order == null)
                 throw new UserFriendlyException("Order not found");
 
-            // Validate status
-            var validStatuses = new[] { "Pending", "Verified", "Processing", "Shipped", "Delivered", "Cancelled" };
-            if (!validStatuses.Contains(input.Status, StringComparer.OrdinalIgnoreCase))
-                throw new UserFriendlyException($"Invalid status. Valid statuses are: {string.Join(", ", validStatuses)}");
+            if (order.Status == "Delivered" || order.Status == "Cancelled")
+                throw new UserFriendlyException($"Cannot cancel an order that is already {order.Status}");
 
-            order.Status = input.Status;
-
-            if (!string.IsNullOrEmpty(input.DeliveryTrackingNumber))
+            // Refund logic if payment was held in escrow
+            if (order.PaymentStatus == "Held in Escrow")
             {
-                order.DeliveryTrackingNumber = input.DeliveryTrackingNumber;
+                await _walletManager.TransferAsync(
+                    PlatformAdminId,
+                    order.UserId,
+                    order.TotalAmount,
+                    $"Refund for Cancelled Order {order.OrderNumber}"
+                );
+                order.PaymentStatus = "Refunded (Escrow)";
             }
 
-            // If marking as delivered, also update payment status
-            if (input.Status.Equals("Delivered", StringComparison.OrdinalIgnoreCase))
-            {
-                order.PaymentStatus = "Completed";
-                await FinalizeOrder(order);
-            }
-
+            order.Status = "Cancelled";
             await _orderRepository.UpdateAsync(order);
             await CurrentUnitOfWork.SaveChangesAsync();
 
             return ObjectMapper.Map<OrderDto>(order);
+        }
+
+        public async Task<List<CarrierDto>> GetCarriers()
+        {
+            var carriers = await _carrierRepository.GetAll()
+                .Where(c => c.IsActive)
+                .ToListAsync();
+
+            return ObjectMapper.Map<List<CarrierDto>>(carriers);
         }
 
         private async Task SendOrderPlacementEmails(Order order, List<CartItem> cartItems)

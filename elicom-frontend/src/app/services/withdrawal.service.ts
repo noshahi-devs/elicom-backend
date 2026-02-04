@@ -14,7 +14,7 @@ export interface WithdrawRequestDto {
 })
 export class WithdrawalService {
     private http = inject(HttpClient);
-    private baseUrl = 'http://localhost:5050/api/services/app/Withdraw';
+    private baseUrl = 'https://localhost:44311/api/services/app/Withdraw';
 
     submitWithdrawRequest(amount: number): Observable<any> {
         return this.http.post(`${this.baseUrl}/SubmitWithdrawRequest`, { amount });

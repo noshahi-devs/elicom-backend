@@ -1,98 +1,287 @@
-.order-details-container {
-    max-width: 1200px;
-    margin: 0 auto;
+.order-details-wrapper {
+    background: #f0f2f2;
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    color: #0f1111;
+    padding-bottom: 5rem;
+}
 
-    .page-header {
-        .status-badge {
-            padding: 8px 16px;
-            border-radius: 30px;
-            font-weight: 700;
-            font-size: 14px;
-            text-transform: uppercase;
+/* Professional Progress Tracker */
+.order-timeline-container {
+    background: white;
+    padding: 2.5rem 2rem;
+    border-radius: 8px;
+    border: 1px solid #e7e7e7;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 2px rgba(15, 17, 17, .15);
 
-            &.unshipped,
-            &.pending {
-                background: #fee2e2;
-                color: #ef4444;
-            }
-
-            &.processing {
-                background: #eef2ff;
-                color: #4f46e5;
-            }
-
-            &.shipped {
-                background: #dcfce7;
-                color: #10b981;
-            }
-
-            &.delivered {
-                background: #e0f2fe;
-                color: #0ea5e9;
-            }
-
-            &.cancelled {
-                background: #f1f5f9;
-                color: #64748b;
-            }
-
-            &.returned {
-                background: #fef3c7;
-                color: #f59e0b;
-            }
-        }
-    }
-
-    .card {
-        transition: transform 0.2s;
-
-        &:hover {
-            transform: translateY(-2px);
-        }
-    }
-
-    .avatar-circle {
-        width: 45px;
-        height: 45px;
-        background: #4f46e5;
-        color: white;
-        border-radius: 50%;
+    .timeline-steps {
         display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 18px;
+        justify-content: space-between;
+        position: relative;
+        max-width: 800px;
+        margin: 0 auto;
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: 18px;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #e7e7e7;
+            z-index: 1;
+        }
+
+        .step {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            flex: 1;
+
+            .dot {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background: white;
+                border: 4px solid #e7e7e7;
+                margin: 0 auto 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.4s;
+
+                i {
+                    font-size: 14px;
+                    color: #94a3b8;
+                }
+            }
+
+            .label {
+                font-size: 0.85rem;
+                font-weight: 700;
+                color: #565959;
+            }
+
+            &.active {
+                .dot {
+                    border-color: #10b981;
+                    background: white;
+
+                    i {
+                        color: #10b981;
+                    }
+                }
+
+                .label {
+                    color: #10b981;
+                }
+            }
+
+            &.completed {
+                &:not(:first-child)::before {
+                    background: #10b981;
+                    content: '';
+                    position: absolute;
+                    height: 4px;
+                    top: 18px;
+                    left: -50%;
+                    right: 50%;
+                    z-index: -1;
+                }
+
+                .dot {
+                    background: #10b981;
+                    border-color: #10b981;
+
+                    i {
+                        color: white !important;
+                    }
+                }
+
+                .label {
+                    color: #0f1111;
+                }
+            }
+        }
     }
+}
 
-    .summary-box {
-        width: 100%;
-        max-width: 300px;
+/* Amazon-Style Buttons */
+.btn-utility {
+    background: white;
+    border: 1px solid #d5d9d9;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    box-shadow: 0 2px 5px rgba(213, 217, 217, .5);
+    color: #0f1111;
+    transition: background 0.2s;
 
-        hr {
-            border-color: #e2e8f0;
-            opacity: 0.5;
+    &:hover {
+        background: #f7fafa;
+        border-color: #adb1b1;
+    }
+}
+
+/* Horizontal Market Cards */
+.market-horizontal-card {
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e7e7e7;
+    margin-bottom: 12px;
+    display: flex;
+    padding: 1.25rem;
+
+    .item-img-box {
+        width: 120px;
+        height: 120px;
+        border: 1px solid #eee;
+        border-radius: 4px;
+        margin-right: 1.5rem;
+        flex-shrink: 0;
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
     }
 
-    .bg-indigo-subtle {
-        background-color: #eef2ff !important;
+    .item-info-box {
+        flex-grow: 1;
+
+        .p-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #007185;
+            margin-bottom: 4px;
+        }
+
+        .p-subtitle {
+            font-size: 0.85rem;
+            color: #565959;
+            margin-bottom: 10px;
+        }
+
+        .p-meta-labels {
+            display: flex;
+            gap: 15px;
+            font-size: 0.8rem;
+
+            b {
+                color: #0f1111;
+            }
+        }
     }
 
-    .text-indigo {
-        color: #4f46e5 !important;
+    .item-price-box {
+        width: 250px;
+        border-left: 1px solid #e7e7e7;
+        padding-left: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+            color: #565959;
+
+            &.final-line {
+                margin-top: 10px;
+                padding-top: 10px;
+                border-top: 1px solid #eee;
+                font-weight: 700;
+                color: #b12704;
+                font-size: 1rem;
+            }
+        }
     }
 }
 
-.animate__fadeIn {
-    animation: fadeIn 0.5s ease-in;
+/* Sidebar Cards */
+.amazon-sidebar {
+    .sidebar-card {
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e7e7e7;
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+
+        .card-header {
+            font-size: 1rem;
+            font-weight: 700;
+            border-bottom: none;
+            background: transparent;
+            padding: 0 0 12px 0;
+            display: block;
+        }
+
+        .address-box {
+            color: #0f1111;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+    }
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
+/* Action Panel */
+.amazon-action-panel {
+    background: #fdfdfd;
+    border: 2px solid #e7e7e7;
+    border-radius: 8px;
+    padding: 2rem;
+
+    .panel-heading {
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        font-size: 1.15rem;
     }
 
-    to {
-        opacity: 1;
+    .market-input {
+        border: 1px solid #888c8c;
+        border-radius: 3px;
+        height: 35px;
+        box-shadow: 0 1px 2px rgba(15, 17, 17, .15) inset;
+    }
+
+    .btn-amazon-primary {
+        background: #FFD814;
+        border: 1px solid #FCD200;
+        border-radius: 20px;
+        padding: 8px 30px;
+        font-weight: 500;
+    }
+
+    .btn-amazon-secondary {
+        background: #fff;
+        border: 1px solid #d5d9d9;
+        border-radius: 20px;
+        padding: 8px 30px;
+        font-weight: 500;
+    }
+}
+
+/* Payout highlights */
+.daraz-payout-card {
+    background: #f85606;
+    color: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+
+    .payout-label {
+        opacity: 0.8;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .payout-amount {
+        font-size: 1.75rem;
+        font-weight: 900;
+        letter-spacing: -1px;
     }
 }

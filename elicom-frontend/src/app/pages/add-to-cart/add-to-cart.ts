@@ -73,7 +73,7 @@ export class AddToCart implements OnInit {
     }
 
     if (!img.startsWith('http')) {
-      return `http://localhost:5050/images/products/${img}`;
+      return `https://localhost:44311/images/products/${img}`;
     }
     return img;
   }
@@ -103,7 +103,7 @@ export class AddToCart implements OnInit {
         return `https://picsum.photos/seed/${seed}/300/400`;
       }
       if (!img.startsWith('http')) {
-        return `http://localhost:5050/images/products/${img}`;
+        return `https://localhost:44311/images/products/${img}`;
       }
       return img;
     }

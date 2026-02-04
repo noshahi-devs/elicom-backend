@@ -45,7 +45,7 @@ import { StoreService } from './store.service';
 })
 export class AuthService {
     // Using a simplified base URL, adjust if needed (e.g. from environment)
-    private baseUrl = 'http://localhost:5050';
+    private baseUrl = 'https://localhost:44311';
 
     // State
     private _currentUser = new BehaviorSubject<User | null>(this.getUserFromStorage());

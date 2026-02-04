@@ -49,7 +49,7 @@ export interface CreateStoreDto {
 })
 export class StoreService {
     private http = inject(HttpClient);
-    private apiUrl = 'http://localhost:5050/api/services/app/Store';
+    private apiUrl = 'https://localhost:44311/api/services/app/Store';
 
     getAllStores(): Observable<any> {
         return this.http.get(`${this.apiUrl}/GetAll`);

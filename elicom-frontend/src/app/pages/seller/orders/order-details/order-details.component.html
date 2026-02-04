@@ -1,135 +1,190 @@
-<div class="order-details-container animate__animated animate__fadeIn">
-    <!-- Header -->
-    <div class="page-header mb-4 d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-3">
-            <button class="btn btn-light rounded-circle shadow-sm" (click)="goBack()">
-                <i class="fas fa-arrow-left"></i>
-            </button>
-            <div>
-                <h3 class="fw-bold text-dark mb-0">Order Details {{ order?.id }}</h3>
-                <p class="text-muted small mb-0">Placed on {{ order?.date }}</p>
+<div class="order-details-wrapper p-3 p-lg-4">
+    <div class="container-fluid max-width-1200 mx-auto">
+
+        <!-- DEBUG: SYNC VERSION 2.1 (Amazon Polish) -->
+        <small class="text-muted opacity-25">UI SYNC: 2026-02-04_1549</small>
+
+        <!-- Top Toolbar: Navigation & Header -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-utility shadow-none" (click)="goBack()" title="Back to Orders">
+                    <i class="fas fa-chevron-left"></i> Back
+                </button>
+                <h4 class="m-0 fw-bold">Order Details</h4>
             </div>
         </div>
-        <div class="status-badge" [ngClass]="order?.status.toLowerCase()">
-            {{ order?.status }}
-        </div>
-    </div>
 
-    <div class="row g-4">
-        <!-- Main Content -->
-        <div class="col-lg-8">
-            <!-- Order Items Card -->
-            <div class="card border-0 shadow-sm rounded-4 mb-4">
-                <div class="card-header bg-white border-0 pt-4 px-4">
-                    <h5 class="fw-bold mb-0">Order Items</h5>
+        <!-- Professional Progress Tracker (Amazon/Daraz Style) -->
+        <div class="order-timeline-container mb-4">
+            <div class="timeline-steps">
+                <div class="step" [ngClass]="{'completed': order?.status !== 'Cancelled'}">
+                    <div class="dot"><i class="fas fa-receipt"></i></div>
+                    <div class="label">Ordered</div>
                 </div>
-                <div class="card-body p-4">
-                    <div class="table-responsive">
-                        <table class="table align-middle">
-                            <thead class="text-muted small">
-                                <tr>
-                                    <th>Product</th>
-                                    <th>SKU</th>
-                                    <th>Price</th>
-                                    <th>Quantity</th>
-                                    <th class="text-end">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr *ngFor="let item of order?.orderItems">
-                                    <td>
-                                        <div class="d-flex align-items-center gap-3">
-                                            <img [src]="item.image" class="rounded-3" width="50" height="50">
-                                            <span class="fw-semibold text-dark">{{ item.name }}</span>
-                                        </div>
-                                    </td>
-                                    <td><span class="text-muted">{{ item.sku }}</span></td>
-                                    <td>${{ item.price }}</td>
-                                    <td>{{ item.quantity }}</td>
-                                    <td class="text-end fw-bold text-dark">${{ item.subtotal }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                <div class="step" [ngClass]="{
+                    'completed': order?.status === 'PendingVerification' || order?.status === 'Verified' || order?.status === 'Delivered',
+                    'active': order?.status === 'Pending' && order?.status !== 'Cancelled'
+                }">
+                    <div class="dot"><i class="fas fa-truck-loading"></i></div>
+                    <div class="label">Confirm Shipment</div>
+                </div>
+                <div class="step" [ngClass]="{
+                    'completed': order?.status === 'Verified' || order?.status === 'Delivered',
+                    'active': order?.status === 'PendingVerification'
+                }">
+                    <div class="dot"><i class="fas fa-shield-alt"></i></div>
+                    <div class="label">Verified</div>
+                </div>
+                <div class="step" [ngClass]="{
+                    'completed': order?.status === 'Delivered',
+                    'active': order?.status === 'Verified'
+                }">
+                    <div class="dot"><i class="fas fa-home"></i></div>
+                    <div class="label">Delivered</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- MAIN COLUMN: Product Data & Fulfillment -->
+            <div class="col-lg-8">
+
+                <!-- Shipment Header Summary -->
+                <div class="bg-white border rounded-2 p-3 mb-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small">Order ID: </span>
+                        <span class="fw-bold">#{{ order?.id }}</span>
+                    </div>
+                    <div>
+                        <span class="badge" [ngClass]="{
+                            'bg-primary': order?.status === 'Pending',
+                            'bg-success': order?.status === 'Verified' || order?.status === 'Delivered',
+                            'bg-warning text-dark': order?.status === 'PendingVerification',
+                            'bg-danger': order?.status === 'Cancelled'
+                        }">{{ order?.status }}</span>
+                    </div>
+                </div>
+
+                <!-- Horizontal Product Items -->
+                <div class="market-horizontal-card shadow-sm" *ngFor="let item of order?.orderItems">
+                    <div class="item-img-box">
+                        <img [src]="item.image" alt="Product">
+                    </div>
+                    <div class="item-info-box">
+                        <div class="p-title">{{ item.name }}</div>
+                        <div class="p-subtitle">Sold by: <b class="text-dark">Official Store</b> | Condition: New</div>
+                        <div class="p-meta-labels">
+                            <span>SKU: <b>{{ item.sku }}</b></span>
+                            <span>Quantity: <b>{{ item.quantity }}</b></span>
+                            <span>ID: <b class="text-secondary">{{ item.productId?.substring(0,8) }}</b></span>
+                        </div>
+                    </div>
+                    <div class="item-price-box">
+                        <div class="price-row">
+                            <span>Item Price</span>
+                            <span>${{ item.price | number:'1.2-2' }}</span>
+                        </div>
+                        <div class="price-row">
+                            <span>Subtotal</span>
+                            <span>${{ item.subtotal }}</span>
+                        </div>
+                        <div class="price-row">
+                            <span>Market Tax (4%)</span>
+                            <span>+${{ item.tax }}</span>
+                        </div>
+                        <div class="price-row final-line">
+                            <span>Total Proceeds</span>
+                            <span>${{ item.total }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Professional Action Panel (Fulfillment) -->
+                <div class="amazon-action-panel mt-4 shadow-sm" *ngIf="order?.status === 'Pending'">
+                    <h5 class="panel-heading border-bottom pb-3"><i class="fas fa-shipping-fast me-2 text-warning"></i>
+                        Confirm Shipment Details</h5>
+
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Shipment Date</label>
+                            <input type="date" [(ngModel)]="fulfillmentForm.shipmentDate"
+                                class="form-control market-input" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Logistics Carrier</label>
+                            <select class="form-select market-input" [(ngModel)]="fulfillmentForm.carrierId" required>
+                                <option value="" selected disabled>Select Partner</option>
+                                <option value="USPS">USPS Express</option>
+                                <option value="UPS">UPS Worldwide</option>
+                                <option value="FedEx">FedEx Ground</option>
+                                <option value="DHL">DHL International</option>
+                                <option value="DarazExpress">Daraz Express</option>
+                                <option value="AmazonLogistics">Amazon Logistics</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Tracking Code/ID</label>
+                            <input type="text" [(ngModel)]="fulfillmentForm.trackingCode"
+                                class="form-control market-input" placeholder="e.g. TRK778899" required>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-3 mt-5 pt-3 border-top">
+                        <button class="btn btn-amazon-secondary px-5" (click)="cancelOrder()">Abort Order</button>
+                        <button class="btn btn-amazon-primary px-5" (click)="fulfillOrder()" [disabled]="fulfilling">
+                            <span *ngIf="!fulfilling">Confirm & Ship</span>
+                            <span *ngIf="fulfilling"><i class="fas fa-spinner fa-spin me-2"></i>Processing...</span>
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Totals Section -->
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-end">
-                        <div class="summary-box">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted">Subtotal:</span>
-                                <span class="fw-semibold">${{ order?.subtotal }}</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted">Shipping Fee:</span>
-                                <span class="fw-semibold">${{ order?.shippingFee }}</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted">Tax:</span>
-                                <span class="fw-semibold">${{ order?.tax }}</span>
-                            </div>
-                            <hr>
-                            <div class="d-flex justify-content-between">
-                                <h4 class="fw-bold text-dark">Grand Total:</h4>
-                                <h4 class="fw-bold text-primary">${{ order?.grandTotal }}</h4>
-                            </div>
+            <!-- SIDEBAR COLUMN: Addresses & Financials -->
+            <div class="col-lg-4 amazon-sidebar">
+
+                <!-- Financial Summary (Daraz Red) -->
+                <div class="daraz-payout-card shadow-sm mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="payout-label">EXPECTED PAYOUT</span>
+                        <i class="fas fa-info-circle opacity-50"></i>
+                    </div>
+                    <div class="payout-amount">${{ order?.subtotal | number:'1.2-4' }}</div>
+                    <div class="mt-2 small opacity-75">Base: ${{ order?.subtotal }} + Tax: ${{ order?.tax |
+                        number:'1.2-4' }}</div>
+                </div>
+
+                <!-- Shipping Address Card -->
+                <div class="sidebar-card shadow-sm">
+                    <h6 class="card-header border-bottom">Shipping Address</h6>
+                    <div class="address-box mt-2">
+                        <div class="fw-bold mb-1">{{ order?.customer }}</div>
+                        <div>{{ order?.shippingAddress }}</div>
+                        <div>{{ order?.city }}, {{ order?.state }} {{ order?.postalCode }}</div>
+                        <div class="fw-bold mt-2 text-uppercase">{{ order?.country }}</div>
+                        <div class="mt-3 text-muted small"><i class="fas fa-phone-alt me-2"></i> +1 234 567 890</div>
+                    </div>
+                </div>
+
+                <!-- Logistics Meta Card -->
+                <div class="sidebar-card shadow-sm">
+                    <h6 class="card-header border-bottom">Logistics Meta</h6>
+                    <div class="d-flex flex-column gap-3 mt-2">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted small">Ship By</span>
+                            <span class="small fw-bold text-danger">{{ order?.shipBy }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted small">Deliver By</span>
+                            <span class="small fw-bold text-primary">{{ order?.deliverBy }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted small">Fulfillment</span>
+                            <span class="small fw-bold">Marketplace Seller</span>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Sidebar Info -->
-        <div class="col-lg-4">
-            <!-- Customer Info Card -->
-            <div class="card border-0 shadow-sm rounded-4 mb-4">
-                <div class="card-header bg-white border-0 pt-4 px-4">
-                    <h5 class="fw-bold mb-0">Customer Information</h5>
-                </div>
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center gap-3 mb-4">
-                        <div class="avatar-circle">
-                            {{ order?.customer.charAt(0) }}
-                        </div>
-                        <div>
-                            <h6 class="fw-bold mb-0 text-dark">{{ order?.customer }}</h6>
-                            <span class="text-muted small">Customer ID: #USER-{{ order?.userId }}</span>
-                        </div>
-                    </div>
-                    <div class="info-item mb-3">
-                        <label class="text-muted small d-block">Email</label>
-                        <span class="fw-semibold text-dark">{{ order?.email }}</span>
-                    </div>
-                    <div class="info-item mb-3">
-                        <label class="text-muted small d-block">Phone</label>
-                        <span class="fw-semibold text-dark">{{ order?.phone }}</span>
-                    </div>
-                    <div class="info-item">
-                        <label class="text-muted small d-block">Shipping Address</label>
-                        <span class="fw-semibold text-dark">{{ order?.shippingAddress }}</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Update Status Card -->
-            <div class="card border-0 shadow-sm rounded-4 bg-indigo-subtle">
-                <div class="card-body p-4">
-                    <h5 class="fw-bold mb-3 text-indigo">Update Order Status</h5>
-                    <div class="form-group mb-3">
-                        <select class="form-select border-0 shadow-sm" #statusSelect [value]="order?.status">
-                            <option *ngFor="let option of statusOptions" [value]="option">{{ option }}</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-primary w-100 py-2 fw-bold" [disabled]="updatingStatus"
-                        (click)="updateStatus(statusSelect.value)">
-                        <i class="fas fa-sync me-2" [class.fa-spin]="updatingStatus"></i>
-                        {{ updatingStatus ? 'Updating...' : 'Update Status' }}
-                    </button>
-                </div>
-            </div>
-        </div>
+        <div class="py-5"></div>
     </div>
 </div>

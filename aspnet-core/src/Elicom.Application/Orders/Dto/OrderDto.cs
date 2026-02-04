@@ -29,6 +29,10 @@ namespace Elicom.Orders.Dto
         public string SupplierReference { get; set; }
         public string DeliveryTrackingNumber { get; set; }
 
+        public DateTime? ShipmentDate { get; set; }
+        public string CarrierId { get; set; }
+        public string TrackingCode { get; set; }
+
         public List<OrderItemDto> OrderItems { get; set; }
     }
 }

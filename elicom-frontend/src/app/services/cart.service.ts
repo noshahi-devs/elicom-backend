@@ -26,7 +26,7 @@ export interface CartItem {
 export class CartService {
     private http = inject(HttpClient);
     private authService = inject(AuthService);
-    private baseUrl = 'http://localhost:5050/api/services/app/Cart';
+    private baseUrl = 'https://localhost:44311/api/services/app/Cart';
 
     // Using signals for reactive state (Internal UI)
     private cartItems = signal<CartItem[]>(this.loadCartFromStorage());

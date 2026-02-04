@@ -211,8 +211,13 @@ namespace Elicom.Tests.Orders
 
                 await uowManager.Current.SaveChangesAsync();
 
-                // Now Mark as Processing
-                await _orderAppService.MarkAsProcessing(new MarkOrderProcessingDto { Id = orderDto.Id, SupplierReference = "REF-123" });
+                // Now Fulfill (Seller)
+                await _orderAppService.Fulfill(new FulfillOrderDto { 
+                    Id = orderDto.Id, 
+                    CarrierId = "DHL", 
+                    TrackingCode = "REF-123",
+                    ShipmentDate = DateTime.Now
+                });
                 await uowManager.Current.SaveChangesAsync();
 
                 // Check balances before delivery
@@ -220,15 +225,17 @@ namespace Elicom.Tests.Orders
                 // Wait, GetMyWallet auto-creates with 0. Deposit adds 1000. So 1000 - 150 = 850.
                 (await _walletManager.GetBalanceAsync(user.Id)).ShouldBe(850);
 
-                // Act: Mark as Delivered
-                await _orderAppService.MarkAsDelivered(new MarkOrderDeliveredDto { Id = orderDto.Id, DeliveryTrackingNumber = "TRACK-123" });
+                // Act: Verify (Admin)
+                await _orderAppService.Verify(new VerifyOrderDto { Id = orderDto.Id });
+                await uowManager.Current.SaveChangesAsync();
+
+                // Act: Deliver (Admin)
+                await _orderAppService.Deliver(orderDto.Id);
                 await uowManager.Current.SaveChangesAsync();
 
                 // Assert: 
-                // Supplier (user.Id) should get 100.
-                // Reseller (user.Id) should get 50 (150 - 100).
-                // Total balance: 850 + 100 + 50 = 1000.
-                (await _walletManager.GetBalanceAsync(user.Id)).ShouldBe(1000);
+                // Total balance: 850 + 135 (Sale - Fee) = 985.
+                (await _walletManager.GetBalanceAsync(user.Id)).ShouldBe(985);
 
                 await uow.CompleteAsync();
             }
@@ -419,23 +426,29 @@ namespace Elicom.Tests.Orders
                 // Verify initial status
                 orderDto.Status.ShouldBe("Pending");
 
-                // Act: Update status to Processing
-                var updatedOrder = await _orderAppService.UpdateStatus(new Elicom.Orders.Dto.UpdateOrderStatusDto {
+                // Act: Fulfill
+                var updatedOrder = await _orderAppService.Fulfill(new FulfillOrderDto {
                     Id = orderDto.Id,
-                    Status = "Processing"
+                    CarrierId = "Carrier1",
+                    TrackingCode = "TRACK-1",
+                    ShipmentDate = DateTime.Now
                 });
 
                 await uowManager.Current.SaveChangesAsync();
 
                 // Assert
                 updatedOrder.ShouldNotBeNull();
-                updatedOrder.Status.ShouldBe("Processing");
+                updatedOrder.Status.ShouldBe("PendingVerification");
 
-                // Act: Update status to Delivered
-                var deliveredOrder = await _orderAppService.UpdateStatus(new Elicom.Orders.Dto.UpdateOrderStatusDto {
-                    Id = orderDto.Id,
-                    Status = "Delivered"
-                });
+                // Act: Verify
+                var verifiedOrder = await _orderAppService.Verify(new VerifyOrderDto { Id = orderDto.Id });
+                await uowManager.Current.SaveChangesAsync();
+
+                // Assert
+                verifiedOrder.Status.ShouldBe("Verified");
+
+                // Act: Deliver
+                var deliveredOrder = await _orderAppService.Deliver(orderDto.Id);
 
                 await uowManager.Current.SaveChangesAsync();
 
@@ -509,12 +522,11 @@ namespace Elicom.Tests.Orders
 
                 await uowManager.Current.SaveChangesAsync();
 
-                // Act & Assert: Try to update with invalid status
+                // Act & Assert: Try to Verify when not in PendingVerification
                 await Should.ThrowAsync<Abp.UI.UserFriendlyException>(async () =>
                 {
-                    await _orderAppService.UpdateStatus(new Elicom.Orders.Dto.UpdateOrderStatusDto {
-                        Id = orderDto.Id,
-                        Status = "InvalidStatus"
+                    await _orderAppService.Verify(new VerifyOrderDto {
+                        Id = orderDto.Id
                     });
                 });
 

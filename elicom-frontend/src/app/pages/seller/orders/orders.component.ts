@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { OrderService } from '../../../services/order.service';
 import { StoreService } from '../../../services/store.service';
+import Swal from 'sweetalert2';
 
 @Component({
     selector: 'app-seller-orders',
@@ -93,6 +94,42 @@ export class SellerOrdersComponent implements OnInit {
     viewOrderDetails(order: any) {
         this.router.navigate(['/seller/orders/details', order.guid], {
             state: { order: order.original || order }
+        });
+    }
+
+    cancelOrder(order: any) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: `Are you sure you want to cancel order ${order.id}? This will refund the payment to the customer.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, cancel it!',
+            cancelButtonText: 'No, keep it'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.isLoading = true;
+                this.orderService.cancelOrder(order.guid).subscribe({
+                    next: () => {
+                        this.loadOrders();
+                        Swal.fire(
+                            'Cancelled!',
+                            'Order has been cancelled successfully.',
+                            'success'
+                        );
+                    },
+                    error: (err) => {
+                        console.error('Failed to cancel order', err);
+                        Swal.fire(
+                            'Error!',
+                            'Failed to cancel order: ' + (err.error?.message || 'Unknown error'),
+                            'error'
+                        );
+                        this.isLoading = false;
+                    }
+                });
+            }
         });
     }
 }

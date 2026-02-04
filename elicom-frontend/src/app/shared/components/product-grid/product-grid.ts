@@ -175,7 +175,7 @@ export class ProductGridComponent implements OnInit, OnChanges {
     if (val.startsWith('http')) return val;
 
     // 6. Prepend Base URL
-    const baseUrl = 'http://localhost:5050';
+    const baseUrl = 'https://localhost:44311';
 
     if (!val.startsWith('/')) {
       if (val.indexOf('/') === -1) {
@@ -217,7 +217,7 @@ export class ProductGridComponent implements OnInit, OnChanges {
 
     if (val.startsWith('http')) return val;
 
-    const baseUrl = 'http://localhost:5050';
+    const baseUrl = 'https://localhost:44311';
     if (!val.startsWith('/')) {
       if (val.indexOf('/') === -1) {
         return `${baseUrl}/images/products/${val}`;

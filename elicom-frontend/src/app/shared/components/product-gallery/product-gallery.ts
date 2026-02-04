@@ -69,7 +69,7 @@ export class ProductGallery implements OnInit {
     if (img.startsWith('http')) return img;
 
     // Handle local images (e.g. 'hair.png')
-    return `http://localhost:5050/images/products/${img}`;
+    return `https://localhost:44311/images/products/${img}`;
   }
 
   selectImage(index: number) {

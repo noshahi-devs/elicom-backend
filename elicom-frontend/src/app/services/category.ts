@@ -18,8 +18,8 @@ export interface Category {
 })
 export class CategoryService {
 
-  private apiUrl = 'http://localhost:5050/api/services/app/Category';
-  private homeUrl = 'http://localhost:5050/api/services/app/Homepage/GetCategoriesWithListedProducts';
+  private apiUrl = 'https://localhost:44311/api/services/app/Category';
+  private homeUrl = 'https://localhost:44311/api/services/app/Homepage/GetCategoriesWithListedProducts';
 
   // Cache observables to prevent multiple simultaneous calls during page load/refresh
   private categoriesCache$?: Observable<any[]>;

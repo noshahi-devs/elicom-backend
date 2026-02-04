@@ -31,6 +31,7 @@ namespace Elicom.EntityFrameworkCore
         public DbSet<AppTransaction> AppTransactions { get; set; }
         public DbSet<SupportTicket> SupportTickets { get; set; }
         public DbSet<Warehouse> Warehouses { get; set; }
+        public DbSet<Carrier> Carriers { get; set; }
 
         public ElicomDbContext(DbContextOptions<ElicomDbContext> options)
             : base(options)

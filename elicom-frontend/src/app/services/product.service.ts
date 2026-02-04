@@ -19,7 +19,7 @@ export interface ProductDto {
 })
 export class ProductService {
     private http = inject(HttpClient);
-    private apiUrl = 'http://localhost:5050/api/services/app/Product';
+    private apiUrl = 'https://localhost:44311/api/services/app/Product';
 
     search(query: string): Observable<any> {
         return this.http.get(`${this.apiUrl}/Search`, { params: { query } });

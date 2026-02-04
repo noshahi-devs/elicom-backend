@@ -17,7 +17,7 @@ namespace Elicom.Entities
 
         // Order details
         public string OrderNumber { get; set; }
-        public string Status { get; set; } = "Pending"; // Pending → Processing → Delivered
+        public string Status { get; set; } = "Pending"; // Pending → PendingVerification → Verified → Delivered
         public string PaymentStatus { get; set; } = "Pending";
         public string PaymentMethod { get; set; }
 
@@ -39,6 +39,11 @@ namespace Elicom.Entities
 
         // Seller sets after purchasing from supplier
         public string SupplierReference { get; set; }
+
+        // Shipment Details (Generic Order Flow)
+        public DateTime? ShipmentDate { get; set; }
+        public string CarrierId { get; set; }
+        public string TrackingCode { get; set; }
 
         // Store/Admin sets when delivering to buyer
         public string DeliveryTrackingNumber { get; set; }

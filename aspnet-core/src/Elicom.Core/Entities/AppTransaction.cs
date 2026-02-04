@@ -2,6 +2,7 @@ using Abp.Domain.Entities;
 using Abp.Domain.Entities.Auditing;
 using Elicom.Authorization.Users;
 using System.ComponentModel.DataAnnotations;
+using System;
 
 namespace Elicom.Entities
 {
@@ -25,6 +26,10 @@ namespace Elicom.Entities
 
         public string ReferenceId { get; set; }
         
+        public Guid? OrderId { get; set; }
+        
+        public string Status { get; set; } // Pending, Approved
+
         public string Description { get; set; }
 
         public AppTransaction()

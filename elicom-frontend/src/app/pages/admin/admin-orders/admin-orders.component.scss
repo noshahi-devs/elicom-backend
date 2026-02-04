@@ -1,0 +1,35 @@
+.admin-orders-container {
+    .tabs-container {
+        max-width: 600px;
+
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+    }
+
+    .table {
+        thead th {
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #f8f9fa;
+        }
+
+        tbody tr {
+            cursor: pointer;
+
+            &:hover {
+                background-color: #fbfbfb;
+                transform: translateX(4px);
+            }
+        }
+    }
+
+    .extra-small {
+        font-size: 0.7rem;
+    }
+
+    .bg-info-subtle {
+        background-color: rgba(13, 202, 240, 0.1);
+    }
+}

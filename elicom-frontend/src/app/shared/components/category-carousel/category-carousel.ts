@@ -106,7 +106,7 @@ export class CategoryCarouselComponent implements OnInit, OnChanges {
       if (img === 'test.jpg' || img === 'category.png' || img === 'hair.png') {
         return `https://picsum.photos/seed/${cat.name}/110/110`;
       }
-      return `http://localhost:5050/images/products/${cat.imageUrl}`;
+      return `https://localhost:44311/images/products/${cat.imageUrl}`;
     }
     const seed = cat.id || cat.categoryId || cat.name || 'default';
     return `https://picsum.photos/seed/${seed}/110/110`;
