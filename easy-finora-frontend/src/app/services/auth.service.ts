@@ -6,7 +6,7 @@ import { Observable, map } from 'rxjs';
     providedIn: 'root'
 })
 export class AuthService {
-    private apiUrl = 'https://localhost:44311/api/services/app/Account';
+    private apiUrl = 'https://app-elicom-backend.azurewebsites.net/api/services/app/Account';
 
     constructor(private http: HttpClient) { }
 
@@ -17,7 +17,7 @@ export class AuthService {
     }
 
     login(input: any): Observable<any> {
-        return this.http.post('https://localhost:44311/api/TokenAuth/Authenticate', input, {
+        return this.http.post('https://app-elicom-backend.azurewebsites.net/api/TokenAuth/Authenticate', input, {
             headers: { 'Abp-TenantId': '3' }
         });
     }

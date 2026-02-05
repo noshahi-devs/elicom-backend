@@ -45,7 +45,7 @@ import { StoreService } from './store.service';
 })
 export class AuthService {
     // Using a simplified base URL, adjust if needed (e.g. from environment)
-    private baseUrl = 'https://localhost:44311';
+    private baseUrl = 'https://app-elicom-backend.azurewebsites.net';
 
     // State
     private _currentUser = new BehaviorSubject<User | null>(this.getUserFromStorage());

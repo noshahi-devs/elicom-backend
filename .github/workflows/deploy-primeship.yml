@@ -1,0 +1,36 @@
+name: Deploy Primeship Frontend
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    paths:
+      - 'Primeship/**'
+      - '.github/workflows/deploy-primeship.yml'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        working-directory: Primeship
+        run: npm install
+
+      - name: Build
+        working-directory: Primeship
+        run: npm run build
+
+      - name: Deploy to Azure Static Web App
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_PRIMESHIP }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "Primeship"
+          output_location: "dist/noshahi-mart" # From package.json name

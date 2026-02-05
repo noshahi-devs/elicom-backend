@@ -1,0 +1,35 @@
+name: Deploy Elicom Backend
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    paths:
+      - 'aspnet-core/**'
+      - '.github/workflows/deploy-backend.yml'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: dotnet restore
+        run: dotnet restore aspnet-core/Elicom.sln
+
+      - name: dotnet build
+        run: dotnet build aspnet-core/Elicom.sln --configuration Release --no-restore
+
+      - name: dotnet publish
+        run: dotnet publish aspnet-core/src/Elicom.Web.Host/Elicom.Web.Host.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'app-elicom-backend' # This must match the script name
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ${{env.DOTNET_ROOT}}/myapp

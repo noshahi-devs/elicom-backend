@@ -28,7 +28,7 @@ export interface AuthResponse {
     providedIn: 'root'
 })
 export class AuthService {
-    private apiUrl = 'https://localhost:44311/api';
+    private apiUrl = 'https://app-elicom-backend.azurewebsites.net/api';
     private currentUserSubject = new BehaviorSubject<any>(null);
     public currentUser$ = this.currentUserSubject.asObservable();
 
