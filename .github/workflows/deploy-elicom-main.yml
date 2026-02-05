@@ -13,6 +13,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: elicom-frontend
+        run: npm install
+
+      - name: Build
+        working-directory: elicom-frontend
+        run: npm run build
+
       - name: Build And Deploy
         uses: Azure/static-web-apps-deploy@v1
         with:
@@ -21,4 +34,5 @@ jobs:
           action: "upload"
           app_location: "elicom-frontend"
           api_location: ""
-          output_location: "dist/elicom-frontend"
+          output_location: "dist/elicom-frontend/browser"
+          skip_app_build: true
