@@ -24,7 +24,9 @@ jobs:
 
       - name: Build
         working-directory: elicom-frontend
-        run: npm run build
+        run: |
+          chmod +x node_modules/.bin/ng
+          npx ng build --configuration production
 
       - name: Build And Deploy
         uses: Azure/static-web-apps-deploy@v1
