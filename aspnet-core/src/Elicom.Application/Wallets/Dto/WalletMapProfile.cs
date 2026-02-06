@@ -9,6 +9,8 @@ namespace Elicom.Wallets.Dto
         public WalletMapProfile()
         {
             CreateMap<Wallet, WalletDto>();
+            CreateMap<SmartStoreWallet, SmartStoreWalletDto>();
+            CreateMap<SmartStoreWalletTransaction, SmartStoreWalletTransactionDto>();
         }
     }
 }

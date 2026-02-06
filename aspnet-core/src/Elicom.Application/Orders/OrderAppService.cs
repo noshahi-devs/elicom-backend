@@ -29,6 +29,7 @@ namespace Elicom.Orders
         private readonly IWalletManager _walletManager;
         private readonly IEmailSender _emailSender;
         private readonly ICardAppService _cardAppService;
+        private readonly ISmartStoreWalletManager _smartStoreWalletManager;
 
         private const long PlatformAdminId = 1; // The system account that holds Escrow funds
 
@@ -41,7 +42,8 @@ namespace Elicom.Orders
             IRepository<AppTransaction, long> appTransactionRepository,
             IWalletManager walletManager,
             IEmailSender emailSender,
-            ICardAppService cardAppService)
+            ICardAppService cardAppService,
+            ISmartStoreWalletManager smartStoreWalletManager)
         {
             _orderRepository = orderRepository;
             _cartItemRepository = cartItemRepository;
@@ -52,6 +54,7 @@ namespace Elicom.Orders
             _walletManager = walletManager;
             _emailSender = emailSender;
             _cardAppService = cardAppService;
+            _smartStoreWalletManager = smartStoreWalletManager;
         }
 
         // Create order from cart
@@ -364,6 +367,14 @@ namespace Elicom.Orders
                         Status = "Approved",
                         Description = $"Platform Fee from Order {order.OrderNumber}"
                     });
+
+                    // NEW: Dedicated SmartStore Wallet Persistence
+                    await _smartStoreWalletManager.CreditAsync(
+                        storeProduct.Store.OwnerId,
+                        sellerAmount - feeAmount,
+                        order.OrderNumber,
+                        $"Proceeds from Verified Order {order.OrderNumber}"
+                    );
                 }
             }
 

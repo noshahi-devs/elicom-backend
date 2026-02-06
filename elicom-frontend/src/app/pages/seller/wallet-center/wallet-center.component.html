@@ -58,18 +58,30 @@
                     </tr>
                 </thead>
                 <tbody>
+                    <tr *ngIf="isLoading">
+                        <td colspan="7" class="text-center py-5">
+                            <i class="fas fa-circle-notch fa-spin fa-2x text-primary mb-2"></i>
+                            <p class="text-muted">Loading your wallet records...</p>
+                        </td>
+                    </tr>
+                    <tr *ngIf="!isLoading && transactions.length === 0">
+                        <td colspan="7" class="text-center py-5">
+                            <i class="fas fa-history fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No transactions found.</p>
+                        </td>
+                    </tr>
                     <tr *ngFor="let t of transactions">
                         <td>
                             <div class="date-cell">
-                                <span class="d-block fw-600">{{t.createdAt | date:'mediumDate'}}</span>
-                                <small class="text-muted">{{t.createdAt | date:'shortTime'}}</small>
+                                <span class="d-block fw-600">{{t.creationTime | date:'mediumDate'}}</span>
+                                <small class="text-muted">{{t.creationTime | date:'shortTime'}}</small>
                             </div>
                         </td>
-                        <td><span class="ref-badge">{{t.reference}}</span></td>
+                        <td><span class="ref-badge">{{t.referenceId}}</span></td>
                         <td>
                             <div class="type-cell">
-                                <i class="fas {{getTypeIcon(t.type)}} me-2"></i>
-                                <span class="text-capitalize">{{t.type}}</span>
+                                <i class="fas {{getTypeIcon(t.transactionType)}} me-2"></i>
+                                <span class="text-capitalize">{{t.transactionType}}</span>
                             </div>
                         </td>
                         <td><span class="desc-text">{{t.description}}</span></td>

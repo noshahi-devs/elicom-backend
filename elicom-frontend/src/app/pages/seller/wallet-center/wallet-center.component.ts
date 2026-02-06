@@ -1,16 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-interface Transaction {
-    id: number;
-    amount: number;
-    type: 'sale' | 'withdrawal' | 'clearance' | 'refund' | 'fees';
-    includeInSum: boolean;
-    reference: string;
-    description: string;
-    status: 'pending' | 'approved' | 'rejected';
-    createdAt: Date;
-}
+import { WalletService, WalletTransactionDto } from '../../../services/wallet.service';
 
 @Component({
     selector: 'app-wallet-center',
@@ -20,44 +10,64 @@ interface Transaction {
     styleUrls: ['./wallet-center.component.scss']
 })
 export class WalletCenterComponent implements OnInit {
-    transactions: Transaction[] = [
-        { id: 1, amount: 150.00, type: 'sale', includeInSum: true, reference: 'ORD-10023', description: 'Payment for Order #10023', status: 'approved', createdAt: new Date('2026-01-28 10:30') },
-        { id: 2, amount: 85.50, type: 'sale', includeInSum: true, reference: 'ORD-10024', description: 'Payment for Order #10024', status: 'approved', createdAt: new Date('2026-01-29 14:15') },
-        { id: 3, amount: -500.00, type: 'withdrawal', includeInSum: true, reference: 'WTH-552', description: 'Weekly withdrawal to bank', status: 'pending', createdAt: new Date('2026-01-30 09:00') },
-        { id: 4, amount: -15.20, type: 'fees', includeInSum: true, reference: 'FEE-991', description: 'Platform service fee - Jan', status: 'approved', createdAt: new Date('2026-01-25 23:59') },
-        { id: 5, amount: 45.00, type: 'clearance', includeInSum: true, reference: 'CLR-201', description: 'Settlement for previous period', status: 'approved', createdAt: new Date('2026-01-20 12:00') }
-    ];
+    private walletService = inject(WalletService);
+    private cdr = inject(ChangeDetectorRef);
 
+    transactions: WalletTransactionDto[] = [];
     balance = 0;
-    pendingBalance = 0;
+    pendingBalance = 0; // SmartStore persistent ledger treats all verified as immediate balance for now
+    isLoading = false;
 
     ngOnInit() {
-        this.calculateBalances();
+        this.loadWalletData();
     }
 
-    calculateBalances() {
-        this.balance = this.transactions
-            .filter(t => t.includeInSum && (t.status === 'approved'))
-            .reduce((acc, curr) => acc + curr.amount, 0);
+    loadWalletData() {
+        this.isLoading = true;
+        this.walletService.getMyWallet().subscribe({
+            next: (wallet) => {
+                this.balance = wallet.balance;
+                this.loadTransactions();
+            },
+            error: (err) => {
+                console.error('Failed to load wallet', err);
+                this.isLoading = false;
+                this.cdr.detectChanges();
+            }
+        });
+    }
 
-        this.pendingBalance = this.transactions
-            .filter(t => t.status === 'pending')
-            .reduce((acc, curr) => acc + curr.amount, 0);
+    loadTransactions() {
+        this.walletService.getTransactions().subscribe({
+            next: (res) => {
+                this.transactions = res;
+                this.isLoading = false;
+                this.cdr.detectChanges();
+            },
+            error: (err) => {
+                console.error('Failed to load transactions', err);
+                this.isLoading = false;
+                this.cdr.detectChanges();
+            }
+        });
     }
 
     getStatusClass(status: string) {
+        if (!status) return {};
+        const s = status.toLowerCase();
         return {
-            'badge-pending': status === 'pending',
-            'badge-approved': status === 'approved',
-            'badge-rejected': status === 'rejected'
+            'badge-pending': s === 'pending',
+            'badge-approved': s === 'completed' || s === 'approved',
+            'badge-rejected': s === 'failed' || s === 'rejected'
         };
     }
 
     getTypeIcon(type: string) {
-        switch (type) {
+        if (!type) return 'fa-exchange-alt';
+        const t = type.toLowerCase();
+        switch (t) {
             case 'sale': return 'fa-shopping-cart text-success';
-            case 'withdrawal': return 'fa-bank text-danger';
-            case 'fees': return 'fa-percentage text-warning';
+            case 'payout': return 'fa-bank text-danger';
             case 'refund': return 'fa-undo text-info';
             default: return 'fa-exchange-alt';
         }

@@ -32,6 +32,8 @@ namespace Elicom.EntityFrameworkCore
         public DbSet<SupportTicket> SupportTickets { get; set; }
         public DbSet<Warehouse> Warehouses { get; set; }
         public DbSet<Carrier> Carriers { get; set; }
+        public DbSet<SmartStoreWallet> SmartStoreWallets { get; set; }
+        public DbSet<SmartStoreWalletTransaction> SmartStoreWalletTransactions { get; set; }
 
         public ElicomDbContext(DbContextOptions<ElicomDbContext> options)
             : base(options)
@@ -176,6 +178,28 @@ namespace Elicom.EntityFrameworkCore
                  .WithMany() // A store can have multiple warehouses
                  .HasForeignKey(w => w.StoreId)
                  .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            /* ---------------- SmartStore Wallet Configuration ---------------- */
+            builder.Entity<SmartStoreWallet>(b =>
+            {
+                b.HasOne(w => w.User)
+                 .WithOne()
+                 .HasForeignKey<SmartStoreWallet>(w => w.UserId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                b.Property(w => w.Balance).HasColumnType("decimal(18,2)");
+                b.Property(w => w.RowVersion).IsRowVersion();
+            });
+
+            builder.Entity<SmartStoreWalletTransaction>(b =>
+            {
+                b.HasOne(wt => wt.Wallet)
+                 .WithMany()
+                 .HasForeignKey(wt => wt.WalletId)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                b.Property(wt => wt.Amount).HasColumnType("decimal(18,2)");
             });
         }
     }

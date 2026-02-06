@@ -9,19 +9,31 @@ export interface WalletDto {
     currency: string;
 }
 
+export interface WalletTransactionDto {
+    id: string;
+    walletId: string;
+    amount: number;
+    transactionType: 'Sale' | 'Payout' | 'Refund';
+    referenceId: string;
+    description: string;
+    status: string;
+    creationTime: string;
+}
+
 @Injectable({
     providedIn: 'root'
 })
 export class WalletService {
     private http = inject(HttpClient);
-    private baseUrl = 'https://localhost:44311/api/services/app/Wallet';
+    private baseUrl = 'https://localhost:44311/api/services/app/SmartStoreWallet';
 
     getMyWallet(): Observable<WalletDto> {
         return this.http.get<any>(`${this.baseUrl}/GetMyWallet`)
             .pipe(map(res => res.result));
     }
 
-    getTransactions(): Observable<any> {
-        return this.http.get<any>(`${this.baseUrl}/GetTransactions`);
+    getTransactions(): Observable<WalletTransactionDto[]> {
+        return this.http.get<any>(`${this.baseUrl}/GetTransactions`)
+            .pipe(map(res => res.result?.items || []));
     }
 }
