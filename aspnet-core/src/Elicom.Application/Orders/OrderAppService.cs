@@ -265,6 +265,7 @@ namespace Elicom.Orders
             return ObjectMapper.Map<List<OrderDto>>(orders);
         }
 
+        [AbpAuthorize(PermissionNames.Pages_SmartStore_Seller)]
         public async Task<List<OrderDto>> GetByStore(Guid storeId)
         {
             var orders = await _orderRepository.GetAll()
@@ -277,6 +278,7 @@ namespace Elicom.Orders
         }
 
 
+        [AbpAuthorize(PermissionNames.Pages_SmartStore_Seller)]
         public async Task<OrderDto> Fulfill(FulfillOrderDto input)
         {
             var order = await _orderRepository.GetAsync(input.Id);

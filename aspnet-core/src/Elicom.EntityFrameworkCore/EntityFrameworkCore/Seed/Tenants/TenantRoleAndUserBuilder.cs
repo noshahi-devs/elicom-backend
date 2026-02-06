@@ -139,6 +139,10 @@ public class TenantRoleAndUserBuilder
             GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_Stores);
             GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_Stores_Create);
             GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_Stores_Edit);
+            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_SmartStore_Seller);
+            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_StoreProducts);
+            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_StoreProducts_Create);
+            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_StoreProducts_Edit);
             GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_Supplier_Products);
         }
 

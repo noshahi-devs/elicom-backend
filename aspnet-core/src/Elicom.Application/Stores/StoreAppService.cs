@@ -18,7 +18,6 @@ using MailKit.Security;
 namespace Elicom.Stores
 {    
 
-    [AbpAuthorize(PermissionNames.Pages_Stores)]
     public class StoreAppService : ElicomAppServiceBase, IStoreAppService
     {
         private readonly IRepository<Store, Guid> _storeRepo;
@@ -38,12 +37,14 @@ namespace Elicom.Stores
             _userManager = userManager;
         }
 
+        [AbpAuthorize(PermissionNames.Pages_Stores)]
         public async Task<ListResultDto<StoreDto>> GetAll()
         {
             var stores = await _storeRepo.GetAll().Include(s => s.Kyc).ToListAsync();
             return new ListResultDto<StoreDto>(ObjectMapper.Map<List<StoreDto>>(stores));
         }
 
+        [AbpAuthorize(PermissionNames.Pages_Stores)]
         public async Task<StoreDto> Get(Guid id)
         {
             var store = await _storeRepo.GetAsync(id);
@@ -81,6 +82,7 @@ namespace Elicom.Stores
             await _storeRepo.DeleteAsync(id);
         }
 
+        [AbpAuthorize(PermissionNames.Pages_Stores)]
         public async Task Approve(EntityDto<Guid> input)
         {
             var store = await _storeRepo.GetAsync(input.Id);
@@ -163,6 +165,7 @@ namespace Elicom.Stores
             }
         }
 
+        [AbpAuthorize(PermissionNames.Pages_Stores)]
         public async Task Reject(EntityDto<Guid> input)
         {
             var store = await _storeRepo.GetAsync(input.Id);
@@ -170,6 +173,7 @@ namespace Elicom.Stores
             await _storeRepo.UpdateAsync(store);
         }
 
+        [AbpAuthorize(PermissionNames.Pages_SmartStore_Seller)]
         public async Task<StoreDto> GetMyStore()
         {
             var userId = AbpSession.UserId;

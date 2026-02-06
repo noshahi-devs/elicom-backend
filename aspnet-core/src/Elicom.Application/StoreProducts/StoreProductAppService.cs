@@ -12,7 +12,6 @@ using Microsoft.EntityFrameworkCore;
 namespace Elicom.StoreProducts
 {    
 
-    [AbpAuthorize(PermissionNames.Pages_StoreProducts)]
     public class StoreProductAppService : ElicomAppServiceBase, IStoreProductAppService
     {
         private readonly IRepository<StoreProduct, Guid> _storeProductRepo;
@@ -54,6 +53,7 @@ namespace Elicom.StoreProducts
             await _storeProductRepo.InsertAsync(storeProduct);
         }
 
+        [AbpAuthorize(PermissionNames.Pages_SmartStore_Seller)]
         public async Task<ListResultDto<StoreProductDto>> GetByStore(Guid storeId)
         {
             using (CurrentUnitOfWork.DisableFilter(Abp.Domain.Uow.AbpDataFilters.MayHaveTenant))
