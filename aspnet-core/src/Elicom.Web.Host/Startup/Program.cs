@@ -19,8 +19,8 @@ namespace Elicom.Web.Host.Startup
             {
                 try
                 {
-                    var context = scope.ServiceProvider.GetRequiredService<ElicomDbContext>();
-                    context.Database.Migrate();
+                    // var context = scope.ServiceProvider.GetRequiredService<ElicomDbContext>();
+                    // context.Database.Migrate();
                 }
                 catch (System.Exception ex)
                 {
