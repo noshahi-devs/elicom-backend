@@ -13,23 +13,35 @@ namespace Elicom.Web.Host.Startup
     {
         public static void Main(string[] args)
         {
-            var host = CreateHostBuilder(args).Build();
+            System.Console.WriteLine(">>> Application starting...");
+            System.Console.WriteLine($">>> Environment: {System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}");
+            System.Console.WriteLine($">>> Current Directory: {System.IO.Directory.GetCurrentDirectory()}");
             
-            using (var scope = host.Services.CreateScope())
+            try 
             {
-                try
+                var host = CreateHostBuilder(args).Build();
+                
+                using (var scope = host.Services.CreateScope())
                 {
-                    // var context = scope.ServiceProvider.GetRequiredService<ElicomDbContext>();
-                    // context.Database.Migrate();
+                    try
+                    {
+                        // var context = scope.ServiceProvider.GetRequiredService<ElicomDbContext>();
+                        // context.Database.Migrate();
+                    }
+                    catch (System.Exception ex)
+                    {
+                        var logger = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Program>>();
+                        logger.LogCritical(ex, "An error occurred while migrating the database.");
+                    }
                 }
-                catch (System.Exception ex)
-                {
-                    var logger = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Program>>();
-                    logger.LogCritical(ex, "An error occurred while migrating the database.");
-                }
-            }
 
-            host.Run();
+                host.Run();
+            }
+            catch (System.Exception ex)
+            {
+                System.Console.WriteLine($">>> FATAL ERROR IN MAIN: {ex}");
+                throw;
+            }
         }
 
         internal static IHostBuilder CreateHostBuilder(string[] args) =>
