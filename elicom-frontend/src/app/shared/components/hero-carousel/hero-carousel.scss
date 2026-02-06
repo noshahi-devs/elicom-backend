@@ -1,7 +1,10 @@
 :host {
-  display: block; /* ensure block level */
-  position: relative; /* relative to parent */
-  z-index: 1; /* normal stacking */
+  display: block;
+  /* ensure block level */
+  position: relative;
+  /* relative to parent */
+  z-index: 1;
+  /* normal stacking */
 }
 
 
@@ -85,4 +88,61 @@
   background-color: rgba(0, 0, 0, 0.6);
   border-radius: 50%;
   padding: 12px;
+}
+
+@media (max-width: 768px) {
+  .hero-wrapper {
+    flex-direction: column;
+    gap: 10px;
+    padding: 0; // Removing side padding for full image feel
+  }
+
+  .side-cards {
+    display: none;
+  }
+
+  .main-carousel {
+    width: 100%;
+    height: auto; // Let it scale naturally
+    min-height: 200px;
+    margin-top: 0;
+
+    .carousel-inner {
+      height: 100%;
+
+      img {
+        width: 100%;
+        height: auto;
+        max-height: 250px;
+        object-fit: contain; // Ensure full image is visible
+        background: #f0f0f0; // Fallback background
+      }
+    }
+
+    /* CENTERED NAVIGATION ICONS VERTICALLY */
+    .carousel-control-prev,
+    .carousel-control-next {
+      width: 30px; // Smaller size
+      height: 30px; // Smaller size
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 50%;
+      top: 45%; // thora oper kro
+      transform: translateY(-50%);
+      opacity: 0.8;
+
+      span {
+        filter: invert(1); // Black icons
+        width: 15px; // Smaller internal icon
+        height: 15px;
+      }
+    }
+
+    .carousel-control-prev {
+      left: 10px;
+    }
+
+    .carousel-control-next {
+      right: 10px;
+    }
+  }
 }

@@ -11,12 +11,29 @@
     --sui-header-font: 'Arial Black', Arial, Helvetica, sans-serif;
 }
 
+html,
+body {
+    overflow-x: hidden;
+    width: 100vw;
+}
+
 body {
     font-family: var(--sui-font-family);
     color: var(--sui-secondary);
     background-color: #fff;
     margin: 0;
     -webkit-font-smoothing: antialiased;
+}
+
+.home-wrapper,
+.search-result-container,
+.product-detail-container,
+.cart-container {
+    padding: 0 15px;
+
+    @media (min-width: 768px) {
+        padding: 0 40px;
+    }
 }
 
 h1,

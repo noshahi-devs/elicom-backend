@@ -21,6 +21,8 @@ export class Header implements AfterViewChecked {
   globeDropdown = signal(false);
   authModalOpen = signal(false); // Controls the Auth Modal visibility
   searchTerm = '';
+  isSearchVisible = signal(true);
+
 
   cartService = inject(CartService);
   searchService = inject(SearchService);
@@ -140,13 +142,15 @@ export class Header implements AfterViewChecked {
   scrollAmount = 200;
 
   scrollLeft() {
-    const navbar = document.querySelector('.elicom-navbar');
-    if (navbar) navbar.scrollBy({ left: -200, behavior: 'smooth' });
+    if (this.navbar) {
+      this.navbar.nativeElement.scrollBy({ left: -200, behavior: 'smooth' });
+    }
   }
 
   scrollRight() {
-    const navbar = document.querySelector('.elicom-navbar');
-    if (navbar) navbar.scrollBy({ left: 200, behavior: 'smooth' });
+    if (this.navbar) {
+      this.navbar.nativeElement.scrollBy({ left: 200, behavior: 'smooth' });
+    }
   }
 
   // Checkbox handling methods
@@ -221,7 +225,12 @@ export class Header implements AfterViewChecked {
     }
   }
 
+  toggleSearch() {
+    this.isSearchVisible.update(v => !v);
+  }
+
   logout() {
+
     this.authService.logout();
     this.userDropdown.set(false);
     this.router.navigate(['/']);
