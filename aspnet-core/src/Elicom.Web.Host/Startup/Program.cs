@@ -6,6 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Elicom.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System;
+using Microsoft.Extensions.Configuration;
 
 namespace Elicom.Web.Host.Startup
 {
