@@ -11,6 +11,8 @@ namespace Elicom.Web.Host.Startup
 {
     public class Program
     {
+        public static void Main(string[] args)
+        {
             System.Console.WriteLine(">>> Application starting...");
             var envName = System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
             System.Console.WriteLine($">>> Environment: {envName}");
