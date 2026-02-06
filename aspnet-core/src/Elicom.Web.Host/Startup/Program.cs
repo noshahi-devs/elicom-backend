@@ -11,15 +11,21 @@ namespace Elicom.Web.Host.Startup
 {
     public class Program
     {
-        public static void Main(string[] args)
-        {
             System.Console.WriteLine(">>> Application starting...");
-            System.Console.WriteLine($">>> Environment: {System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}");
+            var envName = System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            System.Console.WriteLine($">>> Environment: {envName}");
             System.Console.WriteLine($">>> Current Directory: {System.IO.Directory.GetCurrentDirectory()}");
-            
+
             try 
             {
                 var host = CreateHostBuilder(args).Build();
+                var config = host.Services.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
+                var connString = config.GetConnectionString("Default");
+                System.Console.WriteLine($">>> Connection String Found: {!string.IsNullOrEmpty(connString)}");
+                if (!string.IsNullOrEmpty(connString)) {
+                    System.Console.WriteLine($">>> Connection String Length: {connString.Length}");
+                    System.Console.WriteLine($">>> Connection String Start: {connString.Substring(0, Math.Min(20, connString.Length))}...");
+                }
                 
                 using (var scope = host.Services.CreateScope())
                 {

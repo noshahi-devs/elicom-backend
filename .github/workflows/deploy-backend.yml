@@ -25,11 +25,11 @@ jobs:
         run: dotnet build aspnet-core/Elicom.sln --configuration Release --no-restore
 
       - name: dotnet publish
-        run: dotnet publish aspnet-core/src/Elicom.Web.Host/Elicom.Web.Host.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
+        run: dotnet publish aspnet-core/src/Elicom.Web.Host/Elicom.Web.Host.csproj -c Release -o ./publish-output
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'app-elicom-backend' # This must match the script name
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ${{env.DOTNET_ROOT}}/myapp
+          package: ./publish-output
