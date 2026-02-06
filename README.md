@@ -38,5 +38,5 @@ Create & download your project from https://aspnetboilerplate.com/Templates
 "# elicom-backend" 
 "# elicom-backend" 
 
-## Azure Deployment - Feb 6, 2026
-Deployed to Azure App Service and Static Web Apps.
+## Azure Deployment - Feb 7, 2026
+Deployed to Azure App Service and Static Web Apps. Database initialized via BACPAC import.
