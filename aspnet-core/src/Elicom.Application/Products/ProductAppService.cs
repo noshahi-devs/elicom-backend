@@ -27,13 +27,16 @@ namespace Elicom.Products
 
         public async Task<ListResultDto<ProductDto>> GetAll()
         {
-            var products = await _productRepo
-                .GetAllIncluding(p => p.Category)
-                .ToListAsync();
+            using (UnitOfWorkManager.Current.DisableFilter(Abp.Domain.Uow.AbpDataFilters.MayHaveTenant))
+            {
+                var products = await _productRepo
+                    .GetAllIncluding(p => p.Category)
+                    .ToListAsync();
 
-            return new ListResultDto<ProductDto>(
-                ObjectMapper.Map<List<ProductDto>>(products)
-            );
+                return new ListResultDto<ProductDto>(
+                    ObjectMapper.Map<List<ProductDto>>(products)
+                );
+            }
         }
 
         public async Task<ListResultDto<ProductDto>> GetByCategory(Guid categoryId)

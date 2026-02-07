@@ -246,23 +246,29 @@ namespace Elicom.Orders
         // Get all orders (Admin - fetches all retail orders)
         public async Task<List<OrderDto>> GetAll()
         {
-            var orders = await _orderRepository.GetAll()
-                .Include(o => o.OrderItems)
-                .OrderByDescending(o => o.CreationTime)
-                .ToListAsync();
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
+            {
+                var orders = await _orderRepository.GetAll()
+                    .Include(o => o.OrderItems)
+                    .OrderByDescending(o => o.CreationTime)
+                    .ToListAsync();
 
-            return ObjectMapper.Map<List<OrderDto>>(orders);
+                return ObjectMapper.Map<List<OrderDto>>(orders);
+            }
         }
 
         // Get all orders for customer
         public async Task<List<OrderDto>> GetAllForCustomer(long userId)
         {
-            var orders = await _orderRepository.GetAll()
-                .Include(o => o.OrderItems)
-                .Where(o => o.UserId == userId)
-                .ToListAsync();
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
+            {
+                var orders = await _orderRepository.GetAll()
+                    .Include(o => o.OrderItems)
+                    .Where(o => o.UserId == userId)
+                    .ToListAsync();
 
-            return ObjectMapper.Map<List<OrderDto>>(orders);
+                return ObjectMapper.Map<List<OrderDto>>(orders);
+            }
         }
 
         [AbpAuthorize(PermissionNames.Pages_SmartStore_Seller)]
