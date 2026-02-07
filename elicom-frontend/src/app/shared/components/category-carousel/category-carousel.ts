@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { CategoryService } from '../../../services/category';
 import { Router } from '@angular/router';
 import { SearchService } from '../../../services/search.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-category-carousel',
@@ -106,7 +107,7 @@ export class CategoryCarouselComponent implements OnInit, OnChanges {
       if (img === 'test.jpg' || img === 'category.png' || img === 'hair.png') {
         return `https://picsum.photos/seed/${cat.name}/110/110`;
       }
-      return `https://localhost:44311/images/products/${cat.imageUrl}`;
+      return `${environment.apiUrl}/images/products/${cat.imageUrl}`;
     }
     const seed = cat.id || cat.categoryId || cat.name || 'default';
     return `https://picsum.photos/seed/${seed}/110/110`;

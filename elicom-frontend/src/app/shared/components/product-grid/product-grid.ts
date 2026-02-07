@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { ProductService, ProductCardDto } from '../../../services/product';
 import { CartService } from '../../../services/cart.service';
 import Swal from 'sweetalert2';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-product-grid-new',
@@ -175,7 +176,7 @@ export class ProductGridComponent implements OnInit, OnChanges {
     if (val.startsWith('http')) return val;
 
     // 6. Prepend Base URL
-    const baseUrl = 'https://localhost:44311';
+    const baseUrl = environment.apiUrl;
 
     if (!val.startsWith('/')) {
       if (val.indexOf('/') === -1) {
@@ -217,7 +218,7 @@ export class ProductGridComponent implements OnInit, OnChanges {
 
     if (val.startsWith('http')) return val;
 
-    const baseUrl = 'https://localhost:44311';
+    const baseUrl = environment.apiUrl;
     if (!val.startsWith('/')) {
       if (val.indexOf('/') === -1) {
         return `${baseUrl}/images/products/${val}`;

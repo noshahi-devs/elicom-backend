@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface StoreDto {
     id: string;
@@ -49,7 +50,7 @@ export interface CreateStoreDto {
 })
 export class StoreService {
     private http = inject(HttpClient);
-    private apiUrl = 'https://localhost:44311/api/services/app/Store';
+    private apiUrl = `${environment.apiUrl}/api/services/app/Store`;
 
     getAllStores(): Observable<any> {
         return this.http.get(`${this.apiUrl}/GetAll`);

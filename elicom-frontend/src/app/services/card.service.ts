@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface ValidateCardInput {
     cardNumber: string;
@@ -20,7 +21,7 @@ export interface CardValidationResultDto {
 })
 export class CardService {
     private http = inject(HttpClient);
-    private apiUrl = 'https://localhost:44311/api/services/app/Card';
+    private apiUrl = `${environment.apiUrl}/api/services/app/Card`;
 
     validateCard(input: ValidateCardInput): Observable<CardValidationResultDto> {
         return this.http.post<any>(`${this.apiUrl}/ValidateCard`, input).pipe(

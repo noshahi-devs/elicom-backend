@@ -5,6 +5,7 @@ import { OrderProcessBreadcrumb } from '../../shared/components/order-process-br
 import { CartItem } from '../../shared/components/cart-item/cart-item';
 import { ProductCard } from '../../shared/components/product-card/product-card';
 import { ProductService, GlobalMarketplaceProduct } from '../../services/product';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-add-to-cart',
@@ -73,7 +74,7 @@ export class AddToCart implements OnInit {
     }
 
     if (!img.startsWith('http')) {
-      return `https://localhost:44311/images/products/${img}`;
+      return `${environment.apiUrl}/images/products/${img}`;
     }
     return img;
   }
@@ -103,7 +104,7 @@ export class AddToCart implements OnInit {
         return `https://picsum.photos/seed/${seed}/300/400`;
       }
       if (!img.startsWith('http')) {
-        return `https://localhost:44311/images/products/${img}`;
+        return `${environment.apiUrl}/images/products/${img}`;
       }
       return img;
     }

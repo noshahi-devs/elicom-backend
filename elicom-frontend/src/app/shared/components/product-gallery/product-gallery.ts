@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ProductDetailDto } from '../../../services/product';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-product-gallery',
@@ -69,7 +70,7 @@ export class ProductGallery implements OnInit {
     if (img.startsWith('http')) return img;
 
     // Handle local images (e.g. 'hair.png')
-    return `https://localhost:44311/images/products/${img}`;
+    return `${environment.apiUrl}/images/products/${img}`;
   }
 
   selectImage(index: number) {

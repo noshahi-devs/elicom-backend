@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, catchError, of } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface ProductCardDto {
     id: any | string;
@@ -64,8 +65,8 @@ export interface GlobalMarketplaceProduct {
     providedIn: 'root'
 })
 export class ProductService {
-    private apiUrl = 'https://localhost:44311/api/services/app/Homepage';
-    private publicApiUrl = 'https://localhost:44311/api/services/app/SmartStorePublic';
+    private apiUrl = `${environment.apiUrl}/api/services/app/Homepage`;
+    private publicApiUrl = `${environment.apiUrl}/api/services/app/SmartStorePublic`;
 
     constructor(private http: HttpClient) { }
 

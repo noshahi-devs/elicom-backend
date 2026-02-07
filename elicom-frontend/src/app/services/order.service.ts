@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface CreateOrderDto {
     userId: number;
@@ -24,7 +25,7 @@ export interface CreateOrderDto {
 })
 export class OrderService {
     private http = inject(HttpClient);
-    private baseUrl = 'https://localhost:44311/api/services/app/Order';
+    private baseUrl = `${environment.apiUrl}/api/services/app/Order`;
 
     createOrder(input: CreateOrderDto): Observable<any> {
         return this.http.post(`${this.baseUrl}/Create`, input);

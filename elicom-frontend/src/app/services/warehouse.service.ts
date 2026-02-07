@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface WarehouseDto {
     id: string;
@@ -20,7 +21,7 @@ export interface WarehouseDto {
 })
 export class WarehouseService {
     private http = inject(HttpClient);
-    private baseUrl = 'https://localhost:44311/api/services/app/Warehouse';
+    private baseUrl = `${environment.apiUrl}/api/services/app/Warehouse`;
 
     create(input: any): Observable<WarehouseDto> {
         return this.http.post<any>(`${this.baseUrl}/Create`, input)

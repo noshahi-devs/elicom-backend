@@ -2,6 +2,7 @@ import { Injectable, signal, effect, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap, of, BehaviorSubject, throwError } from 'rxjs';
 import { AuthService } from './auth.service';
+import { environment } from '../../environments/environment';
 
 export interface CartItem {
     id?: string; // Backend Guid if available
@@ -26,7 +27,7 @@ export interface CartItem {
 export class CartService {
     private http = inject(HttpClient);
     private authService = inject(AuthService);
-    private baseUrl = 'https://localhost:44311/api/services/app/Cart';
+    private baseUrl = `${environment.apiUrl}/api/services/app/Cart`;
 
     // Using signals for reactive state (Internal UI)
     private cartItems = signal<CartItem[]>(this.loadCartFromStorage());

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface CreateCustomerProfileDto {
     userId: number;
@@ -24,7 +25,7 @@ export interface CustomerProfileDto extends CreateCustomerProfileDto {
     providedIn: 'root'
 })
 export class CustomerProfileService {
-    private baseUrl = 'https://localhost:44311/api/services/app/CustomerProfile';
+    private baseUrl = `${environment.apiUrl}/api/services/app/CustomerProfile`;
 
     constructor(private http: HttpClient) { }
 

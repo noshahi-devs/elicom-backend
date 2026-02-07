@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, catchError, of, shareReplay, retry, timer, delayWhen } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface Category {
   name: string;
@@ -18,8 +19,8 @@ export interface Category {
 })
 export class CategoryService {
 
-  private apiUrl = 'https://localhost:44311/api/services/app/Category';
-  private homeUrl = 'https://localhost:44311/api/services/app/Homepage/GetCategoriesWithListedProducts';
+  private apiUrl = `${environment.apiUrl}/api/services/app/Category`;
+  private homeUrl = `${environment.apiUrl}/api/services/app/Homepage/GetCategoriesWithListedProducts`;
 
   // Cache observables to prevent multiple simultaneous calls during page load/refresh
   private categoriesCache$?: Observable<any[]>;

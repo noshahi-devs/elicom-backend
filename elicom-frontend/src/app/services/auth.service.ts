@@ -2,6 +2,7 @@ import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, of, throwError, BehaviorSubject, switchMap, map } from 'rxjs';
 import { Router } from '@angular/router';
+import { environment } from '../../environments/environment';
 
 export interface User {
     id?: number;
@@ -44,8 +45,8 @@ import { StoreService } from './store.service';
     providedIn: 'root'
 })
 export class AuthService {
-    // Using a simplified base URL, adjust if needed (e.g. from environment)
-    private baseUrl = 'https://app-elicom-backend.azurewebsites.net';
+    // Using a simplified base URL from environment
+    private baseUrl = environment.apiUrl;
 
     // State
     private _currentUser = new BehaviorSubject<User | null>(this.getUserFromStorage());

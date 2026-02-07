@@ -5,6 +5,7 @@ import { AuthService } from '../../../services/auth.service';
 import { ProductDetailDto } from '../../../services/product';
 import { CartService } from '../../../services/cart.service';
 import Swal from 'sweetalert2';
+import { environment } from '../../../../environments/environment';
 
 export type AccordionType = 'desc' | 'sizefit' | null;
 export type SizeTabType = 'product' | 'body';
@@ -95,7 +96,7 @@ export class ProductInfo implements OnInit {
     }
 
     if (img.startsWith('http')) return img;
-    return `https://localhost:44311/images/products/${img}`;
+    return `${environment.apiUrl}/images/products/${img}`;
   }
 
   ngOnInit(): void {
