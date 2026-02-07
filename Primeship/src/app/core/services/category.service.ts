@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 import { map } from 'rxjs/operators';
 
 export interface CategoryDto {
@@ -44,7 +46,7 @@ export interface UpdateCategoryDto {
     providedIn: 'root'
 })
 export class CategoryService {
-    private apiUrl = 'https://localhost:44311/api/services/app/Category';
+    private apiUrl = `${environment.apiUrl}/api/services/app/Category`;
     private tenantId = '2'; // Prime Ship Tenant
 
     constructor(private http: HttpClient) { }

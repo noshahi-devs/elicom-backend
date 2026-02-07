@@ -4,12 +4,13 @@ import { Observable, catchError, throwError, shareReplay, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { CategoryDto } from './category.service';
 import { ProductDto } from './product.service';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
     providedIn: 'root'
 })
 export class PublicService {
-    private apiUrl = 'https://localhost:44311/api/services/app/Public';
+    private apiUrl = `${environment.apiUrl}/api/services/app/Public`;
     private tenantId = '2'; // Prime Ship Tenant
     private cachedCategories$: Observable<CategoryDto[]> | null = null;
 

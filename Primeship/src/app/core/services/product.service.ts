@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 
 export interface ProductDto {
   id: string;
@@ -57,8 +58,8 @@ export interface UpdateProductDto extends CreateProductDto {
   providedIn: 'root'
 })
 export class ProductService {
-  private publicApiUrl = 'https://localhost:44311/api/services/app/Public';
-  private productApiUrl = 'https://localhost:44311/api/services/app/Product';
+  private publicApiUrl = `${environment.apiUrl}/api/services/app/Public`;
+  private productApiUrl = `${environment.apiUrl}/api/services/app/Product`;
 
   constructor(
     private http: HttpClient,

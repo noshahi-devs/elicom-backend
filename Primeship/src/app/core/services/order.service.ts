@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
@@ -48,8 +49,8 @@ export interface CreateOrderInput {
     providedIn: 'root'
 })
 export class OrderService {
-    private apiUrl = 'https://localhost:44311/api/services/app/Order';
-    private wholesaleApiUrl = 'https://localhost:44311/api/services/app/SupplierOrder';
+    private apiUrl = `${environment.apiUrl}/api/services/app/Order`;
+    private wholesaleApiUrl = `${environment.apiUrl}/api/services/app/SupplierOrder`;
 
     constructor(
         private http: HttpClient,

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 
 export interface WholesaleOrderItemInput {
     productId: string;
@@ -22,7 +23,7 @@ export interface CreateWholesaleOrderInput {
     providedIn: 'root'
 })
 export class WholesaleService {
-    private apiUrl = 'https://localhost:44311/api/services/app/Wholesale';
+    private apiUrl = `${environment.apiUrl}/api/services/app/Wholesale`;
 
     constructor(
         private http: HttpClient,

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 
 export interface ValidateCardInput {
     cardNumber: string;
@@ -20,7 +21,7 @@ export interface CardValidationResultDto {
     providedIn: 'root'
 })
 export class CardService {
-    private apiUrl = 'https://localhost:44311/api/services/app/Card';
+    private apiUrl = `${environment.apiUrl}/api/services/app/Card`;
 
     constructor(
         private http: HttpClient,
