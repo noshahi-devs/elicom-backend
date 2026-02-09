@@ -56,7 +56,7 @@ namespace Elicom.Web.Host.Startup
                         var corsOrigins = _appConfiguration["App:CorsOrigins"];
                         var origins = (corsOrigins ?? "")
                             .Split(",", StringSplitOptions.RemoveEmptyEntries)
-                            .Select(o => o.RemovePostFix("/"))
+                            .Select(o => o.Trim().RemovePostFix("/"))
                             .ToArray();
 
                         if (origins.Contains("*") || string.IsNullOrEmpty(corsOrigins))
@@ -65,7 +65,8 @@ namespace Elicom.Web.Host.Startup
                         }
                         else
                         {
-                            builder.WithOrigins(origins);
+                            builder.WithOrigins(origins)
+                                .SetIsOriginAllowedToAllowWildcardSubdomains();
                         }
 
                         builder.AllowAnyHeader()
@@ -93,6 +94,8 @@ namespace Elicom.Web.Host.Startup
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             app.UseAbp(options => { options.UseAbpRequestLocalization = false; }); // Initializes ABP framework.
+
+            app.UseStaticFiles();
 
             app.UseRouting();
 
