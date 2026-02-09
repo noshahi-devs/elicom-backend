@@ -347,8 +347,11 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
 
     private async Task SendEmailWithCustomSmtp(string host, int port, string user, string pass, string fromName, string fromEmail, string to, string subject, string body)
     {
+        Logger.Info($"[SMTP] Starting email send to {to} via {host}:{port} from {fromEmail}");
+        
         try
         {
+            Logger.Info($"[SMTP] Creating MIME message...");
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(fromName, fromEmail));
             message.To.Add(new MailboxAddress("", to));
@@ -356,23 +359,37 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
 
             var bodyBuilder = new BodyBuilder { HtmlBody = body };
             message.Body = bodyBuilder.ToMessageBody();
+            
+            Logger.Info($"[SMTP] Message created. Connecting to {host}:{port}...");
 
             using (var client = new MailKit.Net.Smtp.SmtpClient())
             {
                 // For demo/test, we accept all certificates
                 client.ServerCertificateValidationCallback = (s, c, h, e) => true;
 
+                Logger.Info($"[SMTP] Attempting connection with Auto SSL mode...");
                 // Use Auto to intelligently handle STARTTLS vs SSL
                 await client.ConnectAsync(host, port, SecureSocketOptions.Auto);
+                
+                Logger.Info($"[SMTP] Connected successfully. Authenticating as {user}...");
                 await client.AuthenticateAsync(user, pass);
+                
+                Logger.Info($"[SMTP] Authenticated successfully. Sending message...");
                 await client.SendAsync(message);
+                
+                Logger.Info($"[SMTP] Message sent successfully. Disconnecting...");
                 await client.DisconnectAsync(true);
             }
-            Logger.Info($"Email sent successfully to {to} via {host} as {fromEmail}");
+            Logger.Info($"[SMTP] ✅ Email sent successfully to {to} via {host} as {fromEmail}");
         }
         catch (Exception ex)
         {
-            Logger.Error($"Failed to send Smart Store email to {to} via {host}: {ex.Message}");
+            Logger.Error($"[SMTP] ❌ Failed to send email to {to} via {host}:{port}", ex);
+            Logger.Error($"[SMTP] Error details: {ex.GetType().Name} - {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Logger.Error($"[SMTP] Inner exception: {ex.InnerException.GetType().Name} - {ex.InnerException.Message}");
+            }
             // We don't throw the exception to allow registration to complete even if email fails
         }
     }
