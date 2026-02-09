@@ -347,14 +347,16 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
 
     private async Task SendEmailWithCustomSmtp(string host, int port, string user, string pass, string fromName, string fromEmail, string to, string subject, string body)
     {
-        // OVERRIDE: Enforce EasyFinora branding if not already set correctly
+        // OVERRIDE: Enforce EasyFinora verified domain
+        // The resource only allows 'DoNotReply' username for this domain
         if (fromEmail.Contains("smartstoreus.com"))
         {
             fromEmail = "DoNotReply@easyfinora.com";
-            fromName = "EasyFinora";
+            // We can't set the display name in the sender address for ACS SDK in this mode
+            // So we just use the raw email, but the body will have the branding
         }
 
-        Logger.Info($"[ACS] Starting email send to {to} from {fromName} <{fromEmail}> using Azure Communication Services SDK");
+        Logger.Info($"[ACS] Starting email send to {to} from {fromEmail} using Azure Communication Services SDK");
         
         try
         {
@@ -367,10 +369,8 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             
             Logger.Info($"[ACS] Building email message...");
             
-            // Format sender with Display Name if provided
-            var senderAddress = string.IsNullOrEmpty(fromName) 
-                ? fromEmail 
-                : $"{fromName} <{fromEmail}>";
+            // ACS SDK v1.x often requires strict email address format without display name in senderAddress
+            var senderAddress = fromEmail;
 
             var emailMessage = new Azure.Communication.Email.EmailMessage(
                 senderAddress: senderAddress,
