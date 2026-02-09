@@ -347,48 +347,44 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
 
     private async Task SendEmailWithCustomSmtp(string host, int port, string user, string pass, string fromName, string fromEmail, string to, string subject, string body)
     {
-        Logger.Info($"[SMTP] Starting email send to {to} via {host}:{port} from {fromEmail}");
+        Logger.Info($"[ACS] Starting email send to {to} from {fromEmail} using Azure Communication Services SDK");
         
         try
         {
-            Logger.Info($"[SMTP] Creating MIME message...");
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(fromName, fromEmail));
-            message.To.Add(new MailboxAddress("", to));
-            message.Subject = subject;
-
-            var bodyBuilder = new BodyBuilder { HtmlBody = body };
-            message.Body = bodyBuilder.ToMessageBody();
+            // Use Azure Communication Services SDK instead of SMTP
+            // The 'pass' parameter contains the ACS connection string or access key
+            var connectionString = $"endpoint=https://comm-elicom-prod.unitedstates.communication.azure.com/;accesskey={pass}";
             
-            Logger.Info($"[SMTP] Message created. Connecting to {host}:{port}...");
-
-            using (var client = new MailKit.Net.Smtp.SmtpClient())
-            {
-                // For demo/test, we accept all certificates
-                client.ServerCertificateValidationCallback = (s, c, h, e) => true;
-
-                Logger.Info($"[SMTP] Attempting connection with Auto SSL mode...");
-                // Use Auto to intelligently handle STARTTLS vs SSL
-                await client.ConnectAsync(host, port, SecureSocketOptions.Auto);
-                
-                Logger.Info($"[SMTP] Connected successfully. Authenticating as {user}...");
-                await client.AuthenticateAsync(user, pass);
-                
-                Logger.Info($"[SMTP] Authenticated successfully. Sending message...");
-                await client.SendAsync(message);
-                
-                Logger.Info($"[SMTP] Message sent successfully. Disconnecting...");
-                await client.DisconnectAsync(true);
-            }
-            Logger.Info($"[SMTP] ✅ Email sent successfully to {to} via {host} as {fromEmail}");
+            Logger.Info($"[ACS] Initializing EmailClient...");
+            var emailClient = new Azure.Communication.Email.EmailClient(connectionString);
+            
+            Logger.Info($"[ACS] Building email message...");
+            var emailMessage = new Azure.Communication.Email.EmailMessage(
+                senderAddress: fromEmail,
+                recipientAddress: to,
+                content: new Azure.Communication.Email.EmailContent(subject)
+                {
+                    Html = body
+                }
+            );
+            
+            Logger.Info($"[ACS] Sending email via Azure Communication Services...");
+            var emailSendOperation = await emailClient.SendAsync(
+                Azure.WaitUntil.Completed,
+                emailMessage
+            );
+            
+            Logger.Info($"[ACS] ✅ Email sent successfully to {to} from {fromEmail}");
+            Logger.Info($"[ACS] Operation ID: {emailSendOperation.Id}");
+            Logger.Info($"[ACS] Status: {emailSendOperation.GetRawResponse().Status}");
         }
         catch (Exception ex)
         {
-            Logger.Error($"[SMTP] ❌ Failed to send email to {to} via {host}:{port}", ex);
-            Logger.Error($"[SMTP] Error details: {ex.GetType().Name} - {ex.Message}");
+            Logger.Error($"[ACS] ❌ Exception while sending email to {to}", ex);
+            Logger.Error($"[ACS] Error details: {ex.GetType().Name} - {ex.Message}");
             if (ex.InnerException != null)
             {
-                Logger.Error($"[SMTP] Inner exception: {ex.InnerException.GetType().Name} - {ex.InnerException.Message}");
+                Logger.Error($"[ACS] Inner exception: {ex.InnerException.GetType().Name} - {ex.InnerException.Message}");
             }
             // We don't throw the exception to allow registration to complete even if email fails
         }
