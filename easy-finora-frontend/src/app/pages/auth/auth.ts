@@ -291,6 +291,7 @@ export class Auth implements OnInit {
         this.isLoading = true;
 
         const registerInput = {
+            fullName: this.signupName,
             emailAddress: this.signupEmail,
             password: this.signupPassword,
             phoneNumber: this.signupPhone,
@@ -366,10 +367,16 @@ export class Auth implements OnInit {
         }
 
         this.isLoading = true;
-        setTimeout(() => {
-            this.isLoading = false;
-            this.toastService.showSuccess('Reset link sent to ' + this.resetEmail);
-            this.toggleForgot(); // Go back to login
-        }, 1500);
+        this.authService.forgotPassword(this.resetEmail).subscribe({
+            next: () => {
+                this.isLoading = false;
+                this.toastService.showSuccess('Reset link sent to ' + this.resetEmail + '. Check your inbox.');
+                this.toggleForgot(); // Go back to login
+            },
+            error: (err: any) => {
+                this.isLoading = false;
+                this.toastService.showError(err.error?.error?.message || 'Failed to send reset link');
+            }
+        });
     }
 }

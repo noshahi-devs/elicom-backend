@@ -37,8 +37,11 @@ namespace Elicom.Web.Host.Controllers
         {
             try
             {
-                var connectionString = "endpoint=https://comm-elicom-prod.unitedstates.communication.azure.com/;accesskey=9T13Y14jFEDlkFHMdCO5u82rPwyrNEtzdJW3tYf2W9t5C3kfVMM1JQQJ99CBACULyCppDbGFAAAAAZCSi4Q3";
-                var sender = "DoNotReply@easyfinora.com";
+                var connectionString = _configuration["Settings:Abp.Net.Mail.Smtp.Password"]?.StartsWith("endpoint=") == true 
+                    ? _configuration["Settings:Abp.Net.Mail.Smtp.Password"] 
+                    : $"endpoint=https://comm-elicom-prod.unitedstates.communication.azure.com/;accesskey={_configuration["Settings:Abp.Net.Mail.Smtp.Password"]}";
+                
+                var sender = _configuration["Settings:Abp.Net.Mail.DefaultFromAddress"] ?? "DoNotReply@easyfinora.com";
 
                 var emailClient = new EmailClient(connectionString);
                 

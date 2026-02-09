@@ -29,6 +29,12 @@ export class AuthService {
         });
     }
 
+    forgotPassword(email: string): Observable<any> {
+        return this.http.post(`${this.apiUrl}/ForgotPassword`, { emailAddress: email }, {
+            headers: { 'Abp-TenantId': '3' }
+        });
+    }
+
     isTenantAvailable(tenancyName: string): Observable<any> {
         return this.http.post(`${this.apiUrl}/IsTenantAvailable`, { tenancyName });
     }

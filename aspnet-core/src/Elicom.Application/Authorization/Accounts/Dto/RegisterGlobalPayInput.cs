@@ -9,6 +9,9 @@ public class RegisterGlobalPayInput
     [EmailAddress]
     [StringLength(AbpUserBase.MaxEmailAddressLength)]
     public string EmailAddress { get; set; }
+    
+    [Required]
+    public string FullName { get; set; }
 
     [Required]
     [StringLength(AbpUserBase.MaxPlainPasswordLength)]
