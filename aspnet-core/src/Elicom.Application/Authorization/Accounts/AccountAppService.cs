@@ -335,14 +335,18 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             // 5. Send Platform-Specific Email (ACS ONLY)
             // We use global SMTP settings for ACS since it's a single account,
             // but we use platform-specific sender logic to satisfy domain verification.
-            string host = await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.Host") ?? "smtp.azurecomm.net";
-            int port = int.Parse(await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.Port") ?? "587");
+            string host = await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.Host");
+            if (string.IsNullOrWhiteSpace(host)) host = "smtp.azurecomm.net";
+
+            string portStr = await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.Port");
+            int port = string.IsNullOrWhiteSpace(portStr) ? 587 : int.Parse(portStr);
+
             string userSmtp = await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.UserName");
             string passSmtp = await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.Password");
             
             // Default from address based on platform if not explicitly set globally
             string fromEmail = await SettingManager.GetSettingValueAsync("Abp.Net.Mail.DefaultFromAddress");
-            if (string.IsNullOrEmpty(fromEmail))
+            if (string.IsNullOrWhiteSpace(fromEmail))
             {
                 fromEmail = $"no-reply@{platformName.Replace(" ", "").ToLower()}.com";
                 if (platformName == "Easy Finora" || platformName == "Global Pay") fromEmail = "DoNotReply@easyfinora.com";
