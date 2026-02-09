@@ -165,11 +165,12 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             </div>";
 
         await SendEmailWithCustomSmtp(
-            "easyfinora.com",
-            465,
-            "no-reply@easyfinora.com",
-            "qy,DI!+ZasZz",
+            _configuration["Settings:Abp.Net.Mail.Smtp.Host"] ?? "smtp.azurecomm.net",
+            int.Parse(_configuration["Settings:Abp.Net.Mail.Smtp.Port"] ?? "587"),
+            _configuration["Settings:Abp.Net.Mail.Smtp.UserName"],
+            _configuration["Settings:Abp.Net.Mail.Smtp.Password"],
             platformName,
+            _configuration["Settings:Abp.Net.Mail.DefaultFromAddress"] ?? $"no-reply@{platformName.Replace(" ", "").ToLower()}.com",
             user.EmailAddress,
             $"Action Required: Verify Your {platformName} Account",
             emailBody
@@ -427,11 +428,12 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             if (tenantId == 3) // Global Pay / Easy Finora
             {
                 await SendEmailWithCustomSmtp(
-                    "easyfinora.com",
-                    465,
-                    "no-reply@easyfinora.com",
-                    "qy,DI!+ZasZz",
+                    "smtp.azurecomm.net",
+                    587,
+                    _configuration["Settings:Abp.Net.Mail.Smtp.UserName"],
+                    _configuration["Settings:Abp.Net.Mail.Smtp.Password"],
                     "Easy Finora",
+                    "no-reply@easyfinora.com",
                     email,
                     "Reset Your Easy Finora Password",
                     emailBody
@@ -440,11 +442,12 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             else if (tenantId == 2) // Prime Ship
             {
                  await SendEmailWithCustomSmtp(
-                    "primeshipuk.com",
-                    465,
-                    "no-reply@primeshipuk.com",
-                    "xB}Q]@saOI^K",
+                    "smtp.azurecomm.net",
+                    587,
+                    _configuration["Settings:Abp.Net.Mail.Smtp.UserName"],
+                    _configuration["Settings:Abp.Net.Mail.Smtp.Password"],
                     "Prime Ship UK",
+                    "no-reply@primeshipuk.com",
                     email,
                     "Reset Your Prime Ship Password",
                     emailBody

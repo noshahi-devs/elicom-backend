@@ -1,0 +1,12 @@
+﻿[
+  {
+    "name": "ConnectionStrings__Default",
+    "slotSetting": false,
+    "value": "Server=tcp:sql-elicom-server-8690.database.windows.net,1433;Initial Catalog=elicom;Persist Security Info=False;User ID=admin;Password=Noshahi.000;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+  },
+  {
+    "name": "Settings__Abp__Net__Mail__Smtp__Password",
+    "slotSetting": false,
+    "value": "9T13Y14jFEDlkFHMdCO5u82rPwyrNEtzdJW3tYf2W9t5C3kfVMM1JQQJ99CBACULyCppDbGFAAAAAZCSi4Q3"
+  }
+]
