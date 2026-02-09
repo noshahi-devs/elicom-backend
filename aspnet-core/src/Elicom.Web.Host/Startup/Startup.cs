@@ -53,9 +53,23 @@ namespace Elicom.Web.Host.Startup
                     _defaultCorsPolicyName,
                     builder =>
                     {
-                        // Allow everything temporarily to fix the 503 and CORS issue
-                        builder.SetIsOriginAllowed(_ => true)
-                            .AllowAnyHeader()
+                        var corsOrigins = _appConfiguration["App:CorsOrigins"];
+                        var origins = (corsOrigins ?? "")
+                            .Split(",", StringSplitOptions.RemoveEmptyEntries)
+                            .Select(o => o.Trim().RemovePostFix("/"))
+                            .ToArray();
+
+                        if (origins.Contains("*") || string.IsNullOrEmpty(corsOrigins))
+                        {
+                            builder.SetIsOriginAllowed(_ => true);
+                        }
+                        else
+                        {
+                            builder.WithOrigins(origins)
+                                .SetIsOriginAllowedToAllowWildcardSubdomains();
+                        }
+
+                        builder.AllowAnyHeader()
                             .AllowAnyMethod()
                             .AllowCredentials();
                     }
