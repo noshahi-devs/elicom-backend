@@ -49,8 +49,7 @@ namespace Elicom.Web.Host.Startup
             services.AddSignalR();
 
             services.AddCors(
-                options => options.AddPolicy(
-                    _defaultCorsPolicyName,
+                options => options.AddDefaultPolicy(
                     builder =>
                     {
                         var corsOrigins = _appConfiguration["App:CorsOrigins"];
@@ -65,8 +64,7 @@ namespace Elicom.Web.Host.Startup
                         }
                         else
                         {
-                            builder.WithOrigins(origins)
-                                .SetIsOriginAllowedToAllowWildcardSubdomains();
+                            builder.WithOrigins(origins);
                         }
 
                         builder.AllowAnyHeader()
@@ -99,7 +97,7 @@ namespace Elicom.Web.Host.Startup
 
             app.UseRouting();
 
-            app.UseCors(_defaultCorsPolicyName); // Enable CORS!
+            app.UseCors(); // Enable CORS!
 
             app.UseAuthentication();
             app.UseAuthorization();
