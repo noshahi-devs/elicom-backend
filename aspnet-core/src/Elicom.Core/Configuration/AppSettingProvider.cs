@@ -26,7 +26,7 @@ public class AppSettingProvider : SettingProvider
             new SettingDefinition("App.ServerRootAddress", "https://app-elicom-backend.azurewebsites.net/"),
             new SettingDefinition("App.SmartStore.ClientRootAddress", "https://stapp-elicom-main.azurestaticapps.net/"),
             new SettingDefinition("App.PrimeShip.ClientRootAddress", "https://stapp-elicom-primeship.azurestaticapps.net/"),
-            new SettingDefinition("App.EasyFinora.ClientRootAddress", "https://stapp-elicom-easyfinora.azurestaticapps.net/")
+            new SettingDefinition("App.EasyFinora.ClientRootAddress", "https://easyfinora.com/")
         };
     }
 }
