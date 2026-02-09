@@ -23,16 +23,32 @@ public class SessionAppService : ElicomAppServiceBase, ISessionAppService
 
         if (AbpSession.TenantId.HasValue)
         {
-            output.Tenant = ObjectMapper.Map<TenantLoginInfoDto>(await GetCurrentTenantAsync());
+            try
+            {
+                output.Tenant = ObjectMapper.Map<TenantLoginInfoDto>(await GetCurrentTenantAsync());
+            }
+            catch (Abp.Domain.Entities.EntityNotFoundException)
+            {
+                // Tenant not found, ignore
+                output.Tenant = null;
+            }
         }
 
         if (AbpSession.UserId.HasValue)
         {
-            var user = await GetCurrentUserAsync();
-            output.User = ObjectMapper.Map<UserLoginInfoDto>(user);
+            try
+            {
+                var user = await GetCurrentUserAsync();
+                output.User = ObjectMapper.Map<UserLoginInfoDto>(user);
 
-            var roles = await UserManager.GetRolesAsync(user);
-            output.User.RoleNames = roles.ToArray();
+                var roles = await UserManager.GetRolesAsync(user);
+                output.User.RoleNames = roles.ToArray();
+            }
+            catch (Abp.Domain.Entities.EntityNotFoundException)
+            {
+                // User not found, ignore
+                output.User = null;
+            }
         }
 
         return output;
