@@ -139,10 +139,11 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
         };
     }
 
-    private async Task SendVerificationEmail(User user, string platformName, string brandColor)
-    {
+        var serverRootAddress = _configuration["App:ServerRootAddress"]?.TrimEnd('/');
+        if (string.IsNullOrEmpty(serverRootAddress)) serverRootAddress = "http://localhost:44311";
+
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-        var verificationLink = $"https://localhost:44311/api/services/app/Account/VerifyEmail?userId={user.Id}&token={Uri.EscapeDataString(token)}&platform={Uri.EscapeDataString(platformName)}";
+        var verificationLink = $"{serverRootAddress}/api/services/app/Account/VerifyEmail?userId={user.Id}&token={Uri.EscapeDataString(token)}&platform={Uri.EscapeDataString(platformName)}";
 
         var emailBody = $@"
             <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #ffffff;'>
@@ -277,9 +278,12 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                 await _userManager.AddToRoleAsync(user, roleName);
             }
 
+            var serverRootAddress = _configuration["App:ServerRootAddress"]?.TrimEnd('/');
+            if (string.IsNullOrEmpty(serverRootAddress)) serverRootAddress = "http://localhost:44311";
+
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             
-            var verificationLink = $"https://localhost:44311/api/services/app/Account/VerifyEmail?userId={user.Id}&token={Uri.EscapeDataString(token)}&platform={Uri.EscapeDataString(platformName)}";
+            var verificationLink = $"{serverRootAddress}/api/services/app/Account/VerifyEmail?userId={user.Id}&token={Uri.EscapeDataString(token)}&platform={Uri.EscapeDataString(platformName)}";
 
             var emailBody = $@"
                 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #ffffff;'>
@@ -303,48 +307,27 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                 </div>";
 
             // 5. Send Platform-Specific Email
-            if (tenantId == 1) // Smart Store
+            string smtpHost = _configuration[$"Settings:{platformName.Replace(" ", "")}:SmtpHost"] ?? _configuration["Settings:Abp.Net.Mail.Smtp.Host"] ?? "smtp.azurecomm.net";
+            int smtpPort = int.Parse(_configuration[$"Settings:{platformName.Replace(" ", "")}:SmtpPort"] ?? _configuration["Settings:Abp.Net.Mail.Smtp.Port"] ?? "587");
+            string smtpUser = _configuration[$"Settings:{platformName.Replace(" ", "")}:SmtpUserName"] ?? _configuration["Settings:Abp.Net.Mail.Smtp.UserName"];
+            string smtpPass = _configuration[$"Settings:{platformName.Replace(" ", "")}:SmtpPassword"] ?? _configuration["Settings:Abp.Net.Mail.Smtp.Password"];
+
+            if (!string.IsNullOrEmpty(smtpUser) && !string.IsNullOrEmpty(smtpPass))
             {
                 await SendEmailWithCustomSmtp(
-                    "primeshipuk.com",
-                    465,
-                    "worldcart@primeshipuk.com",
-                    "Noshahi.000",
-                    "Smart Store",
+                    smtpHost,
+                    smtpPort,
+                    smtpUser,
+                    smtpPass,
+                    platformName,
                     email,
                     $"Action Required: Verify Your {platformName} Account",
                     emailBody
                 );
             }
-            else if (tenantId == 2) // Prime Ship
+            else
             {
-                await SendEmailWithCustomSmtp(
-                    "primeshipuk.com",
-                    465,
-                    "no-reply@primeshipuk.com",
-                    "xB}Q]@saOI^K",
-                    "Prime Ship",
-                    email,
-                    $"Action Required: Verify Your {platformName} Account",
-                    emailBody
-                );
-            }
-            else if (tenantId == 3) // Global Pay
-            {
-                await SendEmailWithCustomSmtp(
-                    "easyfinora.com",
-                    465,
-                    "no-reply@easyfinora.com",
-                    "qy,DI!+ZasZz",
-                    "Global Pay",
-                    email,
-                    $"Action Required: Verify Your {platformName} Account",
-                    emailBody
-                );
-            }
-            else // Default or other
-            {
-                var mail = new System.Net.Mail.MailMessage("no-reply@primeshipuk.com", email)
+                var mail = new System.Net.Mail.MailMessage(_configuration["Settings:Abp.Net.Mail.DefaultFromAddress"] ?? "no-reply@primeshipuk.com", email)
                 {
                     Subject = $"Action Required: Verify Your {platformName} Account",
                     Body = emailBody,
@@ -401,8 +384,11 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             }
 
             Logger.Info($"ForgotPassword: Generating reset token for {email}");
+            var serverRootAddress = _configuration["App:ServerRootAddress"]?.TrimEnd('/');
+            if (string.IsNullOrEmpty(serverRootAddress)) serverRootAddress = "http://localhost:44311";
+
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var resetLink = $"https://localhost:44311/api/services/app/Account/ShowResetPasswordPage?userId={user.Id}&token={Uri.EscapeDataString(token)}";
+            var resetLink = $"{serverRootAddress}/api/services/app/Account/ShowResetPasswordPage?userId={user.Id}&token={Uri.EscapeDataString(token)}";
 
             var emailBody = $@"
                 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #f4f7f6;'>
