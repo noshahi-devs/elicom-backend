@@ -53,23 +53,8 @@ namespace Elicom.Web.Host.Startup
                     _defaultCorsPolicyName,
                     builder =>
                     {
-                        var corsOrigins = _appConfiguration["App:CorsOrigins"];
-                        var origins = (corsOrigins ?? "")
-                            .Split(",", StringSplitOptions.RemoveEmptyEntries)
-                            .Select(o => o.Trim().RemovePostFix("/"))
-                            .ToArray();
-
-                        if (origins.Contains("*") || string.IsNullOrEmpty(corsOrigins))
-                        {
-                            builder.SetIsOriginAllowed(_ => true);
-                        }
-                        else
-                        {
-                            builder.WithOrigins(origins)
-                                .SetIsOriginAllowedToAllowWildcardSubdomains();
-                        }
-
-                        builder.AllowAnyHeader()
+                        builder.SetIsOriginAllowed(_ => true)
+                            .AllowAnyHeader()
                             .AllowAnyMethod()
                             .AllowCredentials();
                     }
