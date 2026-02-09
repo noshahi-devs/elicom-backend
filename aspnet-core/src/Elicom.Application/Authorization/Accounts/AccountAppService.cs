@@ -139,6 +139,8 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
         };
     }
 
+    private async Task SendVerificationEmail(User user, string platformName, string brandColor)
+    {
         var serverRootAddress = _configuration["App:ServerRootAddress"]?.TrimEnd('/');
         if (string.IsNullOrEmpty(serverRootAddress)) serverRootAddress = "http://localhost:44311";
 
@@ -174,7 +176,6 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
         );
     }
 
-    [HttpPost]
     [HttpPost]
     public async Task RegisterSeller(string email)
     {
