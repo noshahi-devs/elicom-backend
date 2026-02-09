@@ -56,7 +56,7 @@ namespace Elicom.Web.Host.Startup
                         var corsOrigins = _appConfiguration["App:CorsOrigins"];
                         var origins = (corsOrigins ?? "")
                             .Split(",", StringSplitOptions.RemoveEmptyEntries)
-                            .Select(o => o.Trim().RemovePostFix("/"))
+                            .Select(o => o.RemovePostFix("/"))
                             .ToArray();
 
                         if (origins.Contains("*") || string.IsNullOrEmpty(corsOrigins))
@@ -65,8 +65,7 @@ namespace Elicom.Web.Host.Startup
                         }
                         else
                         {
-                            builder.WithOrigins(origins)
-                                .SetIsOriginAllowedToAllowWildcardSubdomains();
+                            builder.WithOrigins(origins);
                         }
 
                         builder.AllowAnyHeader()
@@ -94,8 +93,6 @@ namespace Elicom.Web.Host.Startup
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             app.UseAbp(options => { options.UseAbpRequestLocalization = false; }); // Initializes ABP framework.
-
-            app.UseStaticFiles();
 
             app.UseRouting();
 
@@ -153,7 +150,7 @@ namespace Elicom.Web.Host.Startup
 
                 // Define the BearerAuth scheme that's in use
                 options.AddSecurityDefinition("bearerAuth", new OpenApiSecurityScheme()
-                {
+{
                     Description =
                         "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
                     Name = "Authorization",
