@@ -53,6 +53,7 @@ namespace Elicom.Web.Host.Startup
                     _defaultCorsPolicyName,
                     builder =>
                     {
+                        // Allow everything temporarily to fix the 503 and CORS issue
                         builder.SetIsOriginAllowed(_ => true)
                             .AllowAnyHeader()
                             .AllowAnyMethod()
@@ -80,11 +81,11 @@ namespace Elicom.Web.Host.Startup
         {
             app.UseAbp(options => { options.UseAbpRequestLocalization = false; }); // Initializes ABP framework.
 
+            app.UseCors(_defaultCorsPolicyName); // Enable CORS!
+
             app.UseStaticFiles();
 
             app.UseRouting();
-
-            app.UseCors(_defaultCorsPolicyName); // Enable CORS!
 
             app.UseAuthentication();
             app.UseAuthorization();
