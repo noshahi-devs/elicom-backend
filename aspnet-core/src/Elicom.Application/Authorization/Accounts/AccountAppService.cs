@@ -131,10 +131,15 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             input.Country
         );
 
-        if (AbpSession.TenantId == 3)
-        {
-            await SendVerificationEmail(user, "Easy Finora", "#1de016");
-        }
+        var tenantId = AbpSession.TenantId ?? 1;
+        string platformName = "Elicom";
+        string brandColor = "#007bff";
+
+        if (tenantId == 2) { platformName = "Smart Store"; brandColor = "#ff4500"; }
+        else if (tenantId == 3) { platformName = "Easy Finora"; brandColor = "#1de016"; }
+        else if (tenantId == 4) { platformName = "Global Pay"; brandColor = "#28a745"; }
+
+        await SendVerificationEmail(user, platformName, brandColor);
 
         return new RegisterOutput
         {
@@ -304,66 +309,8 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                 await _userManager.AddToRoleAsync(user, roleName);
             }
 
-            var serverRootAddress = (await SettingManager.GetSettingValueAsync("App.ServerRootAddress"))?.TrimEnd('/');
-            if (string.IsNullOrEmpty(serverRootAddress)) serverRootAddress = "http://localhost:44311";
-
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            
-            var verificationLink = $"{serverRootAddress}/api/services/app/Account/VerifyEmail?userId={user.Id}&token={Uri.EscapeDataString(token)}&platform={Uri.EscapeDataString(platformName)}";
-
-            var emailBody = $@"
-                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #ffffff;'>
-                    <div style='text-align: center; border-bottom: 2px solid {brandColor}; padding-bottom: 15px;'>
-                        <h1 style='color: #333; margin: 0;'>{platformName.ToUpper()}</h1>
-                    </div>
-                    <div style='padding: 30px; line-height: 1.6; color: #333;'>
-                        <h2>Welcome to {platformName}!</h2>
-                        <p>Hi <b>{name}</b>,</p>
-                        <p>You've successfully registered as a <b>{userType}</b> on {platformName}.</p>
-                        <p style='background-color: #f8f9fa; padding: 10px; border-radius: 4px; border-left: 4px solid {brandColor};'>
-                        <b>Username:</b> <code>{email}</code><br>
-                        <b>Password:</b> <code>{(password == "Noshahi.000" ? password : "Your chosen password")}</code>
-                    </p>
-                        <div style='text-align: center; margin: 35px 0;'>
-                            <a href='{verificationLink}' style='background-color: {brandColor}; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 18px;'>
-                                VERIFY MY ACCOUNT
-                            </a>
-                        </div>
-                    </div>
-                </div>";
-
-            // 5. Send Platform-Specific Email (ACS ONLY)
-            // We use global SMTP settings for ACS since it's a single account,
-            // but we use platform-specific sender logic to satisfy domain verification.
-            string host = await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.Host");
-            if (string.IsNullOrWhiteSpace(host)) host = "smtp.azurecomm.net";
-
-            string portStr = await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.Port");
-            int port = string.IsNullOrWhiteSpace(portStr) ? 587 : int.Parse(portStr);
-
-            string userSmtp = await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.UserName");
-            string passSmtp = await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.Password");
-            
-            // Default from address based on platform if not explicitly set globally
-            string fromEmail = await SettingManager.GetSettingValueAsync("Abp.Net.Mail.DefaultFromAddress");
-            if (string.IsNullOrWhiteSpace(fromEmail))
-            {
-                fromEmail = $"no-reply@{platformName.Replace(" ", "").ToLower()}.com";
-                if (platformName == "Easy Finora" || platformName == "Global Pay") fromEmail = "DoNotReply@easyfinora.com";
-                if (platformName == "Smart Store") fromEmail = "DoNotReply@smartstoreus.com";
-            }
-
-            await SendEmailWithCustomSmtp(
-                host,
-                port,
-                userSmtp,
-                passSmtp,
-                platformName,
-                fromEmail,
-                email,
-                $"Action Required: Verify Your {platformName} Account",
-                emailBody
-            );
+            // Send Email using unified helper
+            await SendVerificationEmail(user, platformName, brandColor);
         }
     }
 
