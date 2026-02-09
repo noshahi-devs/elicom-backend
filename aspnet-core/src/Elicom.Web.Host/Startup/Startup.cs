@@ -53,12 +53,13 @@ namespace Elicom.Web.Host.Startup
                     _defaultCorsPolicyName,
                     builder =>
                     {
-                        var origins = _appConfiguration["App:CorsOrigins"]
+                        var corsOrigins = _appConfiguration["App:CorsOrigins"];
+                        var origins = (corsOrigins ?? "")
                             .Split(",", StringSplitOptions.RemoveEmptyEntries)
                             .Select(o => o.RemovePostFix("/"))
                             .ToArray();
 
-                        if (origins.Contains("*"))
+                        if (origins.Contains("*") || string.IsNullOrEmpty(corsOrigins))
                         {
                             builder.SetIsOriginAllowed(_ => true);
                         }
