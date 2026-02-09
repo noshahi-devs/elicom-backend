@@ -414,6 +414,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
         catch (Exception ex)
         {
             Logger.Error($"[ACS] ❌ Exception while sending email to {to}", ex);
+            throw new UserFriendlyException($"Could not send verification email: {ex.Message}");
         }
     }
 
