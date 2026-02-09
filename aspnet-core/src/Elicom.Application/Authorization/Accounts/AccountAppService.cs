@@ -225,12 +225,15 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
 
         Logger.Info($"SendSampleEmail: Start sending sample email to {toEmail}. TenantId={AbpSession.TenantId}");
 
+        var fromEmail = _configuration["Settings:Abp.Net.Mail.DefaultFromAddress"] ?? "no-reply@smartstoreus.com";
+
         await SendEmailWithCustomSmtp(
-            "easyfinora.com",
-            465,
-            "no-reply@easyfinora.com",
-            "qy,DI!+ZasZz",
+            "smtp.azurecomm.net",
+            587,
+            _configuration["Settings:Abp.Net.Mail.Smtp.UserName"],
+            _configuration["Settings:Abp.Net.Mail.Smtp.Password"],
             "Global Pay",
+            fromEmail,
             toEmail,
             "Sample Email (Global Pay UK Register)",
             "<div style='font-family: Arial, sans-serif;'>Sample email from backend API.</div>"
@@ -312,6 +315,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             int smtpPort = int.Parse(_configuration[$"Settings:{platformName.Replace(" ", "")}:SmtpPort"] ?? _configuration["Settings:Abp.Net.Mail.Smtp.Port"] ?? "587");
             string smtpUser = _configuration[$"Settings:{platformName.Replace(" ", "")}:SmtpUserName"] ?? _configuration["Settings:Abp.Net.Mail.Smtp.UserName"];
             string smtpPass = _configuration[$"Settings:{platformName.Replace(" ", "")}:SmtpPassword"] ?? _configuration["Settings:Abp.Net.Mail.Smtp.Password"];
+            string fromEmail = _configuration[$"Settings:{platformName.Replace(" ", "")}:SmtpFromAddress"] ?? _configuration["Settings:Abp.Net.Mail.DefaultFromAddress"] ?? $"no-reply@{platformName.Replace(" ", "").ToLower()}.com";
 
             if (!string.IsNullOrEmpty(smtpUser) && !string.IsNullOrEmpty(smtpPass))
             {
@@ -321,6 +325,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                     smtpUser,
                     smtpPass,
                     platformName,
+                    fromEmail,
                     email,
                     $"Action Required: Verify Your {platformName} Account",
                     emailBody
@@ -339,12 +344,12 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
         }
     }
 
-    private async Task SendEmailWithCustomSmtp(string host, int port, string user, string pass, string fromName, string to, string subject, string body)
+    private async Task SendEmailWithCustomSmtp(string host, int port, string user, string pass, string fromName, string fromEmail, string to, string subject, string body)
     {
         try
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(fromName, user));
+            message.From.Add(new MailboxAddress(fromName, fromEmail));
             message.To.Add(new MailboxAddress("", to));
             message.Subject = subject;
 
@@ -356,12 +361,13 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                 // For demo/test, we accept all certificates
                 client.ServerCertificateValidationCallback = (s, c, h, e) => true;
 
-                await client.ConnectAsync(host, port, SecureSocketOptions.SslOnConnect);
+                // Use Auto to intelligently handle STARTTLS vs SSL
+                await client.ConnectAsync(host, port, SecureSocketOptions.Auto);
                 await client.AuthenticateAsync(user, pass);
                 await client.SendAsync(message);
                 await client.DisconnectAsync(true);
             }
-            Logger.Info($"Smart Store email sent successfully to {to} via {host}");
+            Logger.Info($"Email sent successfully to {to} via {host} as {fromEmail}");
         }
         catch (Exception ex)
         {
