@@ -347,7 +347,14 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
 
     private async Task SendEmailWithCustomSmtp(string host, int port, string user, string pass, string fromName, string fromEmail, string to, string subject, string body)
     {
-        Logger.Info($"[ACS] Starting email send to {to} from {fromEmail} using Azure Communication Services SDK");
+        // OVERRIDE: Enforce EasyFinora branding if not already set correctly
+        if (fromEmail.Contains("smartstoreus.com"))
+        {
+            fromEmail = "DoNotReply@easyfinora.com";
+            fromName = "EasyFinora";
+        }
+
+        Logger.Info($"[ACS] Starting email send to {to} from {fromName} <{fromEmail}> using Azure Communication Services SDK");
         
         try
         {
@@ -359,8 +366,14 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             var emailClient = new Azure.Communication.Email.EmailClient(connectionString);
             
             Logger.Info($"[ACS] Building email message...");
+            
+            // Format sender with Display Name if provided
+            var senderAddress = string.IsNullOrEmpty(fromName) 
+                ? fromEmail 
+                : $"{fromName} <{fromEmail}>";
+
             var emailMessage = new Azure.Communication.Email.EmailMessage(
-                senderAddress: fromEmail,
+                senderAddress: senderAddress,
                 recipientAddress: to,
                 content: new Azure.Communication.Email.EmailContent(subject)
                 {
@@ -374,7 +387,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                 emailMessage
             );
             
-            Logger.Info($"[ACS] ✅ Email sent successfully to {to} from {fromEmail}");
+            Logger.Info($"[ACS] ✅ Email sent successfully to {to} from {senderAddress}");
             Logger.Info($"[ACS] Operation ID: {emailSendOperation.Id}");
             Logger.Info($"[ACS] Status: {emailSendOperation.GetRawResponse().Status}");
         }
@@ -386,7 +399,6 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             {
                 Logger.Error($"[ACS] Inner exception: {ex.InnerException.GetType().Name} - {ex.InnerException.Message}");
             }
-            // We don't throw the exception to allow registration to complete even if email fails
         }
     }
 
