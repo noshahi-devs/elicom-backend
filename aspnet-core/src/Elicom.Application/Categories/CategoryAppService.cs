@@ -40,13 +40,16 @@ namespace Elicom.Categories
             return _mapper.Map<CategoryDto>(entity);
         }
 
-        public async Task<ListResultDto<CategoryDto>> GetAll()
+        public async Task<ListResultDto<CategoryDto>> GetAll(int maxResultCount = 100)
         {
-            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
+            var query = _categoryRepository.GetAll();
+            if (maxResultCount > 0)
             {
-                var categories = await _categoryRepository.GetAllListAsync();
-                return new ListResultDto<CategoryDto>(_mapper.Map<List<CategoryDto>>(categories));
+                query = query.Take(maxResultCount);
             }
+            
+            var categories = await query.ToListAsync();
+            return new ListResultDto<CategoryDto>(_mapper.Map<List<CategoryDto>>(categories));
         }
 
         [AbpAuthorize(PermissionNames.Pages_Categories_Create)]

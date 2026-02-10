@@ -58,9 +58,9 @@ export class CategoryService {
     );
   }
 
-  getAllCategories(): Observable<any[]> {
+  getAllCategories(maxResultCount: number = 100): Observable<any[]> {
     if (!this.categoriesCache$) {
-      this.categoriesCache$ = this.fetchAndCache(`${this.apiUrl}/GetAll`, 'GetAllCategories');
+      this.categoriesCache$ = this.fetchAndCache(`${this.apiUrl}/GetAll?maxResultCount=${maxResultCount}`, 'GetAllCategories');
     }
     return this.categoriesCache$;
   }

@@ -59,8 +59,8 @@ export class HomeComponent implements OnInit {
     });
 
     console.log('HomeComponent: Loading products...');
-    // Using getProductsForCards to fetch all products as requested ("sary product")
-    this.productService.getProductsForCards(0, 50).subscribe({
+    // Optimized: Fetch only 8 products initially for the homepage
+    this.productService.getProductsForCards(0, 8).subscribe({
       next: (res: any) => {
         Swal.close();
         // Handle response robustly (checking result/items)
@@ -81,9 +81,8 @@ export class HomeComponent implements OnInit {
 
   loadCategories() {
     console.log('HomeComponent: Triggering robust category load...');
-    // We subscribe to the shared cache stream. 
-    // If it's already loading from another component (e.g. Nav), we will just join the stream.
-    this.categoryService.getAllCategories().subscribe({
+    // Optimized: Fetch only 8 categories initially for the homepage carousel
+    this.categoryService.getAllCategories(8).subscribe({
       next: (res: any[]) => {
         console.log('HomeComponent: Categories arrived reliably. Count:', res.length);
         this.categoriesDebug = res;

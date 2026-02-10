@@ -36,35 +36,44 @@ namespace Elicom.Public
             _userRepository = userRepository;
         }
 
-        public async Task<ListResultDto<CategoryDto>> GetCategories()
+        public async Task<ListResultDto<CategoryDto>> GetCategories(int maxResultCount = 100)
         {
-            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
+            // Removed DisableFilter to allow tenant-specific indexing (e.g. for Tenant 2)
+            // Abp automatically applies the tenant filter from the header.
+            
+            // Fetch categories for the current tenant
+            var categoriesQuery = _categoryRepository.GetAll();
+            if (maxResultCount > 0)
             {
-                // Fetch all categories
-                var categories = await _categoryRepository.GetAllListAsync();
-                
-                // Optimized: Group and count products in the database instead of in-memory
-                var countDict = await _productRepository.GetAll()
-                    .Where(p => p.Category != null && p.Category.Name != null)
-                    .GroupBy(p => p.Category.Name.Trim().ToLower())
-                    .Select(g => new { Name = g.Key, Count = g.Count() })
-                    .ToDictionaryAsync(x => x.Name, x => x.Count);
+                categoriesQuery = categoriesQuery.Take(maxResultCount);
+            }
+            var categories = await categoriesQuery.ToListAsync();
+            
+            // Optimized: Group and count products by CategoryId in the database
+            var categoryIds = categories.Select(c => c.Id).ToList();
+            var countDict = await _productRepository.GetAll()
+                .Where(p => categoryIds.Contains(p.CategoryId))
+                .GroupBy(p => p.CategoryId)
+                .Select(g => new { Id = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.Id, x => x.Count);
 
                 var result = categories
                     .GroupBy(c => c.Name?.Trim().ToLower() ?? "uncategorized")
                     .Select(g =>
                     {
-                        var name = g.Key;
+                        var groupName = g.Key;
                         var first = g.First();
                         var dto = ObjectMapper.Map<CategoryDto>(first);
-                        dto.ProductCount = countDict.ContainsKey(name) ? countDict[name] : 0;
+                        
+                        // Use Guid ID for dictionary lookup
+                        dto.ProductCount = countDict.ContainsKey(first.Id) ? countDict[first.Id] : 0;
                         
                         // Ensure name is set correctly for display
-                        if (string.IsNullOrEmpty(dto.Name)) dto.Name = name;
+                        if (string.IsNullOrEmpty(dto.Name)) dto.Name = first.Name ?? groupName;
                         
                         if (string.IsNullOrEmpty(dto.Slug) || dto.Slug == "string" || dto.Slug == "null")
                         {
-                            dto.Slug = System.Text.RegularExpressions.Regex.Replace(first.Name.ToLower(), @"[^a-z0-9]+", "-").Trim('-');
+                            dto.Slug = System.Text.RegularExpressions.Regex.Replace((first.Name ?? "category").ToLower(), @"[^a-z0-9]+", "-").Trim('-');
                         }
                         return dto;
                     })
@@ -72,14 +81,12 @@ namespace Elicom.Public
                     .ToList();
 
                 return new ListResultDto<CategoryDto>(result);
-            }
         }
 
-        public async Task<ListResultDto<ProductDto>> GetProducts(string searchTerm = null)
+        public async Task<ListResultDto<ProductDto>> GetProducts(string searchTerm = null, int skipCount = 0, int maxResultCount = 8)
         {
-            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
-            {
-                var query = _productRepository.GetAll().Include(p => p.Category).AsQueryable();
+            // Removed DisableFilter to use tenant indexes
+            var query = _productRepository.GetAll().Include(p => p.Category).AsQueryable();
 
                 if (!string.IsNullOrWhiteSpace(searchTerm))
                 {
@@ -95,14 +102,12 @@ namespace Elicom.Public
                     }
                 }
 
-                // Optimization: Limit the number of products returned to prevent timeouts on large datasets
-                // Ideally this should use proper pagination (skip/take) from the frontend
                 var products = await query.OrderByDescending(p => p.CreatedAt)
-                                          .Take(250) // Reasonable limit for a public listing without pagination
+                                          .Skip(skipCount)
+                                          .Take(maxResultCount > 0 ? maxResultCount : 8)
                                           .ToListAsync();
                 
                 return new ListResultDto<ProductDto>(ObjectMapper.Map<List<ProductDto>>(products));
-            }
         }
 
         public async Task<ProductDto> GetProductBySlug(string slug)
@@ -227,8 +232,8 @@ namespace Elicom.Public
 
     public interface IPublicAppService : IApplicationService
     {
-        Task<ListResultDto<CategoryDto>> GetCategories();
-        Task<ListResultDto<ProductDto>> GetProducts(string searchTerm = null);
+        Task<ListResultDto<CategoryDto>> GetCategories(int maxResultCount = 100);
+        Task<ListResultDto<ProductDto>> GetProducts(string searchTerm = null, int skipCount = 0, int maxResultCount = 8);
         Task<ProductDto> GetProductBySlug(string slug);
         Task<ProductDto> GetProductBySku(string sku);
         Task<List<ProductDto>> GetProductsBySearch(string term);
