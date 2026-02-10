@@ -29,15 +29,18 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
     private readonly UserRegistrationManager _userRegistrationManager;
     private readonly IEmailSender _emailSender;
     private readonly UserManager _userManager;
+    private readonly Microsoft.Extensions.Configuration.IConfiguration _configuration;
 
     public AccountAppService(
         UserRegistrationManager userRegistrationManager,
         IEmailSender emailSender,
-        UserManager userManager)
+        UserManager userManager,
+        Microsoft.Extensions.Configuration.IConfiguration configuration)
     {
         _userRegistrationManager = userRegistrationManager;
         _emailSender = emailSender;
         _userManager = userManager;
+        _configuration = configuration;
     }
 
     [HttpGet]
@@ -316,36 +319,59 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
 
     private async Task SendEmailWithCustomSmtp(string host, int port, string user, string pass, string fromName, string fromEmail, string to, string subject, string body)
     {
-        // Azure Communication Services Integration (Exclusively)
-        // Standard SMTP fallbacks have been removed as per user requirement.
+        // ---------------------------------------------------------
+        // AZURE COMMUNICATION SERVICES (ACS) INTEGRATION - FIXED
+        // ---------------------------------------------------------
         
-        // Ensure strictly verified domains for ACS
-        if (fromEmail.Contains("easyfinora.com") || fromEmail.Contains("globalpay"))
+        // 1. Force override of the Sender Email based on Tenant/Context
+        //    (This matches what was desired, but we must ensure it matches a VERIFIED domain)
+        //    Crucial Fix: Check fromName because fromEmail might be garbage (e.g. admin@mydomain.com)
+        if (fromEmail.Contains("easyfinora.com") || fromEmail.Contains("globalpay") || 
+            (fromName != null && (fromName.Contains("Global Pay") || fromName.Contains("Easy Finora"))))
         {
             fromEmail = "DoNotReply@easyfinora.com";
         }
-        else if (fromEmail.Contains("primeship") || fromEmail.Contains("smartstore"))
+        else if (fromEmail.Contains("primeship") || fromEmail.Contains("smartstore") ||
+                 (fromName != null && (fromName.Contains("Prime Ship") || fromName.Contains("Smart Store"))))
         {
             fromEmail = "DoNotReply@smartstoreus.com";
         }
 
-        Logger.Info($"[ACS] Starting email send to {to} from {fromEmail} using Azure Communication Services SDK");
+        Logger.Info($"[ACS] Starting email send to {to}. Requested Sender: {fromEmail}");
+
+        // 2. Get the ACS Connection String directly from Configuration (bypass DB legacy SMTP settings)
+        //    We utilize the "Abp.Net.Mail.Smtp.Password" key from appsettings.json as the ACS Key
+        string acsKey = _configuration["App:Settings:Abp.Net.Mail.Smtp.Password"]; 
         
+        // If not found there, try the flat structure if that's how it is loaded (ABP behavior varies)
+        if (string.IsNullOrEmpty(acsKey))
+        {
+             acsKey = _configuration["Settings:Abp.Net.Mail.Smtp.Password"];
+        }
+
+        // Fallback to the argument `pass` ONLY if it looks like a connection string, otherwise rely on the Config
+        string connectionString;
+        if (!string.IsNullOrEmpty(pass) && pass.StartsWith("endpoint="))
+        {
+             connectionString = pass;
+             Logger.Info("[ACS] Using Connection String passed in arguments.");
+        }
+        else if (!string.IsNullOrEmpty(acsKey))
+        {
+             // Construct connection string standard format
+             connectionString = $"endpoint=https://comm-elicom-prod.unitedstates.communication.azure.com/;accesskey={acsKey}";
+             Logger.Info("[ACS] Using Connection String constructed from appsettings.json Key.");
+        }
+        else
+        {
+             // Last resort fallback (likely to fail if DB has garbage)
+             connectionString = $"endpoint=https://comm-elicom-prod.unitedstates.communication.azure.com/;accesskey={pass}";
+             Logger.Warn("[ACS] ⚠️ Configuration key not found. Falling back to argument password (potential risk if legacy).");
+        }
+
+
         try
         {
-            // Use Access Key from pass and build connection string if not already one
-            string connectionString;
-            if (pass != null && pass.StartsWith("endpoint="))
-            {
-                connectionString = pass;
-            }
-            else
-            {
-                // Default prod endpoint if only access key is provided
-                connectionString = $"endpoint=https://comm-elicom-prod.unitedstates.communication.azure.com/;accesskey={pass}";
-            }
-            
-            Logger.Info($"[ACS] Initializing EmailClient...");
             var emailClient = new EmailClient(connectionString);
             
             var emailMessage = new EmailMessage(
@@ -356,18 +382,31 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                     Html = body
                 }
             );
-            
+
             Logger.Info($"[ACS] Sending email via Azure Communication Services...");
+            
             var emailSendOperation = await emailClient.SendAsync(WaitUntil.Completed, emailMessage);
             
             Logger.Info($"[ACS] ✅ Email sent successfully to {to} from {fromEmail}. OpId: {emailSendOperation.Id}");
         }
+        catch (RequestFailedException ex)
+        {
+            Logger.Error($"[ACS] ❌ Azure Request Failed. ErrorCode: {ex.ErrorCode}. Message: {ex.Message}");
+            
+            if (ex.ErrorCode == "DomainNotLinked")
+            {
+                throw new UserFriendlyException($"Configuration Error: The domain '{fromEmail}' is not linked to the configured ACS Resource. Please verify the domain in Azure or check 'appsettings.json' keys.");
+            }
+            throw new UserFriendlyException($"Could not send verification email (ACS Error): {ex.Message}");
+        }
         catch (Exception ex)
         {
-            Logger.Error($"[ACS] ❌ Exception while sending email to {to}", ex);
+            Logger.Error($"[ACS] ❌ General Exception while sending email to {to}", ex);
             throw new UserFriendlyException($"Could not send verification email: {ex.Message}");
         }
     }
+    
+    private int min(int a, int b) => a < b ? a : b;
 
 
     [HttpPost]
