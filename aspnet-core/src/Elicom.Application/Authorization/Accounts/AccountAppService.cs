@@ -322,7 +322,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
         // Ensure strictly verified domains for ACS
         if (fromEmail.Contains("easyfinora.com") || fromEmail.Contains("globalpay"))
         {
-            fromEmail = "DoNotReply@easyfinora.com";
+            fromEmail = "DoNotReply@smartstoreus.com";
         }
         else if (fromEmail.Contains("primeship") || fromEmail.Contains("smartstore"))
         {

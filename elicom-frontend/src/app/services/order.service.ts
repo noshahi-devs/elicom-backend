@@ -11,6 +11,9 @@ export interface CreateOrderDto {
     state: string;
     city: string;
     postalCode: string;
+    recipientName?: string;
+    recipientPhone?: string;
+    recipientEmail?: string;
     shippingCost: number;
     discount: number;
     sourcePlatform?: string;

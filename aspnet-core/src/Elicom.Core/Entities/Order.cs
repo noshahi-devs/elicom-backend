@@ -36,6 +36,10 @@ namespace Elicom.Entities
         public string State { get; set; }
         public string City { get; set; }
         public string PostalCode { get; set; }
+        
+        public string RecipientName { get; set; }
+        public string RecipientPhone { get; set; }
+        public string RecipientEmail { get; set; }
 
         // Seller sets after purchasing from supplier
         public string SupplierReference { get; set; }

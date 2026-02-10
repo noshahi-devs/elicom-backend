@@ -1,0 +1,77 @@
+<div class="add-payment-content fade-in-up">
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-bold mb-1">Add Payment Method</h1>
+            <p class="text-muted mb-0">Configure your payout methods securely.</p>
+        </div>
+        <button class="btn btn-outline-primary" routerLink="/seller/finances/payouts">
+            <i class="fas fa-arrow-left me-2"></i> Back to Payouts
+        </button>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-body p-4 p-lg-5">
+            <div class="payment-form-container">
+                <div class="row g-4">
+                    <!-- Payment Type Selection -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Payment Type</label>
+                        <select class="form-select form-control-lg" [(ngModel)]="paymentType" name="paymentType">
+                            <option value="">Select Payment Type</option>
+                            <option value="bank">Bank Transfer</option>
+                            <option value="paypal">PayPal</option>
+                            <option value="stripe">Stripe</option>
+                            <option value="wise">Wise</option>
+                        </select>
+                    </div>
+
+                    <!-- Dynamic Fields based on Payment Type -->
+                    <ng-container *ngIf="paymentType === 'bank' || paymentType === 'wise'">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Account Title</label>
+                            <input type="text" class="form-control form-control-lg" [(ngModel)]="accountTitle"
+                                placeholder="e.g. John Doe">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Bank Name</label>
+                            <input type="text" class="form-control form-control-lg" [(ngModel)]="bankName"
+                                placeholder="e.g. Chase Bank">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Account Number</label>
+                            <input type="text" class="form-control form-control-lg" [(ngModel)]="accountNumber"
+                                placeholder="e.g. 1234567890">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Routing Number (US)</label>
+                            <input type="text" class="form-control form-control-lg" [(ngModel)]="routingNumber"
+                                placeholder="e.g. 021000021">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">SWIFT / BIC Code</label>
+                            <input type="text" class="form-control form-control-lg" [(ngModel)]="swiftCode"
+                                placeholder="e.g. CHASUS33">
+                        </div>
+                    </ng-container>
+
+                    <ng-container *ngIf="paymentType === 'paypal' || paymentType === 'stripe'">
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Email Address / ID</label>
+                            <input type="email" class="form-control form-control-lg" [(ngModel)]="walletId"
+                                placeholder="e.g. email@example.com">
+                        </div>
+                    </ng-container>
+
+                    <div class="col-12 mt-4 d-flex justify-content-end">
+                        <button class="btn btn-primary btn-lg px-5 shadow-lg" (click)="savePaymentMethod()"
+                            [disabled]="isSaving">
+                            <span *ngIf="!isSaving"><i class="fas fa-save me-2"></i> Save Method</span>
+                            <span *ngIf="isSaving"><i class="fas fa-spinner fa-spin me-2"></i> Saving...</span>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 
 interface PayoutMethod {
     type: 'bank' | 'third_party';
@@ -15,7 +16,7 @@ interface PayoutMethod {
 @Component({
     selector: 'app-payouts',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, RouterModule],
     templateUrl: './payouts.component.html',
     styleUrls: ['./payouts.component.scss']
 })

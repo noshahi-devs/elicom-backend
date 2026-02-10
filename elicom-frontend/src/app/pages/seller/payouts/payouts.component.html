@@ -61,10 +61,11 @@
             <div class="payout-card h-100">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3 class="fw-bold mb-0">Payout Method</h3>
-                    <button *ngIf="!isSettingUpMethod" (click)="isSettingUpMethod = true"
-                        class="btn btn-outline-custom btn-sm">
-                        <i class="fas fa-edit me-2"></i> Change Method
-                    </button>
+                    <div class="d-flex gap-2">
+                        <button routerLink="/seller/finances/add-payment-method" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-plus me-2"></i> Add/Change Method
+                        </button>
+                    </div>
                 </div>
 
                 <div *ngIf="!isSettingUpMethod" class="method-details">
