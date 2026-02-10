@@ -79,10 +79,16 @@
       <div class="col-6">
         <div class="field static province" [class.error]="invalid('state')">
           <label>State / Province*</label>
-          <select [value]="fields.state" (change)="set('state',$event)" (blur)="touch('state')">
-            <option value="" disabled selected>Select</option>
-            <option *ngFor="let s of states" [value]="s">{{ s }}</option>
-          </select>
+          <ng-container *ngIf="states.length > 0; else textState">
+            <select [value]="fields.state" (change)="set('state',$event)" (blur)="touch('state')">
+              <option value="" disabled selected>Select</option>
+              <option *ngFor="let s of states" [value]="s">{{ s }}</option>
+            </select>
+          </ng-container>
+          <ng-template #textState>
+            <input [value]="fields.state" (input)="set('state',$event)" (blur)="touch('state')"
+              placeholder="Enter State/Province" />
+          </ng-template>
         </div>
         <div class="error-text" *ngIf="invalid('state')">Required</div>
       </div>
@@ -90,11 +96,16 @@
       <div class="col-6">
         <div class="field static province" [class.error]="invalid('city')">
           <label>City*</label>
-          <!-- Dropdown dependent on State -->
-          <select [value]="fields.city" (change)="set('city',$event)" (blur)="touch('city')" [disabled]="!fields.state">
-            <option value="" disabled selected>Select</option>
-            <option *ngFor="let c of cities" [value]="c">{{ c }}</option>
-          </select>
+          <ng-container *ngIf="cities.length > 0; else textCity">
+            <select [value]="fields.city" (change)="set('city',$event)" (blur)="touch('city')"
+              [disabled]="!fields.state">
+              <option value="" disabled selected>Select</option>
+              <option *ngFor="let c of cities" [value]="c">{{ c }}</option>
+            </select>
+          </ng-container>
+          <ng-template #textCity>
+            <input [value]="fields.city" (input)="set('city',$event)" (blur)="touch('city')" placeholder="Enter City" />
+          </ng-template>
         </div>
         <div class="error-text" *ngIf="invalid('city')">Required</div>
       </div>

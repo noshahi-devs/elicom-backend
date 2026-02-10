@@ -161,7 +161,8 @@
                         <div>{{ order?.shippingAddress }}</div>
                         <div>{{ order?.city }}, {{ order?.state }} {{ order?.postalCode }}</div>
                         <div class="fw-bold mt-2 text-uppercase">{{ order?.country }}</div>
-                        <div class="mt-3 text-muted small"><i class="fas fa-phone-alt me-2"></i> +1 234 567 890</div>
+                        <div class="mt-3 text-muted small"><i class="fas fa-phone-alt me-2"></i> {{ order?.phone }}
+                        </div>
                     </div>
                 </div>
 

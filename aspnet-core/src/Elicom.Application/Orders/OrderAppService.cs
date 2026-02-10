@@ -97,6 +97,10 @@ namespace Elicom.Orders
                 State = input.State,
                 City = input.City,
                 PostalCode = input.PostalCode,
+                
+                RecipientName = input.RecipientName,
+                RecipientPhone = input.RecipientPhone,
+                RecipientEmail = input.RecipientEmail,
 
                 SubTotal = subTotal,
                 ShippingCost = input.ShippingCost,

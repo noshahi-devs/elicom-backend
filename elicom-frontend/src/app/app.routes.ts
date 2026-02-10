@@ -42,6 +42,7 @@ export const routes: Routes = [
       { path: 'warehouse', loadComponent: () => import('./pages/seller/warehouse/warehouse.component').then(m => m.WarehouseComponent) },
       { path: 'finances/wallet', loadComponent: () => import('./pages/seller/wallet-center/wallet-center.component').then(m => m.WalletCenterComponent) },
       { path: 'finances/payouts', loadComponent: () => import('./pages/seller/payouts/payouts.component').then(m => m.PayoutsComponent) },
+      { path: 'finances/add-payment-method', loadComponent: () => import('./pages/seller/add-payment-method/add-payment-method.component').then(m => m.AddPaymentMethodComponent) },
       { path: 'settings', loadComponent: () => import('./pages/seller/coming-soon/coming-soon.component').then(m => m.SellerComingSoonComponent) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]

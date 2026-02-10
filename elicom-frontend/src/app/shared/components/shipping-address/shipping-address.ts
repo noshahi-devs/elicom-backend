@@ -79,14 +79,33 @@ export class ShippingAddress {
     const value = (e.target as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement).value;
     this.fields[field] = value;
 
-    if (field === 'state') {
-      // Populate cities based on state
-      const stateCities = CITIES_BY_STATE[value] || [];
-      this.cities = stateCities.sort();
-
-      // Reset city selection
+    if (field === 'location') {
+      // Reset state/city when country changes
+      this.fields.state = '';
       this.fields.city = '';
+      this.cities = [];
+      this.states = [];
+      this.touch('state');
       this.touch('city');
+
+      // Update states dropdown if available for this country
+      if (value === 'United States') {
+        this.states = US_STATES.sort();
+      } else {
+        this.states = []; // Empty means show text input
+      }
+    } else if (field === 'state') {
+      if (this.fields.location === 'United States') {
+        // Populate cities based on state ONLY for US currently
+        const stateCities = CITIES_BY_STATE[value] || [];
+        this.cities = stateCities.sort();
+
+        // Reset city selection
+        this.fields.city = '';
+        this.touch('city');
+      } else {
+        this.cities = []; // Empty means show text input
+      }
     }
   }
 
@@ -168,9 +187,15 @@ export class ShippingAddress {
     this.fields = { ...this.savedFields };
     this.showSummary = false;
 
-    // Restore cities for the saved state
-    if (this.fields.state) {
-      this.cities = CITIES_BY_STATE[this.fields.state]?.sort() || [];
+    // Restore states/cities for the saved state
+    if (this.fields.location === 'United States') {
+      this.states = US_STATES.sort();
+      if (this.fields.state) {
+        this.cities = CITIES_BY_STATE[this.fields.state]?.sort() || [];
+      }
+    } else {
+      this.states = [];
+      this.cities = [];
     }
   }
 
@@ -182,6 +207,7 @@ export class ShippingAddress {
     this.focused = {};
     this.showSummary = false;
     this.cities = [];
+    this.states = [];
   }
 
   getAddressData() {

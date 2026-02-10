@@ -15,7 +15,9 @@ using MimeKit;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using Abp.Configuration;
+using Azure.Communication.Email;
+using Azure;
 
 namespace Elicom.Authorization.Accounts;
 
@@ -27,18 +29,15 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
     private readonly UserRegistrationManager _userRegistrationManager;
     private readonly IEmailSender _emailSender;
     private readonly UserManager _userManager;
-    private readonly IConfiguration _configuration;
 
     public AccountAppService(
         UserRegistrationManager userRegistrationManager,
         IEmailSender emailSender,
-        UserManager userManager,
-        IConfiguration configuration)
+        UserManager userManager)
     {
         _userRegistrationManager = userRegistrationManager;
         _emailSender = emailSender;
         _userManager = userManager;
-        _configuration = configuration;
     }
 
     [HttpGet]
@@ -67,8 +66,12 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                 user.IsActive = true;
                 await _userManager.UpdateAsync(user);
 
-                // Get ClientRootAddress from config (e.g., http://localhost:4200/)
-                var clientRootAddress = _configuration["App:ClientRootAddress"]?.TrimEnd('/');
+                // Get ClientRootAddress from platform-specific settings
+                string clientRootAddressSetting = "App.SmartStore.ClientRootAddress";
+                if (platform == "Prime Ship") clientRootAddressSetting = "App.PrimeShip.ClientRootAddress";
+                if (platform == "Easy Finora" || platform == "Global Pay") clientRootAddressSetting = "App.EasyFinora.ClientRootAddress";
+
+                var clientRootAddress = (await SettingManager.GetSettingValueAsync(clientRootAddressSetting))?.TrimEnd('/');
                 if (string.IsNullOrEmpty(clientRootAddress)) clientRootAddress = "http://localhost:4200";
 
                 string redirectPath = $"{clientRootAddress}/account/login";
@@ -128,10 +131,15 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             input.Country
         );
 
-        if (AbpSession.TenantId == 3)
-        {
-            await SendVerificationEmail(user, "Easy Finora", "#1de016");
-        }
+        var tenantId = AbpSession.TenantId ?? 1;
+        string platformName = "Elicom";
+        string brandColor = "#007bff";
+
+        if (tenantId == 2) { platformName = "Smart Store"; brandColor = "#ff4500"; }
+        else if (tenantId == 3) { platformName = "Easy Finora"; brandColor = "#1de016"; }
+        else if (tenantId == 4) { platformName = "Global Pay"; brandColor = "#28a745"; }
+
+        await SendVerificationEmail(user, platformName, brandColor);
 
         return new RegisterOutput
         {
@@ -141,7 +149,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
 
     private async Task SendVerificationEmail(User user, string platformName, string brandColor)
     {
-        var serverRootAddress = _configuration["App:ServerRootAddress"]?.TrimEnd('/');
+        var serverRootAddress = (await SettingManager.GetSettingValueAsync("App.ServerRootAddress"))?.TrimEnd('/');
         if (string.IsNullOrEmpty(serverRootAddress)) serverRootAddress = "http://localhost:44311";
 
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -154,7 +162,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                 </div>
                 <div style='padding: 30px; line-height: 1.6; color: #333;'>
                     <h2>Welcome to {platformName}!</h2>
-                    <p>Hi <b>{user.EmailAddress}</b>,</p>
+                    <p>Hi <b>{user.Name}</b>,</p>
                     <p>You've successfully registered on {platformName}.</p>
                     <div style='text-align: center; margin: 35px 0;'>
                         <a href='{verificationLink}' style='background-color: {brandColor}; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 18px;'>
@@ -165,12 +173,12 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             </div>";
 
         await SendEmailWithCustomSmtp(
-            _configuration["Settings:Abp.Net.Mail.Smtp.Host"] ?? "smtp.azurecomm.net",
-            int.Parse(_configuration["Settings:Abp.Net.Mail.Smtp.Port"] ?? "587"),
-            _configuration["Settings:Abp.Net.Mail.Smtp.UserName"],
-            _configuration["Settings:Abp.Net.Mail.Smtp.Password"],
+            await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.Host") ?? "smtp.azurecomm.net",
+            int.Parse(await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.Port") ?? "587"),
+            await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.UserName"),
+            await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.Password"),
             platformName,
-            _configuration["Settings:Abp.Net.Mail.DefaultFromAddress"] ?? $"no-reply@{platformName.Replace(" ", "").ToLower()}.com",
+            await SettingManager.GetSettingValueAsync("Abp.Net.Mail.DefaultFromAddress") ?? $"no-reply@{platformName.Replace(" ", "").ToLower()}.com",
             user.EmailAddress,
             $"Action Required: Verify Your {platformName} Account",
             emailBody
@@ -192,32 +200,33 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
     [HttpPost]
     public async Task RegisterSmartStoreSeller(RegisterSmartStoreInput input)
     {
-        await RegisterPlatformUser(input.EmailAddress, 1, StaticRoleNames.Tenants.Reseller, "Seller", "Smart Store", "SS", "#ff9900", input.Password, input.Country, input.PhoneNumber);
+        await RegisterPlatformUser(input.EmailAddress, 1, StaticRoleNames.Tenants.Reseller, "Seller", "Smart Store", "SS", "#ff9900", input.Password, input.Country, input.PhoneNumber, input.FullName);
     }
 
     [HttpPost]
     public async Task RegisterSmartStoreCustomer(RegisterSmartStoreInput input)
     {
-        await RegisterPlatformUser(input.EmailAddress, 1, StaticRoleNames.Tenants.Buyer, "Customer", "Smart Store", "SS", "#ff9900", input.Password, input.Country, input.PhoneNumber);
+        await RegisterPlatformUser(input.EmailAddress, 1, StaticRoleNames.Tenants.Buyer, "Customer", "Smart Store", "SS", "#ff9900", input.Password, input.Country, input.PhoneNumber, input.FullName);
     }
 
     [HttpPost]
     public async Task RegisterPrimeShipSeller(RegisterPrimeShipInput input)
     {
-        await RegisterPlatformUser(input.EmailAddress, 2, StaticRoleNames.Tenants.Supplier, "Seller", "Prime Ship", "PS", "#007bff", input.Password, input.Country, input.PhoneNumber);
+        await RegisterPlatformUser(input.EmailAddress, 2, StaticRoleNames.Tenants.Supplier, "Seller", "Prime Ship", "PS", "#007bff", input.Password, input.Country, input.PhoneNumber, input.FullName);
     }
 
     [HttpPost]
     public async Task RegisterPrimeShipCustomer(RegisterPrimeShipInput input)
     {
-        await RegisterPlatformUser(input.EmailAddress, 2, StaticRoleNames.Tenants.Reseller, "Customer", "Prime Ship", "PS", "#007bff", input.Password, input.Country, input.PhoneNumber);
+        await RegisterPlatformUser(input.EmailAddress, 2, StaticRoleNames.Tenants.Reseller, "Customer", "Prime Ship", "PS", "#007bff", input.Password, input.Country, input.PhoneNumber, input.FullName);
     }
 
     [HttpPost]
     public async Task RegisterGlobalPayUser(RegisterGlobalPayInput input)
     {
-        await RegisterPlatformUser(input.EmailAddress, 3, StaticRoleNames.Tenants.Reseller, "User", "Global Pay", "GP", "#28a745", input.Password, input.Country, input.PhoneNumber);
+        await RegisterPlatformUser(input.EmailAddress, 3, StaticRoleNames.Tenants.Reseller, "User", "Global Pay", "GP", "#28a745", input.Password, input.Country, input.PhoneNumber, input.FullName);
     }
+
 
     [HttpPost]
     public async Task SendSampleEmail()
@@ -226,13 +235,13 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
 
         Logger.Info($"SendSampleEmail: Start sending sample email to {toEmail}. TenantId={AbpSession.TenantId}");
 
-        var fromEmail = _configuration["Settings:Abp.Net.Mail.DefaultFromAddress"] ?? "no-reply@smartstoreus.com";
+        var fromEmail = await SettingManager.GetSettingValueAsync("Abp.Net.Mail.DefaultFromAddress") ?? "no-reply@smartstoreus.com";
 
         await SendEmailWithCustomSmtp(
-            "smtp.azurecomm.net",
+            await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.Host") ?? "smtp.azurecomm.net",
             587,
-            _configuration["Settings:Abp.Net.Mail.Smtp.UserName"],
-            _configuration["Settings:Abp.Net.Mail.Smtp.Password"],
+            await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.UserName"),
+            await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.Password"),
             "Global Pay",
             fromEmail,
             toEmail,
@@ -243,8 +252,25 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
         Logger.Info($"SendSampleEmail: Completed send attempt to {toEmail}.");
     }
 
-    private async Task RegisterPlatformUser(string email, int tenantId, string roleName, string userType, string platformName, string prefix, string brandColor, string password = "Noshahi.000", string country = null, string phoneNumber = null)
+    private async Task RegisterPlatformUser(string email, int tenantId, string roleName, string userType, string platformName, string prefix, string brandColor, string password = "Noshahi.000", string country = null, string phoneNumber = null, string fullName = null)
     {
+        // Split FullName into Name and Surname for ABP User entity
+        string name = fullName ?? userType;
+        string surname = "User";
+
+        if (!string.IsNullOrEmpty(fullName))
+        {
+            var parts = fullName.Trim().Split(' ', 2);
+            if (parts.Length > 1)
+            {
+                name = parts[0];
+                surname = parts[1];
+            }
+            else
+            {
+                name = parts[0];
+            }
+        }
         using (CurrentUnitOfWork.SetTenantId(tenantId))
         using (CurrentUnitOfWork.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
         {
@@ -257,8 +283,8 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             {
                 // Create new user
                 user = await _userRegistrationManager.RegisterAsync(
-                    userType,
-                    "User",
+                    name,
+                    surname,
                     email,
                     userName,
                     password,
@@ -283,122 +309,63 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                 await _userManager.AddToRoleAsync(user, roleName);
             }
 
-            var serverRootAddress = _configuration["App:ServerRootAddress"]?.TrimEnd('/');
-            if (string.IsNullOrEmpty(serverRootAddress)) serverRootAddress = "http://localhost:44311";
-
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            
-            var verificationLink = $"{serverRootAddress}/api/services/app/Account/VerifyEmail?userId={user.Id}&token={Uri.EscapeDataString(token)}&platform={Uri.EscapeDataString(platformName)}";
-
-            var emailBody = $@"
-                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #ffffff;'>
-                    <div style='text-align: center; border-bottom: 2px solid {brandColor}; padding-bottom: 15px;'>
-                        <h1 style='color: #333; margin: 0;'>{platformName.ToUpper()}</h1>
-                    </div>
-                    <div style='padding: 30px; line-height: 1.6; color: #333;'>
-                        <h2>Welcome to {platformName}!</h2>
-                        <p>Hi <b>{email}</b>,</p>
-                        <p>You've successfully registered as a <b>{userType}</b> on {platformName}.</p>
-                        <p style='background-color: #f8f9fa; padding: 10px; border-radius: 4px; border-left: 4px solid {brandColor};'>
-                        <b>Username:</b> <code>{email}</code><br>
-                        <b>Password:</b> <code>{(password == "Noshahi.000" ? password : "Your chosen password")}</code>
-                    </p>
-                        <div style='text-align: center; margin: 35px 0;'>
-                            <a href='{verificationLink}' style='background-color: {brandColor}; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 18px;'>
-                                VERIFY MY ACCOUNT
-                            </a>
-                        </div>
-                    </div>
-                </div>";
-
-            // 5. Send Platform-Specific Email
-            string smtpHost = _configuration[$"Settings:{platformName.Replace(" ", "")}:SmtpHost"] ?? _configuration["Settings:Abp.Net.Mail.Smtp.Host"] ?? "smtp.azurecomm.net";
-            int smtpPort = int.Parse(_configuration[$"Settings:{platformName.Replace(" ", "")}:SmtpPort"] ?? _configuration["Settings:Abp.Net.Mail.Smtp.Port"] ?? "587");
-            string smtpUser = _configuration[$"Settings:{platformName.Replace(" ", "")}:SmtpUserName"] ?? _configuration["Settings:Abp.Net.Mail.Smtp.UserName"];
-            string smtpPass = _configuration[$"Settings:{platformName.Replace(" ", "")}:SmtpPassword"] ?? _configuration["Settings:Abp.Net.Mail.Smtp.Password"];
-            string fromEmail = _configuration[$"Settings:{platformName.Replace(" ", "")}:SmtpFromAddress"] ?? _configuration["Settings:Abp.Net.Mail.DefaultFromAddress"] ?? $"no-reply@{platformName.Replace(" ", "").ToLower()}.com";
-
-            if (!string.IsNullOrEmpty(smtpUser) && !string.IsNullOrEmpty(smtpPass))
-            {
-                await SendEmailWithCustomSmtp(
-                    smtpHost,
-                    smtpPort,
-                    smtpUser,
-                    smtpPass,
-                    platformName,
-                    fromEmail,
-                    email,
-                    $"Action Required: Verify Your {platformName} Account",
-                    emailBody
-                );
-            }
-            else
-            {
-                var mail = new System.Net.Mail.MailMessage(_configuration["Settings:Abp.Net.Mail.DefaultFromAddress"] ?? "no-reply@primeshipuk.com", email)
-                {
-                    Subject = $"Action Required: Verify Your {platformName} Account",
-                    Body = emailBody,
-                    IsBodyHtml = true
-                };
-                await _emailSender.SendAsync(mail);
-            }
+            // Send Email using unified helper
+            await SendVerificationEmail(user, platformName, brandColor);
         }
     }
 
     private async Task SendEmailWithCustomSmtp(string host, int port, string user, string pass, string fromName, string fromEmail, string to, string subject, string body)
     {
-        // OVERRIDE: Enforce EasyFinora verified domain
-        // The resource only allows 'DoNotReply' username for this domain
-        if (fromEmail.Contains("smartstoreus.com"))
+        // Azure Communication Services Integration (Exclusively)
+        // Standard SMTP fallbacks have been removed as per user requirement.
+        
+        // Ensure strictly verified domains for ACS
+        if (fromEmail.Contains("easyfinora.com") || fromEmail.Contains("globalpay"))
         {
             fromEmail = "DoNotReply@easyfinora.com";
-            // We can't set the display name in the sender address for ACS SDK in this mode
-            // So we just use the raw email, but the body will have the branding
+        }
+        else if (fromEmail.Contains("primeship") || fromEmail.Contains("smartstore"))
+        {
+            fromEmail = "DoNotReply@smartstoreus.com";
         }
 
         Logger.Info($"[ACS] Starting email send to {to} from {fromEmail} using Azure Communication Services SDK");
         
         try
         {
-            // Use Azure Communication Services SDK instead of SMTP
-            // The 'pass' parameter contains the ACS connection string or access key
-            var connectionString = $"endpoint=https://comm-elicom-prod.unitedstates.communication.azure.com/;accesskey={pass}";
+            // Use Access Key from pass and build connection string if not already one
+            string connectionString;
+            if (pass != null && pass.StartsWith("endpoint="))
+            {
+                connectionString = pass;
+            }
+            else
+            {
+                // Default prod endpoint if only access key is provided
+                connectionString = $"endpoint=https://comm-elicom-prod.unitedstates.communication.azure.com/;accesskey={pass}";
+            }
             
             Logger.Info($"[ACS] Initializing EmailClient...");
-            var emailClient = new Azure.Communication.Email.EmailClient(connectionString);
+            var emailClient = new EmailClient(connectionString);
             
-            Logger.Info($"[ACS] Building email message...");
-            
-            // ACS SDK v1.x often requires strict email address format without display name in senderAddress
-            var senderAddress = fromEmail;
-
-            var emailMessage = new Azure.Communication.Email.EmailMessage(
-                senderAddress: senderAddress,
+            var emailMessage = new EmailMessage(
+                senderAddress: fromEmail,
                 recipientAddress: to,
-                content: new Azure.Communication.Email.EmailContent(subject)
+                content: new EmailContent(subject)
                 {
                     Html = body
                 }
             );
             
             Logger.Info($"[ACS] Sending email via Azure Communication Services...");
-            var emailSendOperation = await emailClient.SendAsync(
-                Azure.WaitUntil.Completed,
-                emailMessage
-            );
+            var emailSendOperation = await emailClient.SendAsync(WaitUntil.Completed, emailMessage);
             
-            Logger.Info($"[ACS] ✅ Email sent successfully to {to} from {senderAddress}");
-            Logger.Info($"[ACS] Operation ID: {emailSendOperation.Id}");
-            Logger.Info($"[ACS] Status: {emailSendOperation.GetRawResponse().Status}");
+            Logger.Info($"[ACS] ✅ Email sent successfully to {to} from {fromEmail}. OpId: {emailSendOperation.Id}");
         }
         catch (Exception ex)
         {
             Logger.Error($"[ACS] ❌ Exception while sending email to {to}", ex);
-            Logger.Error($"[ACS] Error details: {ex.GetType().Name} - {ex.Message}");
-            if (ex.InnerException != null)
-            {
-                Logger.Error($"[ACS] Inner exception: {ex.InnerException.GetType().Name} - {ex.InnerException.Message}");
-            }
+            throw new UserFriendlyException($"Could not send verification email: {ex.Message}");
         }
     }
 
@@ -417,7 +384,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             }
 
             Logger.Info($"ForgotPassword: Generating reset token for {email}");
-            var serverRootAddress = _configuration["App:ServerRootAddress"]?.TrimEnd('/');
+            var serverRootAddress = (await SettingManager.GetSettingValueAsync("App.ServerRootAddress"))?.TrimEnd('/');
             if (string.IsNullOrEmpty(serverRootAddress)) serverRootAddress = "http://localhost:44311";
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
@@ -449,14 +416,18 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                     </div>
                 </div>";
 
-            // 5. Send Platform-Specific Email
+            // 5. Send Platform-Specific Email (ACS ONLY)
+            string host = await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.Host") ?? "smtp.azurecomm.net";
+            string userSmtp = await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.UserName");
+            string passSmtp = await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.Password");
+
             if (tenantId == 3) // Global Pay / Easy Finora
             {
                 await SendEmailWithCustomSmtp(
-                    "smtp.azurecomm.net",
+                    host,
                     587,
-                    _configuration["Settings:Abp.Net.Mail.Smtp.UserName"],
-                    _configuration["Settings:Abp.Net.Mail.Smtp.Password"],
+                    userSmtp,
+                    passSmtp,
                     "Easy Finora",
                     "no-reply@easyfinora.com",
                     email,
@@ -467,10 +438,10 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             else if (tenantId == 2) // Prime Ship
             {
                  await SendEmailWithCustomSmtp(
-                    "smtp.azurecomm.net",
+                    host,
                     587,
-                    _configuration["Settings:Abp.Net.Mail.Smtp.UserName"],
-                    _configuration["Settings:Abp.Net.Mail.Smtp.Password"],
+                    userSmtp,
+                    passSmtp,
                     "Prime Ship UK",
                     "no-reply@primeshipuk.com",
                     email,
@@ -480,17 +451,17 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             }
             else // Default (Smart Store or other)
             {
-                var mail = new System.Net.Mail.MailMessage(
-                    "no-reply@primeshipuk.com",
-                    email
-                )
-                {
-                    Subject = "Reset Your Password",
-                    Body = emailBody,
-                    IsBodyHtml = true
-                };
-
-                await _emailSender.SendAsync(mail);
+                await SendEmailWithCustomSmtp(
+                    host,
+                    587,
+                    userSmtp,
+                    passSmtp,
+                    "Smart Store",
+                    "no-reply@smartstoreus.com",
+                    email,
+                    "Reset Your Password",
+                    emailBody
+                );
             }
             Logger.Info($"ForgotPassword: Email sent to {email}");
         }

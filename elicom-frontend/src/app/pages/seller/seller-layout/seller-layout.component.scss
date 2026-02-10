@@ -391,3 +391,64 @@
         background: rgba(0, 0, 0, 0.03);
     }
 }
+
+/* Mobile Responsiveness Updates */
+@media (max-width: 991px) {
+    :host {
+        --sidebar-width: 0px; // No margin for main content
+    }
+
+    .sidebar {
+        left: -280px; // Hide by default
+        width: 280px !important;
+        box-shadow: 15px 0 30px rgba(0, 0, 0, 0.1);
+
+        &::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 280px;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+    }
+
+    .seller-layout.sidebar-collapsed {
+        .sidebar {
+            left: 0; // Show overlay
+
+            &::after {
+                opacity: 1;
+                pointer-events: auto;
+            }
+        }
+    }
+
+    .topbar {
+        left: 0 !important;
+        padding: 0 15px;
+
+        .search-container {
+            display: none; // Search usually takes too much space on mobile topbar
+        }
+    }
+
+    .main-wrapper {
+        margin-left: 0 !important;
+        padding: 1rem; // Less padding on mobile
+    }
+}
+
+@media (max-width: 576px) {
+    .topbar {
+        padding: 0 10px;
+    }
+
+    .main-wrapper {
+        padding: 10px;
+    }
+}
