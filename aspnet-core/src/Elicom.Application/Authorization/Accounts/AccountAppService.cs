@@ -123,31 +123,38 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
     [HttpPost]
     public async Task<RegisterOutput> Register(RegisterInput input)
     {
-        var user = await _userRegistrationManager.RegisterAsync(
-            input.Name,
-            input.Surname,
-            input.EmailAddress,
-            input.UserName,
-            input.Password,
-            false, // Email address is NOT confirmed by default.
-            input.PhoneNumber,
-            input.Country
-        );
-
-        var tenantId = AbpSession.TenantId ?? 1;
-        string platformName = "Elicom";
-        string brandColor = "#007bff";
-
-        if (tenantId == 2) { platformName = "Smart Store"; brandColor = "#ff4500"; }
-        else if (tenantId == 3) { platformName = "Easy Finora"; brandColor = "#1de016"; }
-        else if (tenantId == 4) { platformName = "Global Pay"; brandColor = "#28a745"; }
-
-        await SendVerificationEmail(user, platformName, brandColor);
-
-        return new RegisterOutput
+        try
         {
-            CanLogin = user.IsActive && user.IsEmailConfirmed
-        };
+            var user = await _userRegistrationManager.RegisterAsync(
+                input.Name,
+                input.Surname,
+                input.EmailAddress,
+                input.UserName,
+                input.Password,
+                false, // Email address is NOT confirmed by default.
+                input.PhoneNumber,
+                input.Country
+            );
+
+            var tenantId = AbpSession.TenantId ?? 1;
+            string platformName = "Elicom";
+            string brandColor = "#007bff";
+
+            if (tenantId == 2) { platformName = "Smart Store"; brandColor = "#ff4500"; }
+            else if (tenantId == 3) { platformName = "Easy Finora"; brandColor = "#1de016"; }
+            else if (tenantId == 4) { platformName = "Global Pay"; brandColor = "#28a745"; }
+
+            await SendVerificationEmail(user, platformName, brandColor);
+
+            return new RegisterOutput
+            {
+                CanLogin = user.IsActive && user.IsEmailConfirmed
+            };
+        }
+        catch (Exception ex)
+        {
+             throw new UserFriendlyException($"Registration Error: {ex.Message} | Inner: {ex.InnerException?.Message}");
+        }
     }
 
     private async Task SendVerificationEmail(User user, string platformName, string brandColor)
