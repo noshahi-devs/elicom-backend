@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { TransactionService } from '../../services/transaction.service';
 import { UserService } from '../../services/user.service';
 import { DepositService } from '../../services/deposit.service';
@@ -43,11 +44,11 @@ export class AdminDashboard implements OnInit {
         this.isLoading = true;
 
         forkJoin({
-            users: this.userService.getAllUsers(0, 1),
-            deposits: this.depositService.getAllDepositRequests(0, 100),
-            withdrawals: this.withdrawService.getAllWithdrawRequests(0, 100),
-            tickets: this.supportService.getAllTickets(0, 100),
-            transactions: this.transactionService.getAllTransactions(0, 100)
+            users: this.userService.getAllUsers(0, 1).pipe(catchError(() => of(null))),
+            deposits: this.depositService.getAllDepositRequests(0, 100).pipe(catchError(() => of(null))),
+            withdrawals: this.withdrawService.getAllWithdrawRequests(0, 100).pipe(catchError(() => of(null))),
+            tickets: this.supportService.getAllTickets(0, 100).pipe(catchError(() => of(null))),
+            transactions: this.transactionService.getAllTransactions(0, 100).pipe(catchError(() => of(null)))
         }).subscribe({
             next: (res: any) => {
                 this.stats.totalUsers = res.users?.result?.totalCount ?? 0;

@@ -44,4 +44,20 @@ export class CardService {
             tap(response => console.log('CardService.getBalance response is:', response))
         );
     }
+
+    submitCardApplication(input: any): Observable<any> {
+        return this.http.post(`${this.apiUrl}/SubmitCardApplication`, input, { headers: this.getHeaders() });
+    }
+
+    getCardApplications(): Observable<any> {
+        return this.http.get(`${this.apiUrl}/GetCardApplications`, { headers: this.getHeaders() });
+    }
+
+    approveCardApplication(id: number): Observable<any> {
+        return this.http.post(`${this.apiUrl}/ApproveCardApplication?id=${id}`, {}, { headers: this.getHeaders() });
+    }
+
+    rejectCardApplication(input: any): Observable<any> {
+        return this.http.post(`${this.apiUrl}/RejectCardApplication`, input, { headers: this.getHeaders() });
+    }
 }

@@ -25,6 +25,7 @@ import { ApproveSupport } from './pages/approve-support/approve-support';
 import { ApproveAllTransactions } from './pages/approve-all-transactions/approve-all-transactions';
 import { UserManagement } from './pages/user-management/user-management';
 import { AdminDashboard } from './pages/admin-dashboard/admin-dashboard';
+import { ApproveCards } from './pages/approve-cards/approve-cards';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -51,6 +52,7 @@ export const routes: Routes = [
   { path: 'approve-withdrawals', component: ApproveWithdrawHistory, canActivate: [authGuard] },
   { path: 'approve-support', component: ApproveSupport, canActivate: [authGuard] },
   { path: 'approve-transactions', component: ApproveAllTransactions, canActivate: [authGuard] },
+  { path: 'approve-cards', component: ApproveCards, canActivate: [authGuard] },
   { path: 'user-management', component: UserManagement, canActivate: [authGuard] },
   { path: 'admin-dashboard', component: AdminDashboard, canActivate: [authGuard] },
   // Withdraw routes

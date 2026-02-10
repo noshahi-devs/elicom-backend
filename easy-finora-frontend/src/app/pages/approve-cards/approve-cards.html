@@ -1,0 +1,64 @@
+<div class="page-container">
+    <div class="page-header">
+        <h1>Card Application Approvals</h1>
+        <p class="subtitle">Review and approve virtual card applications</p>
+    </div>
+
+    <div class="table-container-3d" [class.loading]="isLoading">
+        <table class="table-3d">
+            <thead>
+                <tr>
+                    <th>Applicant</th>
+                    <th>Contact</th>
+                    <th>Card Type</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let app of applications">
+                    <td>
+                        <div class="user-info">
+                            <strong>{{ app.fullName }}</strong>
+                            <span>@{{ app.userName }}</span>
+                        </div>
+                    </td>
+                    <td>{{ app.contactNumber }}</td>
+                    <td><span class="badge card-type">{{ app.cardType }}</span></td>
+                    <td>
+                        <span class="badge" [ngClass]="app.status.toLowerCase()">
+                            {{ app.status }}
+                        </span>
+                    </td>
+                    <td>{{ app.creationTime | date:'short' }}</td>
+                    <td>
+                        <div class="actions" *ngIf="app.status === 'Pending'">
+                            <button class="btn-icon approve" (click)="approve(app)" title="Approve">✅</button>
+                            <button class="btn-icon reject" (click)="openRejectModal(app)" title="Reject">❌</button>
+                            <button class="btn-icon view" (click)="viewDocument(app.documentBase64)"
+                                title="View ID">📄</button>
+                        </div>
+                        <span *ngIf="app.status !== 'Pending'" class="remarks">{{ app.adminRemarks }}</span>
+                    </td>
+                </tr>
+                <tr *ngIf="applications.length === 0 && !isLoading">
+                    <td colspan="6" class="no-data">No applications found.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Rejection Modal -->
+    <div class="modal-overlay" *ngIf="selectedApp">
+        <div class="modal-3d">
+            <h2>Reject Application</h2>
+            <p>Reason for rejecting <strong>{{ selectedApp.fullName }}</strong>'s application:</p>
+            <textarea [(ngModel)]="adminRemarks" placeholder="Enter reason..." class="input-3d" rows="4"></textarea>
+            <div class="modal-actions">
+                <button class="btn-3d cancel" (click)="selectedApp = null">Cancel</button>
+                <button class="btn-3d reject" (click)="reject()" [disabled]="!adminRemarks">Confirm Reject</button>
+            </div>
+        </div>
+    </div>
+</div>

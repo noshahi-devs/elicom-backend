@@ -132,7 +132,7 @@ namespace Elicom.Controllers
                 using (UnitOfWorkManager.Current.DisableFilter(Abp.Domain.Uow.AbpDataFilters.MayHaveTenant, Abp.Domain.Uow.AbpDataFilters.MustHaveTenant))
                 {
                     // Prioritize current tenant if identifiable
-                    int? currentTenantId = _tenantCache.GetOrNull(tenancyName)?.Id;
+                    int? currentTenantId = string.IsNullOrEmpty(tenancyName) ? null : _tenantCache.GetOrNull(tenancyName)?.Id;
 
                     var users = await _userManager.Users
                         .IgnoreQueryFilters()

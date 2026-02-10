@@ -34,6 +34,7 @@ namespace Elicom.EntityFrameworkCore
         public DbSet<Carrier> Carriers { get; set; }
         public DbSet<SmartStoreWallet> SmartStoreWallets { get; set; }
         public DbSet<SmartStoreWalletTransaction> SmartStoreWalletTransactions { get; set; }
+        public DbSet<Cards.CardApplication> CardApplications { get; set; }
 
         public ElicomDbContext(DbContextOptions<ElicomDbContext> options)
             : base(options)

@@ -71,37 +71,54 @@ export class ApplyCard {
         this.isLoading = true;
         this.cdr.detectChanges();
 
-        const payload = {
-            fullName: this.fullName,
-            contact: this.contact,
-            address: this.address,
-            cardType: this.cardBrand, // For virtual, we use the brand (Visa/MasterCard/Amex)
-            document: this.documentFile.name // In a real app we'd upload this
-        };
+        try {
+            const base64Document = await this.convertToBase64(this.documentFile);
 
-        console.log('ApplyCard: Submit Payload:', payload);
+            const payload = {
+                fullName: this.fullName,
+                contactNumber: this.contact,
+                address: this.address,
+                cardType: this.cardBrand,
+                documentBase64: base64Document
+            };
 
-        this.cardService.createVirtualCard(this.cardBrand).subscribe({
-            next: (response) => {
-                console.log('ApplyCard: Submit Response:', response);
-                this.toastService.showSuccess('Virtual Card generated successfully!');
+            console.log('ApplyCard: Submit Payload:', { ...payload, documentBase64: '[REDACTED]' });
 
-                // Reset form
-                this.resetForm();
+            this.cardService.submitCardApplication(payload).subscribe({
+                next: (response) => {
+                    console.log('ApplyCard: Submit Response:', response);
+                    this.toastService.showSuccess('Application submitted successfully! Please wait for admin approval.');
 
-                // Redirect to cards list
-                this.router.navigate(['/cards']);
-            },
-            error: (err) => {
-                console.error('ApplyCard: Submit Error:', err);
-                this.toastService.showError(err.error?.error?.message || 'Failed to create virtual card. Please try again.');
-                this.isLoading = false;
-                this.cdr.detectChanges();
-            },
-            complete: () => {
-                this.isLoading = false;
-                this.cdr.detectChanges();
-            }
+                    // Reset form
+                    this.resetForm();
+
+                    // Redirect to dashboard or application status page
+                    this.router.navigate(['/dashboard']);
+                },
+                error: (err) => {
+                    console.error('ApplyCard: Submit Error:', err);
+                    this.toastService.showError(err.error?.error?.message || 'Failed to submit application. Please try again.');
+                    this.isLoading = false;
+                    this.cdr.detectChanges();
+                },
+                complete: () => {
+                    this.isLoading = false;
+                    this.cdr.detectChanges();
+                }
+            });
+        } catch (error) {
+            this.toastService.showError('Error processing document file.');
+            this.isLoading = false;
+            this.cdr.detectChanges();
+        }
+    }
+
+    private convertToBase64(file: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = error => reject(error);
         });
     }
 

@@ -83,6 +83,7 @@ export class Sidebar {
         { label: 'Global Transaction', icon: '📈', route: '/approve-transactions' },
         { label: 'User Management', icon: '👥', route: '/user-management' },
         { label: 'Support Management', icon: '🛠️', route: '/approve-support' },
+        { label: 'Approve Cards', icon: '💳', route: '/approve-cards' },
         { label: 'Logout', icon: '🚪', route: '/auth' }
       ],
       isAdminOnly: true
@@ -98,14 +99,29 @@ export class Sidebar {
   ];
 
   get isAdmin(): boolean {
-    const email = localStorage.getItem('userEmail');
-    return (email?.toLowerCase() === 'noshahi@easyfinora.com' || email?.toLowerCase() === 'noshahi@finora.com');
+    const email = localStorage.getItem('userEmail')?.toLowerCase().trim();
+    const adminEmails = ['noshahi@easyfinora.com', 'noshahi@finora.com', 'admin@defaulttenant.com', 'gp_noshahi@easyfinora.com', 'admin'];
+
+    // Check for Admin role in stored roles
+    const rolesJson = localStorage.getItem('userRoles');
+    let hasAdminRole = false;
+    if (rolesJson) {
+      try {
+        const roles = JSON.parse(rolesJson);
+        hasAdminRole = Array.isArray(roles) && roles.some(r => r.toLowerCase() === 'admin');
+      } catch (e) { }
+    }
+
+    const isAdm = adminEmails.includes(email || '') || hasAdminRole;
+    console.log('Sidebar Admin Check:', { email, hasAdminRole, isAdm });
+    return isAdm;
   }
 
   get filteredMenuSections() {
+    console.log('Filtering Menu Sections, isAdmin:', this.isAdmin);
     if (this.isAdmin) {
-      // Admins only see the Admin Management section
-      return this.menuSections.filter(section => section['isAdminOnly'] === true);
+      // Admins see everything
+      return this.menuSections;
     }
     // Users see everything except Admin sections
     return this.menuSections.filter(section => !section['isAdminOnly']);

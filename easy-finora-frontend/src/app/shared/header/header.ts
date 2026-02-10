@@ -44,6 +44,11 @@ export class Header implements OnInit {
           this.user.name = u.name;
           this.user.surname = u.surname;
           this.user.email = u.emailAddress;
+
+          // Store roles for sidebar and other components
+          if (u.roleNames) {
+            localStorage.setItem('userRoles', JSON.stringify(u.roleNames));
+          }
         }
       }
     });
