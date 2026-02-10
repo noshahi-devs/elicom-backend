@@ -1,4 +1,4 @@
 export const environment = {
     production: false,
-    apiUrl: 'https://localhost:44311'
+    apiUrl: 'https://app-elicom-backend.azurewebsites.net'
 };
