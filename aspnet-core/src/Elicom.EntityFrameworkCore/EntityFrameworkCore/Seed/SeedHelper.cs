@@ -19,6 +19,9 @@ public static class SeedHelper
 
     public static void SeedHostDb(ElicomDbContext context)
     {
+        // Ensure database is migrated before seeding
+        context.Database.Migrate();
+
         context.SuppressAutoSetTenantId = true;
 
         // Host seed
