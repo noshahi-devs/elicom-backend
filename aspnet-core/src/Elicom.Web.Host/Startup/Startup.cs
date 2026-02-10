@@ -103,6 +103,41 @@ namespace Elicom.Web.Host.Startup
             app.UseAuthentication();
             app.UseAuthorization();
 
+            // Sanitize invalid culture cookies (Fix for "Culture is not supported: d")
+            app.Use(async (context, next) =>
+            {
+                // Check and clean "Cookie" header
+                if (context.Request.Headers.TryGetValue("Cookie", out var cookies))
+                {
+                    bool changed = false;
+                    var newCookies = cookies.Select(cookie =>
+                    {
+                        if (string.IsNullOrEmpty(cookie)) return cookie;
+                        
+                        // Detect invalid culture "d" or similar short invalid strings in .AspNetCore.Culture
+                        // Pattern matches .AspNetCore.Culture=...c=d... or ...uic=d...
+                        // We strictly look for "c=d|" or "|uic=d" or end of string cases to avoid false positives
+                        if (cookie.Contains(".AspNetCore.Culture=") && (cookie.Contains("c=d") || cookie.Contains("uic=d")))
+                        {
+                            changed = true;
+                            // Remove the .AspNetCore.Culture cookie entirely from the header string
+                            // Regex: match .AspNetCore.Culture= followed by non-semicolons, then optional semicolon and space
+                            return System.Text.RegularExpressions.Regex.Replace(cookie, @"\.AspNetCore\.Culture=[^;]+(;\s*)?", string.Empty);
+                        }
+                        return cookie;
+                    }).ToArray();
+
+                    if (changed)
+                    {
+                        context.Request.Headers["Cookie"] = newCookies;
+                        // Also instruct client to delete the bad cookie
+                        context.Response.Cookies.Delete(".AspNetCore.Culture");
+                    }
+                }
+                
+                await next();
+            });
+
             app.UseAbpRequestLocalization();
 
             app.UseEndpoints(endpoints =>
