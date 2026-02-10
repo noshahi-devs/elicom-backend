@@ -4,7 +4,7 @@ using Abp.Domain.Entities.Auditing;
 
 namespace Elicom.Cards
 {
-    public class CardApplication : FullAuditedEntity<long>, IMustHaveTenant
+    public class CardApplication : FullAuditedEntity<Guid>, IMustHaveTenant
     {
         public int TenantId { get; set; }
         public long UserId { get; set; }
@@ -15,11 +15,15 @@ namespace Elicom.Cards
         public string FullName { get; set; }
         public string ContactNumber { get; set; }
         public string Address { get; set; }
-        public string CardType { get; set; } // Visa, MasterCard, etc.
-        public string DocumentBase64 { get; set; } // Storing the base64 string for now
-        
+        public string CardType { get; set; } // Visa, MasterCard, Amex
+        public string DocumentBase64 { get; set; } // Base64 encoded document
+        public string DocumentType { get; set; } // pdf, jpg, jpeg, png
         public string Status { get; set; } // Pending, Approved, Rejected
-        public string AdminRemarks { get; set; }
-        public DateTime? DecisionDate { get; set; }
+        
+        public DateTime AppliedDate { get; set; }
+        public DateTime? ReviewedDate { get; set; }
+        public long? ReviewedBy { get; set; } // Admin user ID
+        public string ReviewNotes { get; set; } // Optional admin notes
+        public long? GeneratedCardId { get; set; } // Link to VirtualCard after approval
     }
 }

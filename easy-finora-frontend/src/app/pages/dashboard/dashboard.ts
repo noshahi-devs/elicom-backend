@@ -5,6 +5,7 @@ import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { CardService } from '../../services/card.service';
 import { TransactionService } from '../../services/transaction.service';
+import { WalletService } from '../../services/wallet.service';
 import { forkJoin } from 'rxjs';
 import { Loader } from '../../shared/loader/loader';
 
@@ -39,6 +40,7 @@ export class Dashboard implements OnInit {
     private toastService: ToastService,
     private cardService: CardService,
     private transactionService: TransactionService,
+    private walletService: WalletService,
     private cdr: ChangeDetectorRef
   ) { }
 
@@ -53,14 +55,15 @@ export class Dashboard implements OnInit {
     forkJoin({
       balance: this.cardService.getBalance(),
       cards: this.cardService.getUserCards(),
-      history: this.transactionService.getHistory(0, 5)
+      history: this.transactionService.getHistory(0, 5),
+      wallet: this.walletService.getMyWallet()
     }).subscribe({
       next: (res: any) => {
         console.log('Dashboard: Loaded Data:', res);
 
         // Update Wallet
         this.walletData.balance = res.balance.result.totalBalance;
-        this.walletData.walletId = res.balance.result.userId ? `WLT-${res.balance.result.userId}-GP` : '---';
+        this.walletData.walletId = res.wallet.result.id || '---';
 
         // Update Transactions
         this.recentTransactions = res.history.result.items.map((t: any) => ({

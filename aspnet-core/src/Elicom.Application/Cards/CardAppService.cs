@@ -22,20 +22,20 @@ namespace Elicom.Cards
         private readonly IRepository<VirtualCard, long> _cardRepository;
         private readonly IRepository<DepositRequest, Guid> _depositRepository;
         private readonly IRepository<WithdrawRequest, long> _withdrawRepository;
-        private readonly IRepository<CardApplication, long> _cardApplicationRepository;
+        private readonly IRepository<CardApplication, Guid> _applicationRepository;
         private readonly UserManager _userManager;
 
         public CardAppService(
             IRepository<VirtualCard, long> cardRepository,
             IRepository<DepositRequest, Guid> depositRepository,
             IRepository<WithdrawRequest, long> withdrawRepository,
-            IRepository<CardApplication, long> cardApplicationRepository,
+            IRepository<CardApplication, Guid> applicationRepository,
             UserManager userManager)
         {
             _cardRepository = cardRepository;
             _depositRepository = depositRepository;
             _withdrawRepository = withdrawRepository;
-            _cardApplicationRepository = cardApplicationRepository;
+            _applicationRepository = applicationRepository;
             _userManager = userManager;
         }
 
@@ -219,18 +219,89 @@ namespace Elicom.Cards
                 throw new UserFriendlyException("You already have a pending card application.");
             }
 
-            var application = ObjectMapper.Map<CardApplication>(input);
-            application.UserId = userId;
-            application.TenantId = AbpSession.TenantId ?? 1;
-            application.Status = "Pending";
+        public async Task<CardApplicationDto> SubmitCardApplication(SubmitCardApplicationInput input)
+        {
+            var userId = AbpSession.GetUserId();
+            
+            // Check if there is already a pending application
+            var existingPending = await _applicationRepository.FirstOrDefaultAsync(x => x.UserId == userId && x.Status == "Pending");
+            if (existingPending != null)
+            {
+                throw new UserFriendlyException("You already have a pending card application.");
+            }
 
-            await _cardApplicationRepository.InsertAsync(application);
+            // Validate inputs
+            if (string.IsNullOrWhiteSpace(input.FullName) || input.FullName.Length < 3)
+                throw new UserFriendlyException("Full name must be at least 3 characters");
+
+            if (string.IsNullOrWhiteSpace(input.ContactNumber) || input.ContactNumber.Length < 10)
+                throw new UserFriendlyException("Contact number must be at least 10 digits");
+
+            if (string.IsNullOrWhiteSpace(input.Address) || input.Address.Length < 10)
+                throw new UserFriendlyException("Address must be at least 10 characters");
+
+            if (!new[] { "Visa", "MasterCard", "Amex" }.Contains(input.CardType))
+                throw new UserFriendlyException("Invalid card type");
+
+            if (string.IsNullOrWhiteSpace(input.DocumentBase64))
+                throw new UserFriendlyException("Document is required");
+
+            if (!new[] { "pdf", "jpg", "jpeg", "png" }.Contains(input.DocumentType?.ToLower()))
+                throw new UserFriendlyException("Document must be PDF, JPG, JPEG, or PNG");
+
+            var application = new CardApplication
+            {
+                UserId = userId,
+                TenantId = AbpSession.TenantId ?? 1,
+                FullName = input.FullName.Trim(),
+                ContactNumber = input.ContactNumber.Trim(),
+                Address = input.Address.Trim(),
+                CardType = input.CardType,
+                DocumentBase64 = input.DocumentBase64,
+                DocumentType = input.DocumentType.ToLower(),
+                Status = "Pending",
+                AppliedDate = DateTime.UtcNow
+            };
+
+            var applicationId = await _applicationRepository.InsertAndGetIdAsync(application);
+
+            return new CardApplicationDto
+            {
+                Id = applicationId,
+                FullName = application.FullName,
+                ContactNumber = application.ContactNumber,
+                Address = application.Address,
+                CardType = application.CardType,
+                DocumentType = application.DocumentType,
+                Status = application.Status,
+                AppliedDate = application.AppliedDate
+            };
         }
 
-        [AbpAuthorize(Authorization.PermissionNames.Pages_Users)] // Or a specific admin permission
+        public async Task<List<CardApplicationDto>> GetMyApplications()
+        {
+            var userId = AbpSession.GetUserId();
+            var applications = await _applicationRepository.GetAllListAsync(a => a.UserId == userId);
+
+            return applications.Select(a => new CardApplicationDto
+            {
+                Id = a.Id,
+                FullName = a.FullName,
+                ContactNumber = a.ContactNumber,
+                Address = a.Address,
+                CardType = a.CardType,
+                DocumentType = a.DocumentType,
+                Status = a.Status,
+                AppliedDate = a.AppliedDate,
+                ReviewedDate = a.ReviewedDate,
+                ReviewNotes = a.ReviewNotes
+            }).ToList();
+        }
+
+        [AbpAuthorize(Authorization.PermissionNames.Pages_Users)] 
         public async Task<List<CardApplicationDto>> GetCardApplications()
         {
-            var applications = await _cardApplicationRepository.GetAll()
+            var applications = await _applicationRepository.GetAll()
                 .Include(a => a.User)
                 .OrderByDescending(a => a.CreationTime)
                 .ToListAsync();
@@ -238,19 +309,38 @@ namespace Elicom.Cards
             return ObjectMapper.Map<List<CardApplicationDto>>(applications);
         }
 
-        [AbpAuthorize(Authorization.PermissionNames.Pages_Users)]
-        public async Task ApproveCardApplication(long id)
+        [AbpAuthorize("Admin")]
+        public async Task<List<CardApplicationDto>> GetPendingApplications()
         {
-            var application = await _cardApplicationRepository.GetAsync(id);
-            if (application.Status != "Pending")
+            var applications = await _applicationRepository.GetAllListAsync(a => a.Status == "Pending");
+
+            return applications.Select(a => new CardApplicationDto
             {
-                throw new UserFriendlyException("Only pending applications can be approved.");
-            }
+                Id = a.Id,
+                FullName = a.FullName,
+                ContactNumber = a.ContactNumber,
+                Address = a.Address,
+                CardType = a.CardType,
+                DocumentBase64 = a.DocumentBase64,
+                DocumentType = a.DocumentType,
+                Status = a.Status,
+                AppliedDate = a.AppliedDate
+            }).ToList();
+        }
+
+        [AbpAuthorize("Admin")]
+        public async Task<VirtualCardDto> ApproveApplication(ApproveApplicationInput input)
+        {
+            var application = await _applicationRepository.GetAsync(input.ApplicationId);
+
+            if (application.Status != "Pending")
+                throw new UserFriendlyException("Application is not pending");
 
             application.Status = "Approved";
-            application.DecisionDate = DateTime.Now;
+            application.ReviewedDate = DateTime.UtcNow;
+            application.ReviewedBy = AbpSession.GetUserId();
+            application.ReviewNotes = input.ReviewNotes;
 
-            // Generate the virtual card
             var user = await _userManager.GetUserByIdAsync(application.UserId);
             var card = new VirtualCard
             {
@@ -266,34 +356,64 @@ namespace Elicom.Cards
                 Status = "Active"
             };
 
-            await _cardRepository.InsertAsync(card);
+            var cardId = await _cardRepository.InsertAndGetIdAsync(card);
+            application.GeneratedCardId = cardId;
+
+            await _applicationRepository.UpdateAsync(application);
+
+            return new VirtualCardDto
+            {
+                CardId = cardId,
+                CardNumber = FormatCardNumber(card.CardNumber),
+                CardType = card.CardType,
+                HolderName = card.HolderName,
+                ExpiryDate = card.ExpiryDate,
+                Cvv = card.Cvv,
+                Balance = card.Balance,
+                Currency = card.Currency,
+                Status = card.Status
+            };
+        }
+
+        [AbpAuthorize(Authorization.PermissionNames.Pages_Users)]
+        public async Task ApproveCardApplication(long id)
+        {
+             // This is for backward compatibility or different flow, but needs to use Guid now if id is Guid.
+             // However, the input is long. If we changed CardApplication to Guid, this will fail if we pass long.
+             // I'll assume we use the new ApproveApplication with input.
+             throw new UserFriendlyException("Use ApproveApplication instead.");
+        }
+
+        [AbpAuthorize("Admin")]
+        public async Task RejectApplication(RejectApplicationInput input)
+        {
+            var application = await _applicationRepository.GetAsync(input.ApplicationId);
+
+            if (application.Status != "Pending")
+                throw new UserFriendlyException("Application is not pending");
+
+            if (string.IsNullOrWhiteSpace(input.ReviewNotes))
+                throw new UserFriendlyException("Rejection reason is required");
+
+            application.Status = "Rejected";
+            application.ReviewedDate = DateTime.UtcNow;
+            application.ReviewedBy = AbpSession.GetUserId();
+            application.ReviewNotes = input.ReviewNotes;
+
+            await _applicationRepository.UpdateAsync(application);
         }
 
         [AbpAuthorize(Authorization.PermissionNames.Pages_Users)]
         public async Task RejectCardApplication(RejectCardApplicationInput input)
         {
-            var application = await _cardApplicationRepository.GetAsync(input.Id);
-            if (application.Status != "Pending")
-            {
-                throw new UserFriendlyException("Only pending applications can be rejected.");
-            }
-
-            application.Status = "Rejected";
-            application.AdminRemarks = input.AdminRemarks;
-            application.DecisionDate = DateTime.Now;
+             throw new UserFriendlyException("Use RejectApplication instead.");
         }
 
         private string GenerateCardNumber(string cardType)
         {
-            // Visa: starts with 4
-            // MasterCard: starts with 5
-            // Amex: starts with 3
             var prefix = cardType == "Visa" ? "4" : cardType == "MasterCard" ? "5" : "3";
             var random = new Random();
-            
-            // Generate 15 random digits
             var digits = string.Join("", Enumerable.Range(0, 15).Select(_ => random.Next(0, 10)));
-            
             return prefix + digits;
         }
 
@@ -305,19 +425,14 @@ namespace Elicom.Cards
 
         private string FormatCardNumber(string cardNumber)
         {
-            // Format: 4111 1111 1111 1234
-            if (cardNumber.Length != 16)
-                return cardNumber;
-
+            if (cardNumber.Length != 16) return cardNumber;
             return $"{cardNumber.Substring(0, 4)} {cardNumber.Substring(4, 4)} {cardNumber.Substring(8, 4)} {cardNumber.Substring(12, 4)}";
         }
 
         private string MaskCardNumber(string formattedCardNumber)
         {
-            // 4111 1111 1111 1234 -> 4111 **** **** 1234
             var parts = formattedCardNumber.Split(' ');
             if (parts.Length != 4) return formattedCardNumber;
-
             return $"{parts[0]} **** **** {parts[3]}";
         }
     }

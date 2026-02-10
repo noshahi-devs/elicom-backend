@@ -13,6 +13,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Abp.UI;
+using Microsoft.EntityFrameworkCore;
 
 namespace Elicom.Categories
 {
@@ -39,11 +40,17 @@ namespace Elicom.Categories
             return _mapper.Map<CategoryDto>(entity);
         }
 
-        public async Task<ListResultDto<CategoryDto>> GetAll()
+        public async Task<ListResultDto<CategoryDto>> GetAll(int maxResultCount = 100)
         {
             using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
             {
-                var categories = await _categoryRepository.GetAllListAsync();
+                var query = _categoryRepository.GetAll();
+                if (maxResultCount > 0)
+                {
+                    query = query.Take(maxResultCount);
+                }
+                
+                var categories = await query.ToListAsync();
                 return new ListResultDto<CategoryDto>(_mapper.Map<List<CategoryDto>>(categories));
             }
         }
@@ -80,18 +87,23 @@ namespace Elicom.Categories
         {
             using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
             {
-                var categories = await _categoryRepository.GetAllListAsync();
-
-                // Group by name to remove duplicates and project to DTO
-                var result = categories
+                // Optimization: Database-side grouping to avoid memory bottleneck
+                // We project to a simplified object first to minimize data transfer
+                var categoryGroups = await _categoryRepository.GetAll()
+                    .Where(c => c.Name != null)
                     .GroupBy(c => c.Name.Trim())
-                    .Select(g => g.First())
+                    .Select(g => g.FirstOrDefault())
+                    .OrderBy(c => c.Name)
+                    .ToListAsync();
+
+                var result = categoryGroups
+                    .Where(c => c != null)
                     .Select(c => {
                         var dto = _mapper.Map<CategoryLookupDto>(c);
                         // Fallback for missing or invalid slugs
                         if (string.IsNullOrEmpty(dto.Slug) || dto.Slug == "string" || dto.Slug == "null")
                         {
-                            dto.Slug = System.Text.RegularExpressions.Regex.Replace(c.Name.ToLower(), @"[^a-z0-9]+", "-").Trim('-');
+                            dto.Slug = System.Text.RegularExpressions.Regex.Replace(c.Name?.ToLower() ?? "category", @"[^a-z0-9]+", "-").Trim('-');
                         }
                         return dto;
                     })

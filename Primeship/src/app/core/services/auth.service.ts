@@ -10,6 +10,9 @@ export interface RegisterInput {
     password: string;
     phoneNumber: string;
     country: string;
+    firstName?: string;
+    lastName?: string;
+    fullName?: string;
 }
 
 export interface LoginInput {
@@ -48,12 +51,16 @@ export class AuthService {
     }
 
     /**
-     * Register a new Prime Ship Seller (Supplier role)
+     * Register a new Prime Ship Seller
      */
-    registerSeller(input: RegisterInput): Observable<any> {
+    registerSeller(input: any): Observable<any> {
+        const data = {
+            ...input,
+            fullName: input.fullName || `${input.firstName} ${input.lastName}`
+        };
         return this.http.post(
             `${this.apiUrl}/services/app/Account/RegisterPrimeShipSeller`,
-            input,
+            data,
             {
                 headers: this.getTenantHeaders()
             }
@@ -61,12 +68,16 @@ export class AuthService {
     }
 
     /**
-     * Register a new Prime Ship Customer (Reseller role)
+     * Register a new Prime Ship Customer
      */
-    registerCustomer(input: RegisterInput): Observable<any> {
+    registerCustomer(input: any): Observable<any> {
+        const data = {
+            ...input,
+            fullName: input.fullName || `${input.firstName} ${input.lastName}`
+        };
         return this.http.post(
             `${this.apiUrl}/services/app/Account/RegisterPrimeShipCustomer`,
-            input,
+            data,
             {
                 headers: this.getTenantHeaders()
             }
@@ -232,7 +243,11 @@ export class AuthService {
     }
 
     isSeller(): boolean {
-        return this.hasRole('Supplier');
+        return this.hasRole('Seller') || this.hasRole('Supplier');
+    }
+
+    isCustomer(): boolean {
+        return this.hasRole('Buyer') || this.hasRole('Reseller');
     }
 
     /**

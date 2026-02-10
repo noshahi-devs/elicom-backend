@@ -45,8 +45,11 @@ export class CardService {
         );
     }
 
-    submitCardApplication(input: any): Observable<any> {
-        return this.http.post(`${this.apiUrl}/SubmitCardApplication`, input, { headers: this.getHeaders() });
+    submitCardApplication(payload: any): Observable<any> {
+        console.log('CardService.submitCardApplication payload is:', payload);
+        return this.http.post(`${this.apiUrl}/SubmitCardApplication`, payload, { headers: this.getHeaders() }).pipe(
+            tap(response => console.log('CardService.submitCardApplication response is:', response))
+        );
     }
 
     getCardApplications(): Observable<any> {

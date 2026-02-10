@@ -16,9 +16,17 @@ namespace Elicom.Cards
         Task<CardValidationResultDto> ValidateCard(ValidateCardInput input);
 
         Task ProcessPayment(ProcessCardPaymentInput input);
-        
-        Task SubmitCardApplication(SubmitCardApplicationInput input);
-        
+        // Card Application Methods
+        Task<CardApplicationDto> SubmitCardApplication(SubmitCardApplicationInput input);
+
+        Task<List<CardApplicationDto>> GetMyApplications();
+
+        Task<List<CardApplicationDto>> GetPendingApplications(); // Admin only
+
+        Task<VirtualCardDto> ApproveApplication(ApproveApplicationInput input); // Admin only
+
+        Task RejectApplication(RejectApplicationInput input); // Admin only
+
         Task<List<CardApplicationDto>> GetCardApplications();
         
         Task ApproveCardApplication(long id);

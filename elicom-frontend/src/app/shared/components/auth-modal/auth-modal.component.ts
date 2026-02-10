@@ -167,12 +167,22 @@ export class AuthModalComponent {
             emailAddress: this.signUpForm.value.email,
             password: this.signUpForm.value.password,
             country: this.selectedCountry.name,
-            phoneNumber: this.signUpForm.value.phone
+            phoneNumber: this.signUpForm.value.phone,
+            fullName: `${this.signUpForm.value.firstName} ${this.signUpForm.value.lastName}`
         };
 
-        const registerMethod = this.userRole === 'seller'
-            ? this.authService.registerSmartStoreSeller(data)
-            : this.authService.registerSmartStoreCustomer(data);
+        const isPrimeShip = window.location.pathname.includes('primeship');
+
+        let registerMethod;
+        if (isPrimeShip) {
+            registerMethod = this.userRole === 'seller'
+                ? this.authService.registerPrimeShipSeller(data)
+                : this.authService.registerPrimeShipCustomer(data);
+        } else {
+            registerMethod = this.userRole === 'seller'
+                ? this.authService.registerSmartStoreSeller(data)
+                : this.authService.registerSmartStoreCustomer(data);
+        }
 
         registerMethod
             .subscribe({

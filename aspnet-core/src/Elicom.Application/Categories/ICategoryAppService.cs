@@ -12,7 +12,7 @@ namespace Elicom.Categories
     public interface ICategoryAppService : IApplicationService
     {
         Task<CategoryDto> Get(Guid id);
-        Task<ListResultDto<CategoryDto>> GetAll();
+        Task<ListResultDto<CategoryDto>> GetAll(int maxResultCount = 100);
         Task<CategoryDto> Create(CreateCategoryDto input);
         Task<CategoryDto> Update(UpdateCategoryDto input);
         Task<ListResultDto<CategoryLookupDto>> GetLookup();
