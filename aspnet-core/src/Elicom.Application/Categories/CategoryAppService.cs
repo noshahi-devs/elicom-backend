@@ -84,7 +84,7 @@ namespace Elicom.Categories
 
                 // Group by name to remove duplicates and project to DTO
                 var result = categories
-                    .GroupBy(c => c.Name.Trim())
+                    .GroupBy(c => c.Name?.Trim() ?? "Uncategorized")
                     .Select(g => g.First())
                     .Select(c => {
                         var dto = _mapper.Map<CategoryLookupDto>(c);

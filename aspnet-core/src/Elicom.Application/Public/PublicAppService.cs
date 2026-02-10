@@ -51,14 +51,17 @@ namespace Elicom.Public
                     .ToDictionary(g => g.Key, g => g.Count());
 
                 var result = categories
-                    .GroupBy(c => c.Name.Trim().ToLower())
+                    .GroupBy(c => c.Name?.Trim().ToLower() ?? "uncategorized")
                     .Select(g =>
                     {
                         var name = g.Key;
                         var first = g.First();
                         var dto = ObjectMapper.Map<CategoryDto>(first);
                         dto.ProductCount = countDict.ContainsKey(name) ? countDict[name] : 0;
-
+                        
+                        // Ensure name is set correctly for display
+                        if (string.IsNullOrEmpty(dto.Name)) dto.Name = name;
+                        
                         if (string.IsNullOrEmpty(dto.Slug) || dto.Slug == "string" || dto.Slug == "null")
                         {
                             dto.Slug = System.Text.RegularExpressions.Regex.Replace(first.Name.ToLower(), @"[^a-z0-9]+", "-").Trim('-');
@@ -84,10 +87,10 @@ namespace Elicom.Public
                     foreach (var term in terms)
                     {
                         query = query.Where(p =>
-                            p.Name.ToLower().Contains(term) ||
+                            (p.Name != null && p.Name.ToLower().Contains(term)) ||
                             (p.Description != null && p.Description.ToLower().Contains(term)) ||
                             (p.SKU != null && p.SKU.ToLower().Contains(term)) ||
-                            (p.Category != null && p.Category.Name.ToLower().Contains(term))
+                            (p.Category != null && p.Category.Name != null && p.Category.Name.ToLower().Contains(term))
                         );
                     }
                 }
@@ -149,8 +152,8 @@ namespace Elicom.Public
                     // Allow exact match OR partial name match to handle cases like "digital product" -> "Digital Products ALi Bhai"
                     query = query.Where(p =>
                         (p.Category != null && p.Category.Slug == categorySlug) ||
-                        (p.Category != null && p.Category.Name.ToLower() == searchPattern) ||
-                        (p.Category != null && p.Category.Name.ToLower().Contains(searchPattern))
+                        (p.Category != null && p.Category.Name != null && p.Category.Name.ToLower() == searchPattern) ||
+                        (p.Category != null && p.Category.Name != null && p.Category.Name.ToLower().Contains(searchPattern))
                     );
                 }
                 // If categorySlug is empty, we simply don't filter by category, allowing search across all products.
