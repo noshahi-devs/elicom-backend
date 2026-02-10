@@ -22,17 +22,20 @@ namespace Elicom.Cards
         private readonly IRepository<VirtualCard, long> _cardRepository;
         private readonly IRepository<DepositRequest, Guid> _depositRepository;
         private readonly IRepository<WithdrawRequest, long> _withdrawRepository;
+        private readonly IRepository<CardApplication, Guid> _applicationRepository;
         private readonly UserManager _userManager;
 
         public CardAppService(
             IRepository<VirtualCard, long> cardRepository,
             IRepository<DepositRequest, Guid> depositRepository,
             IRepository<WithdrawRequest, long> withdrawRepository,
+            IRepository<CardApplication, Guid> applicationRepository,
             UserManager userManager)
         {
             _cardRepository = cardRepository;
             _depositRepository = depositRepository;
             _withdrawRepository = withdrawRepository;
+            _applicationRepository = applicationRepository;
             _userManager = userManager;
         }
 
@@ -241,6 +244,164 @@ namespace Elicom.Cards
             if (parts.Length != 4) return formattedCardNumber;
 
             return $"{parts[0]} **** **** {parts[3]}";
+        }
+
+        // ==================== CARD APPLICATION METHODS ====================
+
+        public async Task<CardApplicationDto> SubmitCardApplication(SubmitCardApplicationInput input)
+        {
+            // Validate inputs
+            if (string.IsNullOrWhiteSpace(input.FullName) || input.FullName.Length < 3)
+                throw new UserFriendlyException("Full name must be at least 3 characters");
+
+            if (string.IsNullOrWhiteSpace(input.ContactNumber) || input.ContactNumber.Length < 10)
+                throw new UserFriendlyException("Contact number must be at least 10 digits");
+
+            if (string.IsNullOrWhiteSpace(input.Address) || input.Address.Length < 10)
+                throw new UserFriendlyException("Address must be at least 10 characters");
+
+            if (!new[] { "Visa", "MasterCard", "Amex" }.Contains(input.CardType))
+                throw new UserFriendlyException("Invalid card type");
+
+            if (string.IsNullOrWhiteSpace(input.DocumentBase64))
+                throw new UserFriendlyException("Document is required");
+
+            if (!new[] { "pdf", "jpg", "jpeg", "png" }.Contains(input.DocumentType?.ToLower()))
+                throw new UserFriendlyException("Document must be PDF, JPG, JPEG, or PNG");
+
+            var userId = AbpSession.GetUserId();
+
+            var application = new CardApplication
+            {
+                UserId = userId,
+                FullName = input.FullName.Trim(),
+                ContactNumber = input.ContactNumber.Trim(),
+                Address = input.Address.Trim(),
+                CardType = input.CardType,
+                DocumentBase64 = input.DocumentBase64,
+                DocumentType = input.DocumentType.ToLower(),
+                Status = "Pending",
+                AppliedDate = DateTime.UtcNow
+            };
+
+            var applicationId = await _applicationRepository.InsertAndGetIdAsync(application);
+
+            return new CardApplicationDto
+            {
+                Id = applicationId,
+                FullName = application.FullName,
+                ContactNumber = application.ContactNumber,
+                Address = application.Address,
+                CardType = application.CardType,
+                DocumentType = application.DocumentType,
+                Status = application.Status,
+                AppliedDate = application.AppliedDate
+            };
+        }
+
+        public async Task<List<CardApplicationDto>> GetMyApplications()
+        {
+            var userId = AbpSession.GetUserId();
+            var applications = await _applicationRepository.GetAllListAsync(a => a.UserId == userId);
+
+            return applications.Select(a => new CardApplicationDto
+            {
+                Id = a.Id,
+                FullName = a.FullName,
+                ContactNumber = a.ContactNumber,
+                Address = a.Address,
+                CardType = a.CardType,
+                DocumentType = a.DocumentType,
+                Status = a.Status,
+                AppliedDate = a.AppliedDate,
+                ReviewedDate = a.ReviewedDate,
+                ReviewNotes = a.ReviewNotes
+            }).ToList();
+        }
+
+        [AbpAuthorize("Admin")] // Requires admin permission
+        public async Task<List<CardApplicationDto>> GetPendingApplications()
+        {
+            var applications = await _applicationRepository.GetAllListAsync(a => a.Status == "Pending");
+
+            return applications.Select(a => new CardApplicationDto
+            {
+                Id = a.Id,
+                FullName = a.FullName,
+                ContactNumber = a.ContactNumber,
+                Address = a.Address,
+                CardType = a.CardType,
+                DocumentBase64 = a.DocumentBase64, // Include for admin to view
+                DocumentType = a.DocumentType,
+                Status = a.Status,
+                AppliedDate = a.AppliedDate
+            }).ToList();
+        }
+
+        [AbpAuthorize("Admin")]
+        public async Task<VirtualCardDto> ApproveApplication(ApproveApplicationInput input)
+        {
+            var application = await _applicationRepository.GetAsync(input.ApplicationId);
+
+            if (application.Status != "Pending")
+                throw new UserFriendlyException("Application is not pending");
+
+            // Update application status
+            application.Status = "Approved";
+            application.ReviewedDate = DateTime.UtcNow;
+            application.ReviewedBy = AbpSession.GetUserId();
+            application.ReviewNotes = input.ReviewNotes;
+
+            // Generate virtual card
+            var card = new VirtualCard
+            {
+                UserId = application.UserId,
+                CardNumber = GenerateCardNumber(application.CardType),
+                CardType = application.CardType,
+                HolderName = application.FullName.ToUpper(),
+                ExpiryDate = DateTime.Now.AddYears(3).ToString("MM/yy"),
+                Cvv = GenerateCVV(),
+                Balance = 0,
+                Currency = "USD",
+                Status = "Active"
+            };
+
+            var cardId = await _cardRepository.InsertAndGetIdAsync(card);
+            application.GeneratedCardId = cardId;
+
+            await _applicationRepository.UpdateAsync(application);
+
+            return new VirtualCardDto
+            {
+                CardId = cardId,
+                CardNumber = FormatCardNumber(card.CardNumber),
+                CardType = card.CardType,
+                HolderName = card.HolderName,
+                ExpiryDate = card.ExpiryDate,
+                Cvv = card.Cvv,
+                Balance = card.Balance,
+                Currency = card.Currency,
+                Status = card.Status
+            };
+        }
+
+        [AbpAuthorize("Admin")]
+        public async Task RejectApplication(RejectApplicationInput input)
+        {
+            var application = await _applicationRepository.GetAsync(input.ApplicationId);
+
+            if (application.Status != "Pending")
+                throw new UserFriendlyException("Application is not pending");
+
+            if (string.IsNullOrWhiteSpace(input.ReviewNotes))
+                throw new UserFriendlyException("Rejection reason is required");
+
+            application.Status = "Rejected";
+            application.ReviewedDate = DateTime.UtcNow;
+            application.ReviewedBy = AbpSession.GetUserId();
+            application.ReviewNotes = input.ReviewNotes;
+
+            await _applicationRepository.UpdateAsync(application);
         }
     }
 }

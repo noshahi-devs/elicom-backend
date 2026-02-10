@@ -63,7 +63,8 @@ export class Cards implements OnInit {
                     type: c.cardType,
                     balance: c.balance,
                     expiryDate: c.expiryDate,
-                    status: c.status
+                    status: c.status,
+                    holderName: c.holderName || 'Card Holder'
                 }));
                 this.isLoading = false;
                 this.cdr.detectChanges();
@@ -98,6 +99,21 @@ export class Cards implements OnInit {
     onFileSelected(event: any) {
         const file = event.target.files[0];
         if (file) {
+            // Validate file type
+            const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+            if (!allowedTypes.includes(file.type)) {
+                this.toastService.showError('Only PDF, JPG, JPEG, and PNG files are allowed');
+                event.target.value = '';
+                return;
+            }
+
+            // Validate file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                this.toastService.showError('File size must be less than 5MB');
+                event.target.value = '';
+                return;
+            }
+
             this.documentFile = file;
         }
     }
@@ -127,22 +143,45 @@ export class Cards implements OnInit {
         this.isLoading = true;
         this.cdr.detectChanges();
 
-        const payload = { cardType: this.cardBrand };
-        console.log('Cards: Submit Payload:', payload);
+        // Convert file to Base64
+        const reader = new FileReader();
+        reader.onload = () => {
+            const base64 = (reader.result as string).split(',')[1]; // Remove data:image/png;base64, prefix
+            const fileExtension = this.documentFile!.name.split('.').pop()?.toLowerCase() || 'pdf';
 
-        this.cardService.createVirtualCard(this.cardBrand).subscribe({
-            next: (response) => {
-                console.log('Cards: Submit Response:', response);
-                this.toastService.showSuccess('Virtual Card generated successfully!');
-                this.closeModal();
-                this.loadData();
-            },
-            error: (err) => {
-                console.error('Cards: Submit Error:', err);
-                this.toastService.showError(err.error?.error?.message || 'Failed to create virtual card');
-                this.isLoading = false;
-                this.cdr.detectChanges();
-            }
-        });
+            const payload = {
+                fullName: this.fullName.trim(),
+                contactNumber: this.contact.trim(),
+                address: this.address.trim(),
+                cardType: this.cardBrand,
+                documentBase64: base64,
+                documentType: fileExtension
+            };
+
+            console.log('Cards: Submit Payload:', { ...payload, documentBase64: '[BASE64_DATA]' });
+
+            this.cardService.submitCardApplication(payload).subscribe({
+                next: (response) => {
+                    console.log('Cards: Submit Response:', response);
+                    this.toastService.showSuccess('Application submitted successfully! Approval typically takes 5-8 hours.');
+                    this.closeModal();
+                    this.loadData();
+                },
+                error: (err) => {
+                    console.error('Cards: Submit Error:', err);
+                    this.toastService.showError(err.error?.error?.message || 'Failed to submit application');
+                    this.isLoading = false;
+                    this.cdr.detectChanges();
+                }
+            });
+        };
+
+        reader.onerror = () => {
+            this.toastService.showError('Failed to read file');
+            this.isLoading = false;
+            this.cdr.detectChanges();
+        };
+
+        reader.readAsDataURL(this.documentFile);
     }
 }

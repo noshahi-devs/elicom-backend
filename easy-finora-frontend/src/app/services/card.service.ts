@@ -44,4 +44,12 @@ export class CardService {
             tap(response => console.log('CardService.getBalance response is:', response))
         );
     }
+
+    submitCardApplication(payload: any): Observable<any> {
+        console.log('CardService.submitCardApplication payload is:', payload);
+
+        return this.http.post(`${this.apiUrl}/SubmitCardApplication`, payload, { headers: this.getHeaders() }).pipe(
+            tap(response => console.log('CardService.submitCardApplication response is:', response))
+        );
+    }
 }
