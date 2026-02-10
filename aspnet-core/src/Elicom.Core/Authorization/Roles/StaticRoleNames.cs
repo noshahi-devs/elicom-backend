@@ -13,5 +13,6 @@ public static class StaticRoleNames
         public const string Supplier = "Supplier";
         public const string Reseller = "Reseller";
         public const string Buyer = "Buyer";
+        public const string Seller = "Seller";
     }
 }

@@ -78,9 +78,9 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                 if (string.IsNullOrEmpty(clientRootAddress)) clientRootAddress = "http://localhost:4200";
 
                 string redirectPath = $"{clientRootAddress}/account/login";
-                if (platform == "Smart Store") redirectPath = $"{clientRootAddress}/smartstore/login";
-                if (platform == "Prime Ship") redirectPath = $"{clientRootAddress}/primeship/login";
-                if (platform == "Easy Finora" || platform == "Global Pay") redirectPath = $"{clientRootAddress}/auth";
+            if (platform == "Smart Store") redirectPath = $"{clientRootAddress}/smartstore/auth";
+            if (platform == "Prime Ship") redirectPath = $"{clientRootAddress}/primeship/auth";
+            if (platform == "Easy Finora" || platform == "Global Pay") redirectPath = $"{clientRootAddress}/auth";
 
                 return new ContentResult
                 {
@@ -181,7 +181,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.UserName"),
             await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.Password"),
             platformName,
-            await SettingManager.GetSettingValueAsync("Abp.Net.Mail.DefaultFromAddress") ?? $"no-reply@{platformName.Replace(" ", "").ToLower()}.com",
+            null, // senderAddress will be determined inside SendEmailWithCustomSmtp based on platformName
             user.EmailAddress,
             $"Action Required: Verify Your {platformName} Account",
             emailBody
@@ -203,7 +203,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
     [HttpPost]
     public async Task RegisterSmartStoreSeller(RegisterSmartStoreInput input)
     {
-        await RegisterPlatformUser(input.EmailAddress, 1, StaticRoleNames.Tenants.Reseller, "Seller", "Smart Store", "SS", "#ff9900", input.Password, input.Country, input.PhoneNumber, input.FullName);
+        await RegisterPlatformUser(input.EmailAddress, 1, StaticRoleNames.Tenants.Seller, "Seller", "Smart Store", "SS", "#ff9900", input.Password, input.Country, input.PhoneNumber, input.FullName);
     }
 
     [HttpPost]
@@ -215,13 +215,13 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
     [HttpPost]
     public async Task RegisterPrimeShipSeller(RegisterPrimeShipInput input)
     {
-        await RegisterPlatformUser(input.EmailAddress, 2, StaticRoleNames.Tenants.Supplier, "Seller", "Prime Ship", "PS", "#007bff", input.Password, input.Country, input.PhoneNumber, input.FullName);
+        await RegisterPlatformUser(input.EmailAddress, 2, StaticRoleNames.Tenants.Seller, "Seller", "Prime Ship", "PS", "#007bff", input.Password, input.Country, input.PhoneNumber, input.FullName);
     }
 
     [HttpPost]
     public async Task RegisterPrimeShipCustomer(RegisterPrimeShipInput input)
     {
-        await RegisterPlatformUser(input.EmailAddress, 2, StaticRoleNames.Tenants.Reseller, "Customer", "Prime Ship", "PS", "#007bff", input.Password, input.Country, input.PhoneNumber, input.FullName);
+        await RegisterPlatformUser(input.EmailAddress, 2, StaticRoleNames.Tenants.Buyer, "Customer", "Prime Ship", "PS", "#007bff", input.Password, input.Country, input.PhoneNumber, input.FullName);
     }
 
     [HttpPost]
@@ -323,21 +323,34 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
         // AZURE COMMUNICATION SERVICES (ACS) INTEGRATION - FIXED
         // ---------------------------------------------------------
         
-        // 1. Force override of the Sender Email based on Tenant/Context
-        //    (This matches what was desired, but we must ensure it matches a VERIFIED domain)
-        //    Crucial Fix: Check fromName because fromEmail might be garbage (e.g. admin@mydomain.com)
-        if (fromEmail.Contains("easyfinora.com") || fromEmail.Contains("globalpay") || 
-            (fromName != null && (fromName.Contains("Global Pay") || fromName.Contains("Easy Finora"))))
+        // 1. Determine Sender Email based on platformName (fromName) or fallback
+        string senderEmail = "DoNotReply@smartstoreus.com"; // Default fallback
+
+        if (!string.IsNullOrEmpty(fromName))
         {
-            fromEmail = "DoNotReply@easyfinora.com";
+            if (fromName.Contains("Global Pay") || fromName.Contains("Easy Finora"))
+            {
+                senderEmail = "DoNotReply@easyfinora.com";
+            }
+            else if (fromName.Contains("Prime Ship"))
+            {
+                senderEmail = "DoNotReply@primeshipuk.com";
+            }
+            else if (fromName.Contains("Smart Store"))
+            {
+                senderEmail = "DoNotReply@smartstoreus.com";
+            }
         }
-        else if (fromEmail.Contains("primeship") || fromEmail.Contains("smartstore") ||
-                 (fromName != null && (fromName.Contains("Prime Ship") || fromName.Contains("Smart Store"))))
+        else if (!string.IsNullOrEmpty(fromEmail) && (fromEmail.Contains("easyfinora.com") || fromEmail.Contains("globalpay")))
         {
-            fromEmail = "DoNotReply@smartstoreus.com";
+            senderEmail = "DoNotReply@easyfinora.com";
+        }
+        else if (!string.IsNullOrEmpty(fromEmail) && fromEmail.Contains("primeship"))
+        {
+            senderEmail = "DoNotReply@primeshipuk.com";
         }
 
-        Logger.Info($"[ACS] Starting email send to {to}. Requested Sender: {fromEmail}");
+        Logger.Info($"[ACS] Starting email send to {to}. Platform: {fromName}. Sender: {senderEmail}");
 
         // 2. Get the ACS Connection String directly from Configuration (bypass DB legacy SMTP settings)
         //    We utilize the "Abp.Net.Mail.Smtp.Password" key from appsettings.json as the ACS Key
@@ -375,7 +388,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             var emailClient = new EmailClient(connectionString);
             
             var emailMessage = new EmailMessage(
-                senderAddress: fromEmail,
+                senderAddress: senderEmail,
                 recipientAddress: to,
                 content: new EmailContent(subject)
                 {

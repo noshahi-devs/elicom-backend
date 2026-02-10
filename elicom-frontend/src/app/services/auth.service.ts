@@ -80,7 +80,21 @@ export class AuthService {
 
     login(credentials: LoginDto): Observable<any> {
         const url = `${this.baseUrl}/api/TokenAuth/Authenticate`;
-        const headers = { 'Abp-TenantId': '1' }; // Smart Store Tenant
+
+        let tenantId = '1'; // Default Smart Store
+        if (window.location.pathname.includes('primeship')) {
+            tenantId = '2';
+        } else if (window.location.pathname.includes('auth')) {
+            // For easyfinora (Global Pay) it might be host or another tenant, 
+            // but user said easyfinora is working. Usually it's host (null) or a specific one.
+            // If url just has /auth, it's Easy Finora.
+        }
+
+        const headers: any = {};
+        if (tenantId) {
+            headers['Abp-TenantId'] = tenantId;
+        }
+
         return this.http.post(url, credentials, { headers }).pipe(
             switchMap((response: any) => {
                 console.log('Login response:', response);
@@ -147,7 +161,8 @@ export class AuthService {
         console.log('Navigating to dashboard...');
         if (!this.isAuthenticated) {
             console.log('Not authenticated, going to login');
-            this.router.navigate(['/smartstore/login']);
+            const isPrimeShip = window.location.pathname.includes('primeship');
+            this.router.navigate([isPrimeShip ? '/primeship/auth' : '/smartstore/auth']);
             return;
         }
 
@@ -250,6 +265,18 @@ export class AuthService {
     registerSmartStoreSeller(data: RegisterSmartStoreInput): Observable<any> {
         const url = `${this.baseUrl}/api/services/app/Account/RegisterSmartStoreSeller`;
         const headers = { 'Abp-TenantId': '1' }; // Smart Store Tenant
+        return this.http.post(url, data, { headers });
+    }
+
+    registerPrimeShipCustomer(data: RegisterSmartStoreInput): Observable<any> {
+        const url = `${this.baseUrl}/api/services/app/Account/RegisterPrimeShipCustomer`;
+        const headers = { 'Abp-TenantId': '2' }; // Prime Ship Tenant
+        return this.http.post(url, data, { headers });
+    }
+
+    registerPrimeShipSeller(data: RegisterSmartStoreInput): Observable<any> {
+        const url = `${this.baseUrl}/api/services/app/Account/RegisterPrimeShipSeller`;
+        const headers = { 'Abp-TenantId': '2' }; // Prime Ship Tenant
         return this.http.post(url, data, { headers });
     }
 
