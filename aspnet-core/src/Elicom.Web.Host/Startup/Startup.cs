@@ -17,6 +17,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Microsoft.AspNetCore.Http; // Added for WriteAsync
 
 namespace Elicom.Web.Host.Startup
 {
@@ -92,6 +93,39 @@ namespace Elicom.Web.Host.Startup
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
+            // 0. ULTIMATE SAFETY NET: Ensure CORS headers & JSON Error on Crash
+            // This catches DB connection errors or other startup crashes that happen before ABP/CORS middleware can handle them gracefully.
+            app.Use(async (context, next) =>
+            {
+                try
+                {
+                    await next();
+                }
+                catch (Exception ex)
+                {
+                    if (context.Response.HasStarted) throw; // Can't write if already started
+
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/json";
+                    
+                    // Manually force CORS headers so the browser allows the error to be seen
+                    var origin = context.Request.Headers["Origin"].ToString();
+                    if (!string.IsNullOrEmpty(origin))
+                    {
+                        context.Response.Headers["Access-Control-Allow-Origin"] = origin;
+                        context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
+                        context.Response.Headers["Access-Control-Allow-Headers"] = "Content-Type, X-Requested-With, Authorization, abp-tenantid";
+                        context.Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS";
+                    }
+
+                    // Simple JSON error
+                    var safeMsg = ex.Message.Replace("\"", "'");
+                    var errorJson = $"{{\"success\":false,\"error\":{{\"message\":\"Critical Server Error (SafetyNet)\",\"details\":\"{safeMsg}\"}}}}";
+                    
+                    await context.Response.WriteAsync(errorJson);
+                }
+            });
+
             // 1. Sanitize invalid culture cookies FIRST to prevent crashes in any downstream middleware
             app.Use(async (context, next) =>
             {
