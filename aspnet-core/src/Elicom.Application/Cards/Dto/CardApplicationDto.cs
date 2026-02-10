@@ -1,7 +1,10 @@
 using System;
+using Abp.AutoMapper;
+using Elicom.Cards;
 
 namespace Elicom.Cards.Dto
 {
+    [AutoMap(typeof(CardApplication))]
     public class CardApplicationDto
     {
         public Guid Id { get; set; }

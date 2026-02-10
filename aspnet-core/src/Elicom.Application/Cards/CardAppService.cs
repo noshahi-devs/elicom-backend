@@ -298,7 +298,22 @@ namespace Elicom.Cards
                     .OrderByDescending(a => a.CreationTime)
                     .ToListAsync();
 
-                return ObjectMapper.Map<List<CardApplicationDto>>(applications);
+                // Manual mapping to ensure UserName is populated and avoid missing AutoMapper profile issues
+                return applications.Select(a => new CardApplicationDto
+                {
+                    Id = a.Id,
+                    FullName = a.FullName,
+                    ContactNumber = a.ContactNumber,
+                    Address = a.Address,
+                    CardType = a.CardType,
+                    DocumentBase64 = a.DocumentBase64, 
+                    DocumentType = a.DocumentType,
+                    Status = a.Status,
+                    AppliedDate = a.AppliedDate,
+                    ReviewedDate = a.ReviewedDate,
+                    ReviewNotes = a.ReviewNotes,
+                    UserName = a.User?.UserName ?? "Unknown"
+                }).ToList();
             }
             catch (Exception ex)
             {
