@@ -38,24 +38,25 @@ namespace Elicom.Public
 
         public async Task<ListResultDto<CategoryDto>> GetCategories(int maxResultCount = 100)
         {
-            // Removed DisableFilter to allow tenant-specific indexing (e.g. for Tenant 2)
-            // Abp automatically applies the tenant filter from the header.
-            
-            // Fetch categories for the current tenant
-            var categoriesQuery = _categoryRepository.GetAll();
-            if (maxResultCount > 0)
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
             {
-                categoriesQuery = categoriesQuery.Take(maxResultCount);
-            }
-            var categories = await categoriesQuery.ToListAsync();
-            
-            // Optimized: Group and count products by CategoryId in the database
-            var categoryIds = categories.Select(c => c.Id).ToList();
-            var countDict = await _productRepository.GetAll()
-                .Where(p => categoryIds.Contains(p.CategoryId))
-                .GroupBy(p => p.CategoryId)
-                .Select(g => new { Id = g.Key, Count = g.Count() })
-                .ToDictionaryAsync(x => x.Id, x => x.Count);
+                Logger.Warn("GetCategories: Starting fetch...");
+                // Fetch categories for the current tenant (or all if filtered)
+                var categoriesQuery = _categoryRepository.GetAll();
+                if (maxResultCount > 0)
+                {
+                    categoriesQuery = categoriesQuery.Take(maxResultCount);
+                }
+                var categories = await categoriesQuery.ToListAsync();
+                Logger.Warn($"GetCategories: Fetched {categories.Count} categories.");
+                
+                // Optimized: Group and count products by CategoryId in the database
+                var categoryIds = categories.Select(c => c.Id).ToList();
+                var countDict = await _productRepository.GetAll()
+                    .Where(p => categoryIds.Contains(p.CategoryId))
+                    .GroupBy(p => p.CategoryId)
+                    .Select(g => new { Id = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(x => x.Id, x => x.Count);
 
                 var result = categories
                     .GroupBy(c => c.Name?.Trim().ToLower() ?? "uncategorized")
@@ -81,12 +82,14 @@ namespace Elicom.Public
                     .ToList();
 
                 return new ListResultDto<CategoryDto>(result);
+            }
         }
 
         public async Task<ListResultDto<ProductDto>> GetProducts(string searchTerm = null, int skipCount = 0, int maxResultCount = 8)
         {
-            // Removed DisableFilter to use tenant indexes
-            var query = _productRepository.GetAll().Include(p => p.Category).AsQueryable();
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
+            {
+                var query = _productRepository.GetAll().Include(p => p.Category).AsQueryable();
 
                 if (!string.IsNullOrWhiteSpace(searchTerm))
                 {
@@ -108,6 +111,7 @@ namespace Elicom.Public
                                           .ToListAsync();
                 
                 return new ListResultDto<ProductDto>(ObjectMapper.Map<List<ProductDto>>(products));
+            }
         }
 
         public async Task<ProductDto> GetProductBySlug(string slug)

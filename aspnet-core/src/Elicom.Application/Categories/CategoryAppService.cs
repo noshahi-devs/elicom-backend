@@ -42,14 +42,17 @@ namespace Elicom.Categories
 
         public async Task<ListResultDto<CategoryDto>> GetAll(int maxResultCount = 100)
         {
-            var query = _categoryRepository.GetAll();
-            if (maxResultCount > 0)
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
             {
-                query = query.Take(maxResultCount);
+                var query = _categoryRepository.GetAll();
+                if (maxResultCount > 0)
+                {
+                    query = query.Take(maxResultCount);
+                }
+                
+                var categories = await query.ToListAsync();
+                return new ListResultDto<CategoryDto>(_mapper.Map<List<CategoryDto>>(categories));
             }
-            
-            var categories = await query.ToListAsync();
-            return new ListResultDto<CategoryDto>(_mapper.Map<List<CategoryDto>>(categories));
         }
 
         [AbpAuthorize(PermissionNames.Pages_Categories_Create)]
@@ -84,15 +87,17 @@ namespace Elicom.Categories
         {
             using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
             {
-                // Optimization: Project to what we need before fetching from DB
-                var categories = await _categoryRepository.GetAll()
+                // Optimization: Database-side grouping to avoid memory bottleneck
+                // We project to a simplified object first to minimize data transfer
+                var categoryGroups = await _categoryRepository.GetAll()
+                    .Where(c => c.Name != null)
+                    .GroupBy(c => c.Name.Trim())
+                    .Select(g => g.FirstOrDefault())
                     .OrderBy(c => c.Name)
                     .ToListAsync();
 
-                // Group by name to remove duplicates and project to DTO
-                var result = categories
-                    .GroupBy(c => c.Name?.Trim() ?? "Uncategorized")
-                    .Select(g => g.First())
+                var result = categoryGroups
+                    .Where(c => c != null)
                     .Select(c => {
                         var dto = _mapper.Map<CategoryLookupDto>(c);
                         // Fallback for missing or invalid slugs
