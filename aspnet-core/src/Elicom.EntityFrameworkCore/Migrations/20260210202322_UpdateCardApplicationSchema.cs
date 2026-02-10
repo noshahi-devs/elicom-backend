@@ -11,54 +11,60 @@ namespace Elicom.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // AbpUserLoginAttempts fix
             migrationBuilder.DropColumn(
                 name: "FailReason",
                 table: "AbpUserLoginAttempts");
 
-            migrationBuilder.RenameColumn(
-                name: "DecisionDate",
-                table: "CardApplications",
-                newName: "ReviewedDate");
+            // Recreate CardApplications table to handle Identity -> Guid change cleanly
+            migrationBuilder.DropTable(
+                name: "CardApplications");
 
-            migrationBuilder.RenameColumn(
-                name: "AdminRemarks",
-                table: "CardApplications",
-                newName: "ReviewNotes");
+            migrationBuilder.CreateTable(
+                name: "CardApplications",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<long>(type: "bigint", nullable: false),
+                    CardType = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    Reason = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    FullName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ContactNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DocumentBase64 = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AppliedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DocumentType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ReviewNotes = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ReviewedBy = table.Column<long>(type: "bigint", nullable: true),
+                    ReviewedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    GeneratedCardId = table.Column<long>(type: "bigint", nullable: true),
+                    CreationTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatorUserId = table.Column<long>(type: "bigint", nullable: true),
+                    LastModificationTime = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    LastModifierUserId = table.Column<long>(type: "bigint", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeleterUserId = table.Column<long>(type: "bigint", nullable: true),
+                    DeletionTime = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    TenantId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CardApplications", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CardApplications_AbpUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AbpUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
 
-            migrationBuilder.AlterColumn<Guid>(
-                name: "Id",
+            migrationBuilder.CreateIndex(
+                name: "IX_CardApplications_UserId",
                 table: "CardApplications",
-                type: "uniqueidentifier",
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint")
-                .OldAnnotation("SqlServer:Identity", "1, 1");
+                column: "UserId");
 
-            migrationBuilder.AddColumn<DateTime>(
-                name: "AppliedDate",
-                table: "CardApplications",
-                type: "datetime2",
-                nullable: false,
-                defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
-
-            migrationBuilder.AddColumn<string>(
-                name: "DocumentType",
-                table: "CardApplications",
-                type: "nvarchar(max)",
-                nullable: true);
-
-            migrationBuilder.AddColumn<long>(
-                name: "GeneratedCardId",
-                table: "CardApplications",
-                type: "bigint",
-                nullable: true);
-
-            migrationBuilder.AddColumn<long>(
-                name: "ReviewedBy",
-                table: "CardApplications",
-                type: "bigint",
-                nullable: true);
-
+            // AbpAuditLogs fix
             migrationBuilder.AlterColumn<string>(
                 name: "Parameters",
                 table: "AbpAuditLogs",
@@ -69,19 +75,6 @@ namespace Elicom.Migrations
                 oldType: "nvarchar(max)",
                 oldMaxLength: 4096,
                 oldNullable: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_CardApplications_UserId",
-                table: "CardApplications",
-                column: "UserId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_CardApplications_AbpUsers_UserId",
-                table: "CardApplications",
-                column: "UserId",
-                principalTable: "AbpUsers",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
         }
 
         /// <inheritdoc />
