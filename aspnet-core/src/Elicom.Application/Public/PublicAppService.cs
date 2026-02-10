@@ -38,56 +38,63 @@ namespace Elicom.Public
 
         public async Task<ListResultDto<CategoryDto>> GetCategories()
         {
-            var categories = await _categoryRepository.GetAllListAsync();
-            var products = await _productRepository.GetAll()
-                .Select(p => new { p.CategoryId, CategoryName = p.Category != null ? p.Category.Name : null })
-                .ToListAsync();
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
+            {
+                var categories = await _categoryRepository.GetAllListAsync();
+                var products = await _productRepository.GetAll()
+                    .Select(p => new { p.CategoryId, CategoryName = p.Category != null ? p.Category.Name : null })
+                    .ToListAsync();
 
-            var countDict = products
-                .GroupBy(x => x.CategoryName?.Trim().ToLower())
-                .Where(g => g.Key != null)
-                .ToDictionary(g => g.Key, g => g.Count());
+                var countDict = products
+                    .GroupBy(x => x.CategoryName?.Trim().ToLower())
+                    .Where(g => g.Key != null)
+                    .ToDictionary(g => g.Key, g => g.Count());
 
-            var result = categories
-                .GroupBy(c => c.Name.Trim().ToLower())
-                .Select(g => {
-                    var name = g.Key;
-                    var first = g.First();
-                    var dto = ObjectMapper.Map<CategoryDto>(first);
-                    dto.ProductCount = countDict.ContainsKey(name) ? countDict[name] : 0;
-
-                    if (string.IsNullOrEmpty(dto.Slug) || dto.Slug == "string" || dto.Slug == "null")
+                var result = categories
+                    .GroupBy(c => c.Name.Trim().ToLower())
+                    .Select(g =>
                     {
-                        dto.Slug = System.Text.RegularExpressions.Regex.Replace(first.Name.ToLower(), @"[^a-z0-9]+", "-").Trim('-');
-                    }
-                    return dto;
-                })
-                .OrderBy(c => c.Name)
-                .ToList();
+                        var name = g.Key;
+                        var first = g.First();
+                        var dto = ObjectMapper.Map<CategoryDto>(first);
+                        dto.ProductCount = countDict.ContainsKey(name) ? countDict[name] : 0;
 
-            return new ListResultDto<CategoryDto>(result);
+                        if (string.IsNullOrEmpty(dto.Slug) || dto.Slug == "string" || dto.Slug == "null")
+                        {
+                            dto.Slug = System.Text.RegularExpressions.Regex.Replace(first.Name.ToLower(), @"[^a-z0-9]+", "-").Trim('-');
+                        }
+                        return dto;
+                    })
+                    .OrderBy(c => c.Name)
+                    .ToList();
+
+                return new ListResultDto<CategoryDto>(result);
+            }
         }
 
         public async Task<ListResultDto<ProductDto>> GetProducts(string searchTerm = null)
         {
-            var query = _productRepository.GetAll().Include(p => p.Category).AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(searchTerm))
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
             {
-                var terms = searchTerm.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                foreach (var term in terms)
-                {
-                    query = query.Where(p => 
-                        p.Name.ToLower().Contains(term) || 
-                        (p.Description != null && p.Description.ToLower().Contains(term)) ||
-                        (p.SKU != null && p.SKU.ToLower().Contains(term)) ||
-                        p.Category.Name.ToLower().Contains(term)
-                    );
-                }
-            }
+                var query = _productRepository.GetAll().Include(p => p.Category).AsQueryable();
 
-            var products = await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
-            return new ListResultDto<ProductDto>(ObjectMapper.Map<List<ProductDto>>(products));
+                if (!string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    var terms = searchTerm.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var term in terms)
+                    {
+                        query = query.Where(p =>
+                            p.Name.ToLower().Contains(term) ||
+                            (p.Description != null && p.Description.ToLower().Contains(term)) ||
+                            (p.SKU != null && p.SKU.ToLower().Contains(term)) ||
+                            (p.Category != null && p.Category.Name.ToLower().Contains(term))
+                        );
+                    }
+                }
+
+                var products = await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
+                return new ListResultDto<ProductDto>(ObjectMapper.Map<List<ProductDto>>(products));
+            }
         }
 
         public async Task<ProductDto> GetProductBySlug(string slug)
@@ -127,66 +134,68 @@ namespace Elicom.Public
 
         public async Task<List<ProductDto>> GetProductsByCategory(string categorySlug, string searchTerm = null, Guid? categoryId = null)
         {
-            var query = _productRepository.GetAll().Include(p => p.Category).AsQueryable();
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
+            {
+                var query = _productRepository.GetAll().Include(p => p.Category).AsQueryable();
 
-            if (categoryId.HasValue && categoryId != Guid.Empty)
-            {
-                query = query.Where(p => p.CategoryId == categoryId.Value);
-            }
-            else if (!string.IsNullOrWhiteSpace(categorySlug))
-            {
-                var searchPattern = categorySlug.Replace("-", " ").ToLower();
-                
-                // Allow exact match OR partial name match to handle cases like "digital product" -> "Digital Products ALi Bhai"
-                query = query.Where(p => 
-                    p.Category.Slug == categorySlug || 
-                    p.Category.Name.ToLower() == searchPattern ||
-                    p.Category.Name.ToLower().Contains(searchPattern)
-                );
-            }
-            // If categorySlug is empty, we simply don't filter by category, allowing search across all products.
-
-            if (!string.IsNullOrWhiteSpace(searchTerm))
-            {
-                var terms = searchTerm.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                foreach (var term in terms)
+                if (categoryId.HasValue && categoryId != Guid.Empty)
                 {
-                    query = query.Where(p => 
-                        p.Name.ToLower().Contains(term) || 
-                        (p.Description != null && p.Description.ToLower().Contains(term)) ||
-                        (p.SKU != null && p.SKU.ToLower().Contains(term)) ||
-                        p.Category.Name.ToLower().Contains(term)
+                    query = query.Where(p => p.CategoryId == categoryId.Value);
+                }
+                else if (!string.IsNullOrWhiteSpace(categorySlug))
+                {
+                    var searchPattern = categorySlug.Replace("-", " ").ToLower();
+
+                    // Allow exact match OR partial name match to handle cases like "digital product" -> "Digital Products ALi Bhai"
+                    query = query.Where(p =>
+                        (p.Category != null && p.Category.Slug == categorySlug) ||
+                        (p.Category != null && p.Category.Name.ToLower() == searchPattern) ||
+                        (p.Category != null && p.Category.Name.ToLower().Contains(searchPattern))
                     );
                 }
-            }
+                // If categorySlug is empty, we simply don't filter by category, allowing search across all products.
 
-            var products = await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
-            var dtos = ObjectMapper.Map<List<ProductDto>>(products);
-
-            // Fetch tenant IDs for suppliers
-            var supplierIds = dtos.Where(d => d.SupplierId.HasValue).Select(d => d.SupplierId.Value).Distinct().ToList();
-            if (supplierIds.Any())
-            {
-                using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
+                if (!string.IsNullOrWhiteSpace(searchTerm))
                 {
-                    var suppliers = await _userRepository.GetAll()
-                        .Where(u => supplierIds.Contains(u.Id))
-                        .Select(u => new { u.Id, u.TenantId })
-                        .ToListAsync();
-
-                    var supplierDict = suppliers.ToDictionary(s => s.Id, s => s.TenantId);
-                    foreach (var dto in dtos)
+                    var terms = searchTerm.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var term in terms)
                     {
-                        if (dto.SupplierId.HasValue && supplierDict.ContainsKey(dto.SupplierId.Value))
+                        query = query.Where(p =>
+                            p.Name.ToLower().Contains(term) ||
+                            (p.Description != null && p.Description.ToLower().Contains(term)) ||
+                            (p.SKU != null && p.SKU.ToLower().Contains(term)) ||
+                            (p.Category != null && p.Category.Name.ToLower().Contains(term))
+                        );
+                    }
+                }
+
+                var products = await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
+                var dtos = ObjectMapper.Map<List<ProductDto>>(products);
+
+                // Fetch tenant IDs for suppliers
+                var supplierIds = dtos.Where(d => d.SupplierId.HasValue).Select(d => d.SupplierId.Value).Distinct().ToList();
+                if (supplierIds.Any())
+                {
+                    using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
+                    {
+                        var suppliers = await _userRepository.GetAll()
+                            .Where(u => supplierIds.Contains(u.Id))
+                            .Select(u => new { u.Id, u.TenantId })
+                            .ToListAsync();
+
+                        var supplierDict = suppliers.ToDictionary(s => s.Id, s => s.TenantId);
+                        foreach (var dto in dtos)
                         {
-                            dto.SupplierTenantId = supplierDict[dto.SupplierId.Value];
+                            if (dto.SupplierId.HasValue && supplierDict.ContainsKey(dto.SupplierId.Value))
+                            {
+                                dto.SupplierTenantId = supplierDict[dto.SupplierId.Value];
+                            }
                         }
                     }
                 }
-            }
 
-            
-            return dtos;
+                return dtos;
+            }
         }
 
         [Authorize]
