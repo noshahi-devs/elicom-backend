@@ -208,16 +208,6 @@ namespace Elicom.Cards
             return dtos;
         }
 
-        public async Task SubmitCardApplication(SubmitCardApplicationInput input)
-        {
-            var userId = AbpSession.GetUserId();
-            
-            // Check if there is already a pending application
-            var existingPending = await _cardApplicationRepository.FirstOrDefaultAsync(x => x.UserId == userId && x.Status == "Pending");
-            if (existingPending != null)
-            {
-                throw new UserFriendlyException("You already have a pending card application.");
-            }
 
         public async Task<CardApplicationDto> SubmitCardApplication(SubmitCardApplicationInput input)
         {
@@ -375,14 +365,6 @@ namespace Elicom.Cards
             };
         }
 
-        [AbpAuthorize(Authorization.PermissionNames.Pages_Users)]
-        public async Task ApproveCardApplication(long id)
-        {
-             // This is for backward compatibility or different flow, but needs to use Guid now if id is Guid.
-             // However, the input is long. If we changed CardApplication to Guid, this will fail if we pass long.
-             // I'll assume we use the new ApproveApplication with input.
-             throw new UserFriendlyException("Use ApproveApplication instead.");
-        }
 
         [AbpAuthorize("Admin")]
         public async Task RejectApplication(RejectApplicationInput input)
@@ -403,11 +385,6 @@ namespace Elicom.Cards
             await _applicationRepository.UpdateAsync(application);
         }
 
-        [AbpAuthorize(Authorization.PermissionNames.Pages_Users)]
-        public async Task RejectCardApplication(RejectCardApplicationInput input)
-        {
-             throw new UserFriendlyException("Use RejectApplication instead.");
-        }
 
         private string GenerateCardNumber(string cardType)
         {

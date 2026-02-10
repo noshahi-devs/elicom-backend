@@ -29,9 +29,6 @@ namespace Elicom.Cards
 
         Task<List<CardApplicationDto>> GetCardApplications();
         
-        Task ApproveCardApplication(long id);
-        
-        Task RejectCardApplication(RejectCardApplicationInput input);
     }
 
     public class ValidateCardInput
