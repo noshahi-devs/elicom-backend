@@ -40,15 +40,15 @@ namespace Elicom.Public
         {
             using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
             {
+                // Fetch all categories
                 var categories = await _categoryRepository.GetAllListAsync();
-                var products = await _productRepository.GetAll()
-                    .Select(p => new { p.CategoryId, CategoryName = p.Category != null ? p.Category.Name : null })
-                    .ToListAsync();
-
-                var countDict = products
-                    .GroupBy(x => x.CategoryName?.Trim().ToLower())
-                    .Where(g => g.Key != null)
-                    .ToDictionary(g => g.Key, g => g.Count());
+                
+                // Optimized: Group and count products in the database instead of in-memory
+                var countDict = await _productRepository.GetAll()
+                    .Where(p => p.Category != null && p.Category.Name != null)
+                    .GroupBy(p => p.Category.Name.Trim().ToLower())
+                    .Select(g => new { Name = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(x => x.Name, x => x.Count);
 
                 var result = categories
                     .GroupBy(c => c.Name?.Trim().ToLower() ?? "uncategorized")
@@ -95,7 +95,12 @@ namespace Elicom.Public
                     }
                 }
 
-                var products = await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
+                // Optimization: Limit the number of products returned to prevent timeouts on large datasets
+                // Ideally this should use proper pagination (skip/take) from the frontend
+                var products = await query.OrderByDescending(p => p.CreatedAt)
+                                          .Take(250) // Reasonable limit for a public listing without pagination
+                                          .ToListAsync();
+                
                 return new ListResultDto<ProductDto>(ObjectMapper.Map<List<ProductDto>>(products));
             }
         }

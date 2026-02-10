@@ -13,6 +13,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Abp.UI;
+using Microsoft.EntityFrameworkCore;
 
 namespace Elicom.Categories
 {
@@ -80,7 +81,10 @@ namespace Elicom.Categories
         {
             using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
             {
-                var categories = await _categoryRepository.GetAllListAsync();
+                // Optimization: Project to what we need before fetching from DB
+                var categories = await _categoryRepository.GetAll()
+                    .OrderBy(c => c.Name)
+                    .ToListAsync();
 
                 // Group by name to remove duplicates and project to DTO
                 var result = categories
@@ -91,7 +95,7 @@ namespace Elicom.Categories
                         // Fallback for missing or invalid slugs
                         if (string.IsNullOrEmpty(dto.Slug) || dto.Slug == "string" || dto.Slug == "null")
                         {
-                            dto.Slug = System.Text.RegularExpressions.Regex.Replace(c.Name.ToLower(), @"[^a-z0-9]+", "-").Trim('-');
+                            dto.Slug = System.Text.RegularExpressions.Regex.Replace(c.Name?.ToLower() ?? "category", @"[^a-z0-9]+", "-").Trim('-');
                         }
                         return dto;
                     })
