@@ -10,6 +10,9 @@ export interface RegisterInput {
     password: string;
     phoneNumber: string;
     country: string;
+    firstName?: string;
+    lastName?: string;
+    fullName?: string;
 }
 
 export interface LoginInput {
