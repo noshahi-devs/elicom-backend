@@ -291,98 +291,126 @@ namespace Elicom.Cards
         [AbpAuthorize(Authorization.PermissionNames.Pages_Users)] 
         public async Task<List<CardApplicationDto>> GetCardApplications()
         {
-            var applications = await _applicationRepository.GetAll()
-                .Include(a => a.User)
-                .OrderByDescending(a => a.CreationTime)
-                .ToListAsync();
+            try
+            {
+                var applications = await _applicationRepository.GetAll()
+                    .Include(a => a.User)
+                    .OrderByDescending(a => a.CreationTime)
+                    .ToListAsync();
 
-            return ObjectMapper.Map<List<CardApplicationDto>>(applications);
+                return ObjectMapper.Map<List<CardApplicationDto>>(applications);
+            }
+            catch (Exception ex)
+            {
+                throw new UserFriendlyException($"Error: {ex.Message} | Inner: {ex.InnerException?.Message}");
+            }
         }
 
         [AbpAuthorize("Admin")]
         public async Task<List<CardApplicationDto>> GetPendingApplications()
         {
-            var applications = await _applicationRepository.GetAllListAsync(a => a.Status == "Pending");
-
-            return applications.Select(a => new CardApplicationDto
+            try
             {
-                Id = a.Id,
-                FullName = a.FullName,
-                ContactNumber = a.ContactNumber,
-                Address = a.Address,
-                CardType = a.CardType,
-                DocumentBase64 = a.DocumentBase64,
-                DocumentType = a.DocumentType,
-                Status = a.Status,
-                AppliedDate = a.AppliedDate
-            }).ToList();
+                var applications = await _applicationRepository.GetAllListAsync(a => a.Status == "Pending");
+
+                return applications.Select(a => new CardApplicationDto
+                {
+                    Id = a.Id,
+                    FullName = a.FullName,
+                    ContactNumber = a.ContactNumber,
+                    Address = a.Address,
+                    CardType = a.CardType,
+                    DocumentBase64 = a.DocumentBase64,
+                    DocumentType = a.DocumentType,
+                    Status = a.Status,
+                    AppliedDate = a.AppliedDate
+                }).ToList();
+            }
+            catch (Exception ex)
+            {
+                throw new UserFriendlyException($"Error: {ex.Message} | Inner: {ex.InnerException?.Message}");
+            }
         }
 
         [AbpAuthorize("Admin")]
         public async Task<VirtualCardDto> ApproveApplication(ApproveApplicationInput input)
         {
-            var application = await _applicationRepository.GetAsync(input.ApplicationId);
-
-            if (application.Status != "Pending")
-                throw new UserFriendlyException("Application is not pending");
-
-            application.Status = "Approved";
-            application.ReviewedDate = DateTime.UtcNow;
-            application.ReviewedBy = AbpSession.GetUserId();
-            application.ReviewNotes = input.ReviewNotes;
-
-            var user = await _userManager.GetUserByIdAsync(application.UserId);
-            var card = new VirtualCard
+            try
             {
-                UserId = user.Id,
-                TenantId = application.TenantId,
-                CardNumber = GenerateCardNumber(application.CardType),
-                CardType = application.CardType,
-                HolderName = application.FullName.ToUpper(),
-                ExpiryDate = DateTime.Now.AddYears(3).ToString("MM/yy"),
-                Cvv = GenerateCVV(),
-                Balance = 0,
-                Currency = "USD",
-                Status = "Active"
-            };
+                var application = await _applicationRepository.GetAsync(input.ApplicationId);
 
-            var cardId = await _cardRepository.InsertAndGetIdAsync(card);
-            application.GeneratedCardId = cardId;
+                if (application.Status != "Pending")
+                    throw new UserFriendlyException("Application is not pending");
 
-            await _applicationRepository.UpdateAsync(application);
+                application.Status = "Approved";
+                application.ReviewedDate = DateTime.UtcNow;
+                application.ReviewedBy = AbpSession.GetUserId();
+                application.ReviewNotes = input.ReviewNotes;
 
-            return new VirtualCardDto
+                var user = await _userManager.GetUserByIdAsync(application.UserId);
+                var card = new VirtualCard
+                {
+                    UserId = user.Id,
+                    TenantId = application.TenantId,
+                    CardNumber = GenerateCardNumber(application.CardType),
+                    CardType = application.CardType,
+                    HolderName = application.FullName.ToUpper(),
+                    ExpiryDate = DateTime.Now.AddYears(3).ToString("MM/yy"),
+                    Cvv = GenerateCVV(),
+                    Balance = 0,
+                    Currency = "USD",
+                    Status = "Active"
+                };
+
+                var cardId = await _cardRepository.InsertAndGetIdAsync(card);
+                application.GeneratedCardId = cardId;
+
+                await _applicationRepository.UpdateAsync(application);
+
+                return new VirtualCardDto
+                {
+                    CardId = cardId,
+                    CardNumber = FormatCardNumber(card.CardNumber),
+                    CardType = card.CardType,
+                    HolderName = card.HolderName,
+                    ExpiryDate = card.ExpiryDate,
+                    Cvv = card.Cvv,
+                    Balance = card.Balance,
+                    Currency = card.Currency,
+                    Status = card.Status
+                };
+            }
+            catch (Exception ex)
             {
-                CardId = cardId,
-                CardNumber = FormatCardNumber(card.CardNumber),
-                CardType = card.CardType,
-                HolderName = card.HolderName,
-                ExpiryDate = card.ExpiryDate,
-                Cvv = card.Cvv,
-                Balance = card.Balance,
-                Currency = card.Currency,
-                Status = card.Status
-            };
+                throw new UserFriendlyException($"Error: {ex.Message} | Inner: {ex.InnerException?.Message}");
+            }
         }
 
 
         [AbpAuthorize("Admin")]
         public async Task RejectApplication(RejectApplicationInput input)
         {
-            var application = await _applicationRepository.GetAsync(input.ApplicationId);
+            try
+            {
+                var application = await _applicationRepository.GetAsync(input.ApplicationId);
 
-            if (application.Status != "Pending")
-                throw new UserFriendlyException("Application is not pending");
+                if (application.Status != "Pending")
+                    throw new UserFriendlyException("Application is not pending");
 
-            if (string.IsNullOrWhiteSpace(input.ReviewNotes))
-                throw new UserFriendlyException("Rejection reason is required");
+                if (string.IsNullOrWhiteSpace(input.ReviewNotes))
+                    throw new UserFriendlyException("Rejection reason is required");
 
-            application.Status = "Rejected";
-            application.ReviewedDate = DateTime.UtcNow;
-            application.ReviewedBy = AbpSession.GetUserId();
-            application.ReviewNotes = input.ReviewNotes;
+                application.Status = "Rejected";
+                application.ReviewedDate = DateTime.UtcNow;
+                application.ReviewedBy = AbpSession.GetUserId();
+                application.ReviewNotes = input.ReviewNotes;
 
-            await _applicationRepository.UpdateAsync(application);
+                await _applicationRepository.UpdateAsync(application);
+            }
+            catch (Exception ex)
+            {
+                throw new UserFriendlyException($"Error: {ex.Message} | Inner: {ex.InnerException?.Message}");
+            }
         }
 
 
