@@ -7,6 +7,7 @@ using Elicom.EntityFrameworkCore.Seed.Tenants;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Transactions;
+using System.Linq;
 
 namespace Elicom.EntityFrameworkCore.Seed;
 
@@ -19,8 +20,33 @@ public static class SeedHelper
 
     public static void SeedHostDb(ElicomDbContext context)
     {
-        // Ensure database is migrated before seeding
-        context.Database.Migrate();
+        try
+        {
+            var connStr = context.Database.GetDbConnection().ConnectionString;
+            var safeConnStr = string.Join(";", connStr.Split(';').Where(s => !s.Trim().StartsWith("Password", StringComparison.OrdinalIgnoreCase) && !s.Trim().StartsWith("Pwd", StringComparison.OrdinalIgnoreCase)));
+            Console.WriteLine($"[SEED-DEBUG] Target DB: {safeConnStr}");
+
+            var applied = context.Database.GetAppliedMigrations().ToList();
+            Console.WriteLine($"[SEED-DEBUG] Applied Migrations ({applied.Count}): Last -> {applied.LastOrDefault()}");
+
+            var pending = context.Database.GetPendingMigrations().ToList();
+            Console.WriteLine($"[SEED-DEBUG] Pending Migrations ({pending.Count}): {string.Join(", ", pending)}");
+
+            if (pending.Any())
+            {
+                Console.WriteLine("[SEED-DEBUG] Applying Migrations...");
+                context.Database.Migrate();
+                Console.WriteLine("[SEED-DEBUG] Migrations Applied Successfully.");
+            }
+            else
+            {
+                Console.WriteLine("[SEED-DEBUG] No Pending Migrations.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[SEED-DEBUG] MIGRATION ERROR: {ex}");
+        }
 
         context.SuppressAutoSetTenantId = true;
 
