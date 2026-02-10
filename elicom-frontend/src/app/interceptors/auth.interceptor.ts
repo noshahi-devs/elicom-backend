@@ -16,10 +16,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     const isPublic = publicEndpoints.some(url => req.url.includes(url));
 
     if (token && !isPublic) {
+        const isPrimeShip = window.location.pathname.includes('primeship');
+        const tenantId = isPrimeShip ? '2' : '1';
+
         const cloned = req.clone({
             setHeaders: {
                 Authorization: `Bearer ${token}`,
-                'Abp-TenantId': '1' // Ensure tenant context is preserved
+                'Abp-TenantId': tenantId
             }
         });
         return next(cloned);
