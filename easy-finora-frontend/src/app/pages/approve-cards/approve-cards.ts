@@ -44,16 +44,27 @@ export class ApproveCards implements OnInit {
     }
 
     approve(app: any) {
+        console.log('Approve requested for:', app);
+        const id = app.id || app.Id;
+        if (!id) {
+            console.error('Missing application ID:', app);
+            this.toastService.showError('Application ID is missing.');
+            return;
+        }
+
         if (!confirm(`Are you sure you want to approve card for ${app.fullName}?`)) return;
 
         this.isLoading = true;
-        this.cardService.approveCardApplication(app.id).subscribe({
-            next: () => {
+        this.cardService.approveCardApplication(id).subscribe({
+            next: (res) => {
+                console.log('Approval success:', res);
                 this.toastService.showSuccess('Card approved and generated!');
                 this.loadApplications();
             },
             error: (err) => {
-                this.toastService.showError('Approval failed.');
+                console.error('Approval error:', err);
+                const msg = err.error?.error?.message || 'Approval failed.';
+                this.toastService.showError(msg);
                 this.isLoading = false;
                 this.cdr.detectChanges();
             }
@@ -71,15 +82,24 @@ export class ApproveCards implements OnInit {
             return;
         }
 
+        console.log('Rejecting application:', this.selectedApp);
+        const id = this.selectedApp?.id || this.selectedApp?.Id;
+        if (!id) {
+            this.toastService.showError('Application ID is missing.');
+            return;
+        }
+
         this.isLoading = true;
-        this.cardService.rejectCardApplication({ id: this.selectedApp.id, adminRemarks: this.adminRemarks }).subscribe({
+        this.cardService.rejectCardApplication({ id: id, adminRemarks: this.adminRemarks }).subscribe({
             next: () => {
                 this.toastService.showSuccess('Application rejected.');
                 this.selectedApp = null;
                 this.loadApplications();
             },
             error: (err) => {
-                this.toastService.showError('Rejection failed.');
+                console.error('Rejection error:', err);
+                const msg = err.error?.error?.message || 'Rejection failed.';
+                this.toastService.showError(msg);
                 this.isLoading = false;
                 this.cdr.detectChanges();
             }

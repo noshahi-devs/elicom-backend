@@ -349,12 +349,15 @@ namespace Elicom.Cards
         }
 
         [AbpAuthorize("Admin")]
-        public async Task<VirtualCardDto> ApproveCardApplication(ApproveApplicationInput input)
+        public async Task<VirtualCardDto> ApproveCardApplication([Microsoft.AspNetCore.Mvc.FromBody] ApproveApplicationInput input)
         {
             try
             {
                 using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
                 {
+                    if (input.Id == Guid.Empty)
+                        throw new UserFriendlyException("Application ID is required");
+
                     var application = await _applicationRepository.GetAsync(input.Id);
 
                     if (application.Status != CardApplicationStatus.Pending)
@@ -407,10 +410,13 @@ namespace Elicom.Cards
 
 
         [AbpAuthorize("Admin")]
-        public async Task RejectCardApplication(RejectApplicationInput input)
+        public async Task RejectCardApplication([Microsoft.AspNetCore.Mvc.FromBody] RejectApplicationInput input)
         {
             try
             {
+                if (input.Id == Guid.Empty)
+                    throw new UserFriendlyException("Application ID is required");
+
                 var application = await _applicationRepository.GetAsync(input.Id);
 
                 if (application.Status != CardApplicationStatus.Pending)

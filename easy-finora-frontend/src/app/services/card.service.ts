@@ -56,8 +56,9 @@ export class CardService {
         return this.http.get(`${this.apiUrl}/GetCardApplications`, { headers: this.getHeaders() });
     }
 
-    approveCardApplication(id: number): Observable<any> {
-        return this.http.post(`${this.apiUrl}/ApproveCardApplication?id=${id}`, {}, { headers: this.getHeaders() });
+    approveCardApplication(id: string): Observable<any> {
+        console.log('CardService.approveCardApplication id is:', id);
+        return this.http.post(`${this.apiUrl}/ApproveCardApplication`, { id }, { headers: this.getHeaders() });
     }
 
     rejectCardApplication(input: any): Observable<any> {
