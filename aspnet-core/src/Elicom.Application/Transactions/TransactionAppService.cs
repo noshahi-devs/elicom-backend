@@ -72,7 +72,7 @@ namespace Elicom.Transactions
         private TransactionDto MapToDto(WalletTransaction t)
         {
             string category = "Unknown";
-            string type = t.TransactionType;
+            string type = t.MovementType;
 
             // Map Backend Types to Frontend Categories
             if (type == "Deposit") category = "Deposit";
@@ -87,7 +87,7 @@ namespace Elicom.Transactions
                 Id = t.Id,
                 CardId = null, // WalletTransaction doesn't have CardId
                 Amount = Math.Abs(t.Amount), // Frontend handles sign based on type/context usually, or we provide absolute
-                TransactionType = t.Amount < 0 ? "Debit" : "Credit",
+                MovementType = t.Amount < 0 ? "Debit" : "Credit",
                 Category = category,
                 ReferenceId = t.ReferenceId,
                 Description = t.Description,

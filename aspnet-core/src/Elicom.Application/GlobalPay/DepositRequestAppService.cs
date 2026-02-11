@@ -133,7 +133,7 @@ namespace Elicom.GlobalPay
                     UserId = request.UserId,
                     CardId = request.CardId,
                     Amount = request.Amount,
-                    TransactionType = "Credit",
+                    MovementType = "Credit",
                     Category = "Deposit",
                     ReferenceId = request.Id.ToString(),
                     Description = $"Deposit Approved for Card {request.CardId}"

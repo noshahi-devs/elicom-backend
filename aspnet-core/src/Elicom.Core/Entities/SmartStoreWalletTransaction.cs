@@ -9,7 +9,7 @@ namespace Elicom.Entities
         public virtual SmartStoreWallet Wallet { get; set; }
 
         public decimal Amount { get; set; } // Positive for Credit, Negative for Debit
-        public string TransactionType { get; set; } // "Sale", "Payout", "Refund"
+        public string MovementType { get; set; } // "Sale", "Payout", "Refund"
         
         public string ReferenceId { get; set; } // e.g., OrderId
         public string Description { get; set; }

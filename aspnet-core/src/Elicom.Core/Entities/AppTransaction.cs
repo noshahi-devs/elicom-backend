@@ -19,7 +19,7 @@ namespace Elicom.Entities
         public decimal Amount { get; set; }
 
         [Required]
-        public string TransactionType { get; set; } // Credit, Debit
+        public string MovementType { get; set; } // Credit, Debit
 
         [Required]
         public string Category { get; set; } // Deposit, Withdrawal, Transfer, Purchase

@@ -139,7 +139,7 @@ namespace Elicom.Withdrawals
                 UserId = request.UserId,
                 CardId = request.CardId,
                 Amount = request.Amount,
-                TransactionType = "Debit",
+                MovementType = "Debit",
                 Category = "Withdrawal",
                 ReferenceId = request.Id.ToString(),
                 Description = $"Withdrawal Approved for Card {request.CardId}"

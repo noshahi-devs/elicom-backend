@@ -359,7 +359,7 @@ namespace Elicom.Orders
                     {
                         UserId = storeProduct.Store.OwnerId,
                         Amount = sellerAmount - feeAmount,
-                        TransactionType = "Credit",
+                        MovementType = "Credit",
                         Category = "Sale",
                         ReferenceId = order.OrderNumber,
                         OrderId = order.Id,
@@ -372,7 +372,7 @@ namespace Elicom.Orders
                     {
                         UserId = PlatformAdminId,
                         Amount = feeAmount,
-                        TransactionType = "Credit",
+                        MovementType = "Credit",
                         Category = "Fee",
                         ReferenceId = order.OrderNumber,
                         OrderId = order.Id,

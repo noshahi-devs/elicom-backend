@@ -10,7 +10,7 @@ namespace Elicom.Entities
         public virtual Wallet Wallet { get; set; }
 
         public decimal Amount { get; set; } // Positive for Credit, Negative for Debit
-        public string TransactionType { get; set; } // "Deposit", "Purchase", "Refund", "ProfitDetails"
+        public string MovementType { get; set; } // "Deposit", "Purchase", "Refund", "ProfitDetails"
         
         public string ReferenceId { get; set; } // e.g., OrderId
         public string Description { get; set; }

@@ -37,7 +37,7 @@ namespace Elicom.Wallets
             {
                 WalletId = wallet.Id,
                 Amount = amount, 
-                TransactionType = "Sale",
+                MovementType = "Sale",
                 ReferenceId = referenceId,
                 Description = description,
                 Status = "Completed"
@@ -57,7 +57,7 @@ namespace Elicom.Wallets
             {
                 WalletId = wallet.Id,
                 Amount = -amount,
-                TransactionType = "Payout",
+                MovementType = "Payout",
                 ReferenceId = referenceId,
                 Description = description,
                 Status = "Completed"

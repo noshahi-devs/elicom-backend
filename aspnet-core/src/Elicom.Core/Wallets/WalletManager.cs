@@ -37,7 +37,7 @@ namespace Elicom.Wallets
             {
                 WalletId = wallet.Id,
                 Amount = amount, 
-                TransactionType = "Deposit",
+                MovementType = "Deposit",
                 ReferenceId = referenceId,
                 Description = description
             });
@@ -56,7 +56,7 @@ namespace Elicom.Wallets
             {
                 WalletId = wallet.Id,
                 Amount = -amount,
-                TransactionType = "Debit",
+                MovementType = "Debit",
                 ReferenceId = referenceId,
                 Description = description
             });
@@ -85,7 +85,7 @@ namespace Elicom.Wallets
             {
                 WalletId = senderWallet.Id,
                 Amount = -amount,
-                TransactionType = "Transfer Out",
+                MovementType = "Transfer Out",
                 ReferenceId = refId,
                 Description = description
             });
@@ -96,7 +96,7 @@ namespace Elicom.Wallets
             {
                 WalletId = receiverWallet.Id,
                 Amount = amount,
-                TransactionType = "Transfer In",
+                MovementType = "Transfer In",
                 ReferenceId = refId,
                 Description = $"From User {senderUserId}: {description}"
             });
