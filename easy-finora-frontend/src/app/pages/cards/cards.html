@@ -17,104 +17,106 @@
         </div>
     </div>
 
-    <!-- Active & Pending Cards Section -->
     <div class="section">
         <h3>My Wallet Cards</h3>
-        <div class="cards-grid" *ngIf="activeCards.length > 0 || cardApplications.length > 0; else noCards">
-            <!-- Active Cards -->
-            <div *ngFor="let card of activeCards" class="card-3d-item">
-                <div class="card-visual" [class.visa]="card.type === 'Visa'" [class.master]="card.type === 'MasterCard'"
-                    [class.amex]="card.type === 'Amex'">
+        <ng-container *ngIf="activeCards.length > 0 || cardApplications.length > 0; else noCards">
+            <div class="cards-grid">
+                <!-- Active Cards -->
+                <div *ngFor="let card of activeCards" class="card-3d-item">
+                    <div class="card-visual" [class.visa]="card.type === 'Visa'"
+                        [class.master]="card.type === 'MasterCard'" [class.amex]="card.type === 'Amex'">
 
-                    <div class="card-header">
-                        <div class="chip-sim"></div>
-                        <div class="contactless-icon">)))</div>
-                    </div>
+                        <div class="card-header">
+                            <div class="chip-sim"></div>
+                            <div class="contactless-icon">)))</div>
+                        </div>
 
-                    <div class="card-body">
-                        <div class="card-number">
-                            <span>{{ card.cardNumber | slice:0:4 }}</span>
-                            <span>{{ card.cardNumber | slice:5:9 }}</span>
-                            <span>{{ card.cardNumber | slice:10:14 }}</span>
-                            <span>{{ card.cardNumber | slice:15:19 }}</span>
+                        <div class="card-body">
+                            <div class="card-number">
+                                <span>{{ card.cardNumber | slice:0:4 }}</span>
+                                <span>{{ card.cardNumber | slice:5:9 }}</span>
+                                <span>{{ card.cardNumber | slice:10:14 }}</span>
+                                <span>{{ card.cardNumber | slice:15:19 }}</span>
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <div class="card-holder">
+                                <label>Card Holder</label>
+                                <span>{{ card.holderName }}</span>
+                            </div>
+                            <div class="card-meta">
+                                <label>Valid Thru</label>
+                                <span>{{ card.expiryDate }}</span>
+                            </div>
+                            <div class="brand-logo">
+                                {{ card.type.toUpperCase() }}
+                            </div>
                         </div>
                     </div>
 
-                    <div class="card-footer">
-                        <div class="card-holder">
-                            <label>Card Holder</label>
-                            <span>{{ card.holderName }}</span>
+                    <div class="card-info-panel">
+                        <div class="info-row">
+                            <span class="label">Current Balance</span>
+                            <span class="value">{{ card.balance | currency: 'USD' }}</span>
                         </div>
-                        <div class="card-meta">
-                            <label>Valid Thru</label>
-                            <span>{{ card.expiryDate }}</span>
-                        </div>
-                        <div class="brand-logo">
-                            {{ card.type.toUpperCase() }}
+                        <div class="info-row">
+                            <span class="label">Status</span>
+                            <span class="status-badge active">{{ card.status }}</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="card-info-panel">
-                    <div class="info-row">
-                        <span class="label">Current Balance</span>
-                        <span class="value">{{ card.balance | currency: 'USD' }}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="label">Status</span>
-                        <span class="status-badge active">{{ card.status }}</span>
+                <div *ngFor="let app of cardApplications">
+                    <div *ngIf="app.status === 'Pending'" class="card-3d-item pending-card">
+                        <div class="card-visual" [class.visa]="app.cardType === 0" [class.master]="app.cardType === 1"
+                            [class.amex]="app.cardType === 2">
+
+                            <div class="pending-overlay">
+                                <span class="pending-badge-large">Pending Approval</span>
+                            </div>
+
+                            <div class="card-header">
+                                <div class="chip-sim"></div>
+                                <div class="contactless-icon">)))</div>
+                            </div>
+
+                            <div class="card-body">
+                                <div class="card-number">
+                                    <span>XXXX</span>
+                                    <span>XXXX</span>
+                                    <span>XXXX</span>
+                                    <span>XXXX</span>
+                                </div>
+                            </div>
+
+                            <div class="card-footer">
+                                <div class="card-holder">
+                                    <label>Card Holder</label>
+                                    <span>{{ app.fullName }}</span>
+                                </div>
+                                <div class="card-meta">
+                                    <label>Applied On</label>
+                                    <span>{{ app.appliedDate | date:'MM/yy' }}</span>
+                                </div>
+                                <div class="brand-logo">
+                                    {{ (app.cardType === 0 ? 'VISA' : app.cardType === 1 ? 'MASTERCARD' : 'AMEX') }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-info-panel">
+                            <div class="info-row">
+                                <span class="label">Status</span>
+                                <span class="status-badge pending">Awaiting Verification</span>
+                            </div>
+                            <p class="pending-hint">Usually approved within 5-8 business hours.</p>
+                        </div>
                     </div>
                 </div>
             </div>
+        </ng-container>
 
-            <!-- Pending Applications as Cards -->
-            <div *ngFor="let app of cardApplications" class="card-3d-item pending-card"
-                *ngIf="app.status === 'Pending'">
-                <div class="card-visual" [class.visa]="app.cardType === 0" [class.master]="app.cardType === 1"
-                    [class.amex]="app.cardType === 2">
-
-                    <div class="pending-overlay">
-                        <span class="pending-badge-large">Pending Approval</span>
-                    </div>
-
-                    <div class="card-header">
-                        <div class="chip-sim"></div>
-                        <div class="contactless-icon">)))</div>
-                    </div>
-
-                    <div class="card-body">
-                        <div class="card-number">
-                            <span>XXXX</span>
-                            <span>XXXX</span>
-                            <span>XXXX</span>
-                            <span>XXXX</span>
-                        </div>
-                    </div>
-
-                    <div class="card-footer">
-                        <div class="card-holder">
-                            <label>Card Holder</label>
-                            <span>{{ app.fullName }}</span>
-                        </div>
-                        <div class="card-meta">
-                            <label>Applied On</label>
-                            <span>{{ app.appliedDate | date:'MM/yy' }}</span>
-                        </div>
-                        <div class="brand-logo">
-                            {{ (app.cardType === 0 ? 'VISA' : app.cardType === 1 ? 'MASTERCARD' : 'AMEX') }}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card-info-panel">
-                    <div class="info-row">
-                        <span class="label">Status</span>
-                        <span class="status-badge pending">Awaiting Verification</span>
-                    </div>
-                    <p class="pending-hint">Usually approved within 5-8 business hours.</p>
-                </div>
-            </div>
-        </div>
         <ng-template #noCards>
             <div class="empty-state-3d" *ngIf="!isLoading">
                 <p>No card activity found. Apply for one to get started!</p>
