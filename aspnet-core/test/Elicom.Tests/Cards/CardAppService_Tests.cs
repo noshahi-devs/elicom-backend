@@ -24,7 +24,7 @@ namespace Elicom.Tests.Cards
 
             var input = new CreateVirtualCardInput
             {
-                CardType = "Visa"
+                CardType = CardType.Visa
             };
 
             // Act
@@ -33,7 +33,7 @@ namespace Elicom.Tests.Cards
             // Assert
             result.ShouldNotBeNull();
             result.CardId.ShouldBeGreaterThan(0);
-            result.CardType.ShouldBe("Visa");
+            result.CardType.ShouldBe(CardType.Visa);
             result.CardNumber.ShouldStartWith("4");
             result.CardNumber.Length.ShouldBe(19); // Formatted with spaces
             result.Cvv.Length.ShouldBe(3);
@@ -51,7 +51,7 @@ namespace Elicom.Tests.Cards
 
             var input = new CreateVirtualCardInput
             {
-                CardType = "MasterCard"
+                CardType = CardType.MasterCard
             };
 
             // Act
@@ -59,7 +59,7 @@ namespace Elicom.Tests.Cards
 
             // Assert
             result.ShouldNotBeNull();
-            result.CardType.ShouldBe("MasterCard");
+            result.CardType.ShouldBe(CardType.MasterCard);
             result.CardNumber.ShouldStartWith("5");
         }
 
@@ -71,7 +71,7 @@ namespace Elicom.Tests.Cards
 
             var input = new CreateVirtualCardInput
             {
-                CardType = "Amex"
+                CardType = CardType.Amex
             };
 
             // Act
@@ -79,7 +79,7 @@ namespace Elicom.Tests.Cards
 
             // Assert
             result.ShouldNotBeNull();
-            result.CardType.ShouldBe("Amex");
+            result.CardType.ShouldBe(CardType.Amex);
             result.CardNumber.ShouldStartWith("3");
         }
 
@@ -91,7 +91,7 @@ namespace Elicom.Tests.Cards
 
             var input = new CreateVirtualCardInput
             {
-                CardType = "InvalidCard"
+                CardType = (CardType)99 // Invalid enum value
             };
 
             // Act & Assert
@@ -109,7 +109,7 @@ namespace Elicom.Tests.Cards
 
             var input = new CreateVirtualCardInput
             {
-                CardType = "Visa"
+                CardType = CardType.Visa
             };
 
             // Act
@@ -127,8 +127,8 @@ namespace Elicom.Tests.Cards
             LoginAsDefaultTenantAdmin();
 
             // Create 2 cards
-            await _cardAppService.CreateVirtualCard(new CreateVirtualCardInput { CardType = "Visa" });
-            await _cardAppService.CreateVirtualCard(new CreateVirtualCardInput { CardType = "MasterCard" });
+            await _cardAppService.CreateVirtualCard(new CreateVirtualCardInput { CardType = CardType.Visa });
+            await _cardAppService.CreateVirtualCard(new CreateVirtualCardInput { CardType = CardType.MasterCard });
 
             // Act
             var result = await _cardAppService.GetUserCards();

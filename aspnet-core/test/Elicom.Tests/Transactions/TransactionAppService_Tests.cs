@@ -36,7 +36,7 @@ namespace Elicom.Tests.Transactions
             LoginAsDefaultTenantAdmin();
 
             // 1. Create Card
-            var card = await _cardAppService.CreateVirtualCard(new CreateVirtualCardInput { CardType = "Visa" });
+            var card = await _cardAppService.CreateVirtualCard(new CreateVirtualCardInput { CardType = CardType.Visa });
 
             // 2. Deposit 1000
             var deposit = await _depositRequestAppService.Create(new CreateDepositRequestInput
@@ -80,7 +80,7 @@ namespace Elicom.Tests.Transactions
         {
             // Arrange
             LoginAsDefaultTenantAdmin();
-            var card = await _cardAppService.CreateVirtualCard(new CreateVirtualCardInput { CardType = "Visa" });
+            var card = await _cardAppService.CreateVirtualCard(new CreateVirtualCardInput { CardType = CardType.Visa });
 
             // 1. Create pending deposit
             await _depositRequestAppService.Create(new CreateDepositRequestInput

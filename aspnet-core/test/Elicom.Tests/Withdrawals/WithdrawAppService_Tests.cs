@@ -31,7 +31,7 @@ namespace Elicom.Tests.Withdrawals
             LoginAsDefaultTenantAdmin();
 
             // 1. Create a card and add balance via deposit
-            var card = await _cardAppService.CreateVirtualCard(new CreateVirtualCardInput { CardType = "Visa" });
+            var card = await _cardAppService.CreateVirtualCard(new CreateVirtualCardInput { CardType = CardType.Visa });
             var deposit = await _depositRequestAppService.Create(new CreateDepositRequestInput
             {
                 Amount = 1000,
@@ -63,7 +63,7 @@ namespace Elicom.Tests.Withdrawals
         {
             // Arrange
             LoginAsDefaultTenantAdmin();
-            var card = await _cardAppService.CreateVirtualCard(new CreateVirtualCardInput { CardType = "Visa" });
+            var card = await _cardAppService.CreateVirtualCard(new CreateVirtualCardInput { CardType = CardType.Visa });
 
             var input = new CreateWithdrawRequestInput
             {
@@ -87,7 +87,7 @@ namespace Elicom.Tests.Withdrawals
             LoginAsDefaultTenantAdmin();
 
             // 1. Setup card with 1000 balance
-            var card = await _cardAppService.CreateVirtualCard(new CreateVirtualCardInput { CardType = "Visa" });
+            var card = await _cardAppService.CreateVirtualCard(new CreateVirtualCardInput { CardType = CardType.Visa });
             var deposit = await _depositRequestAppService.Create(new CreateDepositRequestInput
             {
                 Amount = 1000,

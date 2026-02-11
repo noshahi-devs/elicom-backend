@@ -29,7 +29,7 @@ namespace Elicom.Tests.GlobalPay
             LoginAsDefaultTenantAdmin();
 
             // 1. Create a card first
-            var card = await _cardAppService.CreateVirtualCard(new CreateVirtualCardInput { CardType = "Visa" });
+            var card = await _cardAppService.CreateVirtualCard(new CreateVirtualCardInput { CardType = CardType.Visa });
 
             var input = new CreateDepositRequestInput
             {
@@ -59,7 +59,7 @@ namespace Elicom.Tests.GlobalPay
             LoginAsDefaultTenantAdmin();
 
             // 1. Create a card
-            var card = await _cardAppService.CreateVirtualCard(new CreateVirtualCardInput { CardType = "Visa" });
+            var card = await _cardAppService.CreateVirtualCard(new CreateVirtualCardInput { CardType = CardType.Visa });
             card.Balance.ShouldBe(0);
 
             // 2. Create deposit request

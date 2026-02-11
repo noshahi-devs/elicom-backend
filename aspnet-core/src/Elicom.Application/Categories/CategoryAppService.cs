@@ -88,17 +88,22 @@ namespace Elicom.Categories
             using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
             {
                 // Optimization: Database-side grouping to avoid memory bottleneck
-                // We project to a simplified object first to minimize data transfer
-                var categoryGroups = await _categoryRepository.GetAll()
+                // We project to a simplified structure first to avoid EF Core translation issues
+                var categories = await _categoryRepository.GetAll()
                     .Where(c => c.Name != null)
                     .GroupBy(c => c.Name.Trim())
-                    .Select(g => g.FirstOrDefault())
-                    .OrderBy(c => c.Name)
+                    .Select(g => new { 
+                        Name = g.Key, 
+                        // Pick the first available entity for this name to get its properties
+                        Entity = g.FirstOrDefault() 
+                    })
+                    .OrderBy(x => x.Name)
                     .ToListAsync();
 
-                var result = categoryGroups
-                    .Where(c => c != null)
-                    .Select(c => {
+                var result = categories
+                    .Where(x => x.Entity != null)
+                    .Select(x => {
+                        var c = x.Entity;
                         var dto = _mapper.Map<CategoryLookupDto>(c);
                         // Fallback for missing or invalid slugs
                         if (string.IsNullOrEmpty(dto.Slug) || dto.Slug == "string" || dto.Slug == "null")
