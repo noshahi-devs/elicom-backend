@@ -4,7 +4,7 @@ namespace Elicom.Cards.Dto
 {
     public class ApproveApplicationInput
     {
-        public Guid ApplicationId { get; set; }
-        public string ReviewNotes { get; set; } // Optional
+        public Guid Id { get; set; }
+        public string AdminRemarks { get; set; } // Optional
     }
 }

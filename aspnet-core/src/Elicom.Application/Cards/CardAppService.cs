@@ -349,13 +349,13 @@ namespace Elicom.Cards
         }
 
         [AbpAuthorize("Admin")]
-        public async Task<VirtualCardDto> ApproveApplication(ApproveApplicationInput input)
+        public async Task<VirtualCardDto> ApproveCardApplication(ApproveApplicationInput input)
         {
             try
             {
                 using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
                 {
-                    var application = await _applicationRepository.GetAsync(input.ApplicationId);
+                    var application = await _applicationRepository.GetAsync(input.Id);
 
                     if (application.Status != CardApplicationStatus.Pending)
                         throw new UserFriendlyException("Application is not pending");
@@ -363,7 +363,7 @@ namespace Elicom.Cards
                     application.Status = CardApplicationStatus.Approved;
                     application.ReviewedDate = DateTime.UtcNow;
                     application.ReviewedBy = AbpSession.GetUserId();
-                    application.ReviewNotes = input.ReviewNotes;
+                    application.ReviewNotes = input.AdminRemarks;
 
                     var user = await _userManager.GetUserByIdAsync(application.UserId);
                     var card = new VirtualCard
@@ -407,22 +407,22 @@ namespace Elicom.Cards
 
 
         [AbpAuthorize("Admin")]
-        public async Task RejectApplication(RejectApplicationInput input)
+        public async Task RejectCardApplication(RejectApplicationInput input)
         {
             try
             {
-                var application = await _applicationRepository.GetAsync(input.ApplicationId);
+                var application = await _applicationRepository.GetAsync(input.Id);
 
                 if (application.Status != CardApplicationStatus.Pending)
                     throw new UserFriendlyException("Application is not pending");
 
-                if (string.IsNullOrWhiteSpace(input.ReviewNotes))
+                if (string.IsNullOrWhiteSpace(input.AdminRemarks))
                     throw new UserFriendlyException("Rejection reason is required");
 
                 application.Status = CardApplicationStatus.Rejected;
                 application.ReviewedDate = DateTime.UtcNow;
                 application.ReviewedBy = AbpSession.GetUserId();
-                application.ReviewNotes = input.ReviewNotes;
+                application.ReviewNotes = input.AdminRemarks;
 
                 await _applicationRepository.UpdateAsync(application);
             }

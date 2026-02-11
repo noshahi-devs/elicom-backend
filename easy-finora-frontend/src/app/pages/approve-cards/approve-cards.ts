@@ -87,9 +87,36 @@ export class ApproveCards implements OnInit {
     }
 
     viewDocument(doc: string) {
+        if (!doc) return;
+
+        // Detect file type if prefix is missing
+        let fileType = 'png'; // default
+        if (doc.startsWith('JVBERi')) fileType = 'pdf';
+        else if (doc.startsWith('/9j/')) fileType = 'jpg';
+        else if (doc.startsWith('iVBORw0KGgo')) fileType = 'png';
+
+        let base64 = doc;
+        if (!doc.startsWith('data:')) {
+            const mimeType = fileType === 'pdf' ? 'application/pdf' : `image/${fileType}`;
+            base64 = `data:${mimeType};base64,${doc}`;
+        }
+
         const win = window.open();
         if (win) {
-            win.document.write(`<img src="${doc}" style="max-width: 100%;" />`);
+            win.document.title = "Document Viewer";
+            if (fileType === 'pdf') {
+                win.document.write(`
+                    <body style="margin:0; background: #525659;">
+                        <iframe src="${base64}" style="width:100%; height:100vh; border:none;"></iframe>
+                    </body>
+                `);
+            } else {
+                win.document.write(`
+                    <body style="margin:0; display:flex; align-items:center; justify-content:center; background:#000;">
+                        <img src="${base64}" style="max-width:100%; max-height:100vh; object-fit:contain;" />
+                    </body>
+                `);
+            }
         }
     }
 }

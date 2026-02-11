@@ -23,9 +23,9 @@ namespace Elicom.Cards
 
         Task<List<CardApplicationDto>> GetPendingApplications(); // Admin only
 
-        Task<VirtualCardDto> ApproveApplication(ApproveApplicationInput input); // Admin only
+        Task<VirtualCardDto> ApproveCardApplication(ApproveApplicationInput input); // Admin only
 
-        Task RejectApplication(RejectApplicationInput input); // Admin only
+        Task RejectCardApplication(RejectApplicationInput input); // Admin only
 
         Task<List<CardApplicationDto>> GetCardApplications();
         
