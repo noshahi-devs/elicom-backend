@@ -11,7 +11,7 @@ namespace Elicom.Cards.Dto
         public string FullName { get; set; }
         public string ContactNumber { get; set; }
         public string Address { get; set; }
-        public string CardType { get; set; }
+        public CardType CardType { get; set; }
         public string DocumentBase64 { get; set; }
         public string DocumentType { get; set; }
         public string UserName { get; set; }

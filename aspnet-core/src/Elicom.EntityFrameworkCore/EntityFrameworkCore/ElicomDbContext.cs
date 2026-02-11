@@ -51,7 +51,12 @@ namespace Elicom.EntityFrameworkCore
                 b.HasOne(p => p.Category)
                  .WithMany(c => c.Products)
                  .HasForeignKey(p => p.CategoryId)
-                 .OnDelete(DeleteBehavior.Restrict);
+                 .OnDelete(DeleteBehavior.Restrict)
+                 .IsRequired(false); // Make optional to avoid global query filter warnings
+
+                b.Property(p => p.DiscountPercentage).HasColumnType("decimal(18,2)");
+                b.Property(p => p.ResellerMaxPrice).HasColumnType("decimal(18,2)");
+                b.Property(p => p.SupplierPrice).HasColumnType("decimal(18,2)");
             });
 
             /* ---------------- Store ↔ User (Owner) ---------------- */
@@ -60,7 +65,8 @@ namespace Elicom.EntityFrameworkCore
                 b.HasOne(s => s.Owner)
                  .WithMany() // one user can own multiple stores
                  .HasForeignKey(s => s.OwnerId)
-                 .OnDelete(DeleteBehavior.Restrict);
+                 .OnDelete(DeleteBehavior.Restrict)
+                 .IsRequired(false); // Make optional to avoid global query filter warnings
             });
 
             /* ---------------- Store ↔ StoreKyc (One-to-One) ---------------- */
@@ -83,7 +89,11 @@ namespace Elicom.EntityFrameworkCore
                 b.HasOne(sp => sp.Product)
                  .WithMany(p => p.StoreProducts)
                  .HasForeignKey(sp => sp.ProductId)
-                 .OnDelete(DeleteBehavior.Restrict);
+                 .OnDelete(DeleteBehavior.Restrict)
+                 .IsRequired(false); // Make optional to avoid global query filter warnings
+
+                b.Property(sp => sp.ResellerDiscountPercentage).HasColumnType("decimal(18,2)");
+                b.Property(sp => sp.ResellerPrice).HasColumnType("decimal(18,2)");
 
                 // One product can be listed once per store
                 b.HasIndex(sp => new { sp.StoreId, sp.ProductId }).IsUnique();
@@ -153,7 +163,8 @@ namespace Elicom.EntityFrameworkCore
                 b.HasOne(wt => wt.Wallet)
                  .WithMany()
                  .HasForeignKey(wt => wt.WalletId)
-                 .OnDelete(DeleteBehavior.Restrict);
+                 .OnDelete(DeleteBehavior.Restrict)
+                 .IsRequired(false); // Make optional to avoid global query filter warnings
 
                 b.Property(wt => wt.Amount).HasColumnType("decimal(18,2)");
             });
@@ -170,6 +181,59 @@ namespace Elicom.EntityFrameworkCore
                 b.Property(o => o.TotalAmount).HasColumnType("decimal(18,2)");
                 b.Property(o => o.ShippingCost).HasColumnType("decimal(18,2)");
                 b.Property(o => o.Discount).HasColumnType("decimal(18,2)");
+            });
+
+            /* ---------------- OrderItem Configuration ---------------- */
+            builder.Entity<OrderItem>(b =>
+            {
+                b.HasOne(oi => oi.Order)
+                 .WithMany(o => o.OrderItems)
+                 .HasForeignKey(oi => oi.OrderId)
+                 .OnDelete(DeleteBehavior.Cascade)
+                 .IsRequired(false); // Make optional to avoid global query filter warnings
+
+                b.Property(oi => oi.DiscountPercentage).HasColumnType("decimal(18,2)");
+                b.Property(oi => oi.OriginalPrice).HasColumnType("decimal(18,2)");
+                b.Property(oi => oi.PriceAtPurchase).HasColumnType("decimal(18,2)");
+            });
+
+            /* ---------------- Supplier Order Configuration ---------------- */
+            builder.Entity<SupplierOrder>(b =>
+            {
+                b.Property(so => so.TotalPurchaseAmount).HasColumnType("decimal(18,2)");
+            });
+
+            builder.Entity<SupplierOrderItem>(b =>
+            {
+                b.HasOne(soi => soi.Product)
+                 .WithMany()
+                 .HasForeignKey(soi => soi.ProductId)
+                 .OnDelete(DeleteBehavior.Restrict)
+                 .IsRequired(false); // Make optional to avoid global query filter warnings
+
+                b.Property(soi => soi.PurchasePrice).HasColumnType("decimal(18,2)");
+            });
+
+            /* ---------------- Request Entities ---------------- */
+            builder.Entity<DepositRequest>(b =>
+            {
+                b.Property(dr => dr.Amount).HasColumnType("decimal(18,2)");
+            });
+
+            builder.Entity<WithdrawRequest>(b =>
+            {
+                b.Property(wr => wr.Amount).HasColumnType("decimal(18,2)");
+            });
+
+            builder.Entity<AppTransaction>(b =>
+            {
+                b.Property(at => at.Amount).HasColumnType("decimal(18,2)");
+            });
+
+            /* ---------------- Card Entities ---------------- */
+            builder.Entity<Cards.VirtualCard>(b =>
+            {
+                b.Property(vc => vc.Balance).HasColumnType("decimal(18,2)");
             });
 
             /* ---------------- Warehouse Configuration ---------------- */
@@ -198,7 +262,8 @@ namespace Elicom.EntityFrameworkCore
                 b.HasOne(wt => wt.Wallet)
                  .WithMany()
                  .HasForeignKey(wt => wt.WalletId)
-                 .OnDelete(DeleteBehavior.Restrict);
+                 .OnDelete(DeleteBehavior.Restrict)
+                 .IsRequired(false); // Make optional to avoid global query filter warnings
 
                 b.Property(wt => wt.Amount).HasColumnType("decimal(18,2)");
             });

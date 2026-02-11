@@ -2,7 +2,7 @@ namespace Elicom.Cards.Dto
 {
     public class CreateVirtualCardInput
     {
-        public string CardType { get; set; } // Visa, MasterCard, Amex
+        public CardType CardType { get; set; } // Visa, MasterCard, Amex
         public string FullName { get; set; }
         public string ContactNumber { get; set; }
         public string Address { get; set; }

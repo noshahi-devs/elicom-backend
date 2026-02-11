@@ -15,7 +15,7 @@ namespace Elicom.Cards
         public string FullName { get; set; }
         public string ContactNumber { get; set; }
         public string Address { get; set; }
-        public string CardType { get; set; } // Visa, MasterCard, Amex
+        public CardType CardType { get; set; } // Visa, MasterCard, Amex
         public string DocumentBase64 { get; set; } // Base64 encoded document
         public string DocumentType { get; set; } // pdf, jpg, jpeg, png
         public CardApplicationStatus Status { get; set; } // Pending, Approved, Rejected

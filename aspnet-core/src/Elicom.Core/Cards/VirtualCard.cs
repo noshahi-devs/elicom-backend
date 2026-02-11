@@ -12,7 +12,7 @@ namespace Elicom.Cards
         
         public string CardNumber { get; set; }
         
-        public string CardType { get; set; } // Visa, MasterCard, Amex
+        public CardType CardType { get; set; } // Visa, MasterCard, Amex
         
         public string HolderName { get; set; }
         

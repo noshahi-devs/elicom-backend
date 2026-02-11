@@ -6,7 +6,7 @@ namespace Elicom.Cards.Dto
         
         public string CardNumber { get; set; }
         
-        public string CardType { get; set; }
+        public CardType CardType { get; set; }
         
         public string HolderName { get; set; }
         

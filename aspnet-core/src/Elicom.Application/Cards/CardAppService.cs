@@ -146,9 +146,9 @@ namespace Elicom.Cards
         public async Task<VirtualCardDto> CreateVirtualCard(CreateVirtualCardInput input)
         {
             // Validate card type
-            if (!new[] { "Visa", "MasterCard", "Amex" }.Contains(input.CardType))
+            if (!Enum.IsDefined(typeof(CardType), input.CardType))
             {
-                throw new UserFriendlyException("Invalid card type. Must be Visa, MasterCard, or Amex.");
+                throw new UserFriendlyException("Invalid card type.");
             }
 
             // Get current user
@@ -230,13 +230,13 @@ namespace Elicom.Cards
             if (string.IsNullOrWhiteSpace(input.Address) || input.Address.Length < 10)
                 throw new UserFriendlyException("Address must be at least 10 characters");
 
-            if (!new[] { "Visa", "MasterCard", "Amex" }.Contains(input.CardType))
+            if (!Enum.IsDefined(typeof(CardType), input.CardType))
                 throw new UserFriendlyException("Invalid card type");
 
             if (string.IsNullOrWhiteSpace(input.DocumentBase64))
                 throw new UserFriendlyException("Document is required");
 
-            if (!new[] { "pdf", "jpg", "jpeg", "png" }.Contains(input.DocumentType?.ToLower()))
+            if (input.DocumentType != null && !new[] { "pdf", "jpg", "jpeg", "png" }.Contains(input.DocumentType.ToLower()))
                 throw new UserFriendlyException("Document must be PDF, JPG, JPEG, or PNG");
 
             var application = new CardApplication
@@ -248,7 +248,7 @@ namespace Elicom.Cards
                 Address = input.Address.Trim(),
                 CardType = input.CardType,
                 DocumentBase64 = input.DocumentBase64,
-                DocumentType = input.DocumentType.ToLower(),
+                DocumentType = input.DocumentType?.ToLower(),
                 Status = CardApplicationStatus.Pending,
                 AppliedDate = DateTime.UtcNow
             };
@@ -429,9 +429,9 @@ namespace Elicom.Cards
         }
 
 
-        private string GenerateCardNumber(string cardType)
+        private string GenerateCardNumber(CardType cardType)
         {
-            var prefix = cardType == "Visa" ? "4" : cardType == "MasterCard" ? "5" : "3";
+            var prefix = cardType == CardType.Visa ? "4" : cardType == CardType.MasterCard ? "5" : "3";
             var random = new Random();
             var digits = string.Join("", Enumerable.Range(0, 15).Select(_ => random.Next(0, 10)));
             return prefix + digits;
