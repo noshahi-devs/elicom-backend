@@ -64,17 +64,12 @@ namespace Elicom.Migrations
                 table: "CardApplications",
                 column: "UserId");
 
-            // AbpAuditLogs fix
+            // Ensure AbpAuditLogs.Parameters is large enough for verbose logs
             migrationBuilder.AlterColumn<string>(
                 name: "Parameters",
                 table: "AbpAuditLogs",
-                type: "nvarchar(1024)",
-                maxLength: 1024,
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(max)",
-                oldMaxLength: 4096,
-                oldNullable: true);
+                type: "nvarchar(max)",
+                nullable: true);
         }
 
         /// <inheritdoc />

@@ -22,6 +22,9 @@ public static class SeedHelper
     {
         try
         {
+            // Increase timeout for long-running migrations (recreating tables)
+            context.Database.SetCommandTimeout(300);
+
             var connStr = context.Database.GetDbConnection().ConnectionString;
             var safeConnStr = string.Join(";", connStr.Split(';').Where(s => !s.Trim().StartsWith("Password", StringComparison.OrdinalIgnoreCase) && !s.Trim().StartsWith("Pwd", StringComparison.OrdinalIgnoreCase)));
             Console.WriteLine($"[SEED-DEBUG] Target DB: {safeConnStr}");
