@@ -35,7 +35,7 @@ export class Transactions implements OnInit {
                 this.allTransactions = (res?.result?.items ?? []).map((t: any) => ({
                     id: t.id,
                     type: t.category || 'Unknown',  // Fallback
-                    amount: t.transactionType === 'Debit' ? -t.amount : t.amount,
+                    amount: t.movementType === 'Debit' ? -t.amount : t.amount,
                     status: 'Completed',
                     date: t.creationTime,
                     description: t.description,

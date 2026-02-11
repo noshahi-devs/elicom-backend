@@ -69,7 +69,7 @@ export class Dashboard implements OnInit {
         this.recentTransactions = res.history.result.items.map((t: any) => ({
           id: t.id,
           type: t.category,
-          amount: t.transactionType === 'Debit' ? -t.amount : t.amount,
+          amount: t.movementType === 'Debit' ? -t.amount : t.amount,
           status: 'Completed',
           date: t.creationTime
         }));
