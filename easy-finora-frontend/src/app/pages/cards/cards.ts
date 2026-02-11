@@ -54,6 +54,16 @@ export class Cards implements OnInit {
             error: (err) => console.error('Cards: Balance Error:', err)
         });
 
+        // Fetch Applications
+        this.cardService.getMyApplications().subscribe({
+            next: (res) => {
+                console.log('Cards: Applications Response:', res);
+                this.cardApplications = res.result;
+                this.cdr.detectChanges();
+            },
+            error: (err) => console.error('Cards: Applications Error:', err)
+        });
+
         // Fetch Cards
         this.cardService.getUserCards().subscribe({
             next: (res) => {

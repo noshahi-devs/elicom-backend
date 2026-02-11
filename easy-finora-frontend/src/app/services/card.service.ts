@@ -52,6 +52,10 @@ export class CardService {
         );
     }
 
+    getMyApplications(): Observable<any> {
+        return this.http.get(`${this.apiUrl}/GetMyApplications`, { headers: this.getHeaders() });
+    }
+
     getCardApplications(): Observable<any> {
         return this.http.get(`${this.apiUrl}/GetCardApplications`, { headers: this.getHeaders() });
     }
