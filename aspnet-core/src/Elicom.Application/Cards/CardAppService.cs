@@ -11,7 +11,6 @@ using Elicom.Authorization.Users;
 using Elicom.Cards.Dto;
 
 using Elicom.Entities;
-using Elicom.Cards.Dto;
 using Microsoft.EntityFrameworkCore;
 
 namespace Elicom.Cards
@@ -293,31 +292,33 @@ namespace Elicom.Cards
         {
             try
             {
-                var applications = await _applicationRepository.GetAll()
-                    .Include(a => a.User)
-                    .OrderByDescending(a => a.CreationTime)
-                    .ToListAsync();
-
-                // Manual mapping to ensure UserName is populated and avoid missing AutoMapper profile issues
-                return applications.Select(a => new CardApplicationDto
+                using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
                 {
-                    Id = a.Id,
-                    FullName = a.FullName,
-                    ContactNumber = a.ContactNumber,
-                    Address = a.Address,
-                    CardType = a.CardType,
-                    DocumentBase64 = a.DocumentBase64, 
-                    DocumentType = a.DocumentType,
-                    Status = a.Status.ToString(),
-                    AppliedDate = a.AppliedDate,
-                    ReviewedDate = a.ReviewedDate,
-                    ReviewNotes = a.ReviewNotes,
-                    UserName = a.User?.UserName ?? "Unknown"
-                }).ToList();
+                    var applications = await _applicationRepository.GetAll()
+                        .Include(a => a.User)
+                        .OrderByDescending(a => a.CreationTime)
+                        .ToListAsync();
+
+                    return applications.Select(a => new CardApplicationDto
+                    {
+                        Id = a.Id,
+                        FullName = a.FullName,
+                        ContactNumber = a.ContactNumber,
+                        Address = a.Address,
+                        CardType = a.CardType,
+                        DocumentBase64 = a.DocumentBase64, 
+                        DocumentType = a.DocumentType,
+                        Status = a.Status.ToString(),
+                        AppliedDate = a.AppliedDate,
+                        ReviewedDate = a.ReviewedDate,
+                        ReviewNotes = a.ReviewNotes,
+                        UserName = a.User?.UserName ?? "Unknown"
+                    }).ToList();
+                }
             }
             catch (Exception ex)
             {
-                throw new UserFriendlyException($"Error: {ex.Message} | Inner: {ex.InnerException?.Message}");
+                throw new UserFriendlyException($"Error: {ex.Message} | Session: T:{AbpSession.TenantId} U:{AbpSession.UserId} | Inner: {ex.InnerException?.Message}");
             }
         }
 
@@ -352,52 +353,55 @@ namespace Elicom.Cards
         {
             try
             {
-                var application = await _applicationRepository.GetAsync(input.ApplicationId);
-
-                if (application.Status != CardApplicationStatus.Pending)
-                    throw new UserFriendlyException("Application is not pending");
-
-                application.Status = CardApplicationStatus.Approved;
-                application.ReviewedDate = DateTime.UtcNow;
-                application.ReviewedBy = AbpSession.GetUserId();
-                application.ReviewNotes = input.ReviewNotes;
-
-                var user = await _userManager.GetUserByIdAsync(application.UserId);
-                var card = new VirtualCard
+                using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
                 {
-                    UserId = user.Id,
-                    TenantId = application.TenantId,
-                    CardNumber = GenerateCardNumber(application.CardType),
-                    CardType = application.CardType,
-                    HolderName = application.FullName.ToUpper(),
-                    ExpiryDate = DateTime.Now.AddYears(3).ToString("MM/yy"),
-                    Cvv = GenerateCVV(),
-                    Balance = 0,
-                    Currency = "USD",
-                    Status = "Active"
-                };
+                    var application = await _applicationRepository.GetAsync(input.ApplicationId);
 
-                var cardId = await _cardRepository.InsertAndGetIdAsync(card);
-                application.GeneratedCardId = cardId;
+                    if (application.Status != CardApplicationStatus.Pending)
+                        throw new UserFriendlyException("Application is not pending");
 
-                await _applicationRepository.UpdateAsync(application);
+                    application.Status = CardApplicationStatus.Approved;
+                    application.ReviewedDate = DateTime.UtcNow;
+                    application.ReviewedBy = AbpSession.GetUserId();
+                    application.ReviewNotes = input.ReviewNotes;
 
-                return new VirtualCardDto
-                {
-                    CardId = cardId,
-                    CardNumber = FormatCardNumber(card.CardNumber),
-                    CardType = card.CardType,
-                    HolderName = card.HolderName,
-                    ExpiryDate = card.ExpiryDate,
-                    Cvv = card.Cvv,
-                    Balance = card.Balance,
-                    Currency = card.Currency,
-                    Status = card.Status
-                };
+                    var user = await _userManager.GetUserByIdAsync(application.UserId);
+                    var card = new VirtualCard
+                    {
+                        UserId = user.Id,
+                        TenantId = application.TenantId,
+                        CardNumber = GenerateCardNumber(application.CardType),
+                        CardType = application.CardType,
+                        HolderName = application.FullName.ToUpper(),
+                        ExpiryDate = DateTime.Now.AddYears(3).ToString("MM/yy"),
+                        Cvv = GenerateCVV(),
+                        Balance = 0,
+                        Currency = "USD",
+                        Status = "Active"
+                    };
+
+                    var cardId = await _cardRepository.InsertAndGetIdAsync(card);
+                    application.GeneratedCardId = cardId;
+
+                    await _applicationRepository.UpdateAsync(application);
+
+                    return new VirtualCardDto
+                    {
+                        CardId = cardId,
+                        CardNumber = FormatCardNumber(card.CardNumber),
+                        CardType = card.CardType,
+                        HolderName = card.HolderName,
+                        ExpiryDate = card.ExpiryDate,
+                        Cvv = card.Cvv,
+                        Balance = card.Balance,
+                        Currency = card.Currency,
+                        Status = card.Status
+                    };
+                }
             }
             catch (Exception ex)
             {
-                throw new UserFriendlyException($"Error: {ex.Message} | Inner: {ex.InnerException?.Message}");
+                throw new UserFriendlyException($"Error: {ex.Message}");
             }
         }
 
