@@ -71,8 +71,8 @@ namespace Elicom.Tests.Transactions
 
             // Assert History
             history.TotalCount.ShouldBeGreaterThanOrEqualTo(2);
-            history.Items.Any(t => t.Category == "Deposit" && t.Amount == 1000 && t.TransactionType == "Credit").ShouldBeTrue();
-            history.Items.Any(t => t.Category == "Withdrawal" && t.Amount == 400 && t.TransactionType == "Debit").ShouldBeTrue();
+            history.Items.Any(t => t.Category == "Deposit" && t.Amount == 1000 && t.MovementType == "Credit").ShouldBeTrue();
+            history.Items.Any(t => t.Category == "Withdrawal" && t.Amount == 400 && t.MovementType == "Debit").ShouldBeTrue();
         }
 
         [Fact]
