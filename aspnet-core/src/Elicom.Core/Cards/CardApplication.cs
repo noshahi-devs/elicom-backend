@@ -18,7 +18,7 @@ namespace Elicom.Cards
         public string CardType { get; set; } // Visa, MasterCard, Amex
         public string DocumentBase64 { get; set; } // Base64 encoded document
         public string DocumentType { get; set; } // pdf, jpg, jpeg, png
-        public string Status { get; set; } // Pending, Approved, Rejected
+        public CardApplicationStatus Status { get; set; } // Pending, Approved, Rejected
         
         public DateTime AppliedDate { get; set; }
         public DateTime? ReviewedDate { get; set; }

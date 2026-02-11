@@ -214,7 +214,7 @@ namespace Elicom.Cards
             var userId = AbpSession.GetUserId();
             
             // Check if there is already a pending application
-            var existingPending = await _applicationRepository.FirstOrDefaultAsync(x => x.UserId == userId && x.Status == "Pending");
+            var existingPending = await _applicationRepository.FirstOrDefaultAsync(x => x.UserId == userId && x.Status == CardApplicationStatus.Pending);
             if (existingPending != null)
             {
                 throw new UserFriendlyException("You already have a pending card application.");
@@ -249,7 +249,7 @@ namespace Elicom.Cards
                 CardType = input.CardType,
                 DocumentBase64 = input.DocumentBase64,
                 DocumentType = input.DocumentType.ToLower(),
-                Status = "Pending",
+                Status = CardApplicationStatus.Pending,
                 AppliedDate = DateTime.UtcNow
             };
 
@@ -263,7 +263,7 @@ namespace Elicom.Cards
                 Address = application.Address,
                 CardType = application.CardType,
                 DocumentType = application.DocumentType,
-                Status = application.Status,
+                Status = application.Status.ToString(),
                 AppliedDate = application.AppliedDate
             };
         }
@@ -281,7 +281,7 @@ namespace Elicom.Cards
                 Address = a.Address,
                 CardType = a.CardType,
                 DocumentType = a.DocumentType,
-                Status = a.Status,
+                Status = a.Status.ToString(),
                 AppliedDate = a.AppliedDate,
                 ReviewedDate = a.ReviewedDate,
                 ReviewNotes = a.ReviewNotes
@@ -308,7 +308,7 @@ namespace Elicom.Cards
                     CardType = a.CardType,
                     DocumentBase64 = a.DocumentBase64, 
                     DocumentType = a.DocumentType,
-                    Status = a.Status,
+                    Status = a.Status.ToString(),
                     AppliedDate = a.AppliedDate,
                     ReviewedDate = a.ReviewedDate,
                     ReviewNotes = a.ReviewNotes,
@@ -326,7 +326,7 @@ namespace Elicom.Cards
         {
             try
             {
-                var applications = await _applicationRepository.GetAllListAsync(a => a.Status == "Pending");
+                var applications = await _applicationRepository.GetAllListAsync(a => a.Status == CardApplicationStatus.Pending);
 
                 return applications.Select(a => new CardApplicationDto
                 {
@@ -337,7 +337,7 @@ namespace Elicom.Cards
                     CardType = a.CardType,
                     DocumentBase64 = a.DocumentBase64,
                     DocumentType = a.DocumentType,
-                    Status = a.Status,
+                    Status = a.Status.ToString(),
                     AppliedDate = a.AppliedDate
                 }).ToList();
             }
@@ -354,10 +354,10 @@ namespace Elicom.Cards
             {
                 var application = await _applicationRepository.GetAsync(input.ApplicationId);
 
-                if (application.Status != "Pending")
+                if (application.Status != CardApplicationStatus.Pending)
                     throw new UserFriendlyException("Application is not pending");
 
-                application.Status = "Approved";
+                application.Status = CardApplicationStatus.Approved;
                 application.ReviewedDate = DateTime.UtcNow;
                 application.ReviewedBy = AbpSession.GetUserId();
                 application.ReviewNotes = input.ReviewNotes;
@@ -409,13 +409,13 @@ namespace Elicom.Cards
             {
                 var application = await _applicationRepository.GetAsync(input.ApplicationId);
 
-                if (application.Status != "Pending")
+                if (application.Status != CardApplicationStatus.Pending)
                     throw new UserFriendlyException("Application is not pending");
 
                 if (string.IsNullOrWhiteSpace(input.ReviewNotes))
                     throw new UserFriendlyException("Rejection reason is required");
 
-                application.Status = "Rejected";
+                application.Status = CardApplicationStatus.Rejected;
                 application.ReviewedDate = DateTime.UtcNow;
                 application.ReviewedBy = AbpSession.GetUserId();
                 application.ReviewNotes = input.ReviewNotes;
