@@ -215,7 +215,7 @@ public class TenantRoleAndUserBuilder
             CreateUser("admin@primeshipuk.com", "PS_admin@primeshipuk.com", StaticRoleNames.Tenants.Admin, passwordHasher);
         }
 
-        else if (_tenantId == 3) // Easy Finora / Global Pay
+        else if (_tenantId == 3) // Easy Finora
         {
             testEmail = "noshahi@easyfinora.com";
             userName = "GP_noshahi@easyfinora.com";

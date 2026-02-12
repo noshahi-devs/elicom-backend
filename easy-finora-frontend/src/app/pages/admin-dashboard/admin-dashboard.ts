@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { TransactionService } from '../../services/transaction.service';
@@ -12,7 +12,7 @@ import { Loader } from '../../shared/loader/loader';
 @Component({
     selector: 'app-admin-dashboard',
     standalone: true,
-    imports: [CommonModule, CurrencyPipe, Loader],
+    imports: [CommonModule, Loader],
     templateUrl: './admin-dashboard.html',
     styleUrl: './admin-dashboard.scss',
 })

@@ -29,10 +29,17 @@
                         <div class="card-header">
                             <div class="chip-sim"></div>
                             <div class="contactless-icon">)))</div>
+                            <button class="reveal-btn" (click)="revealDetails(card)" [class.active]="card.showDetails"
+                                title="Show/Hide Details">
+                                <span *ngIf="!card.isRevealing">{{ card.showDetails ? '👁️' : '👁️‍🗨️' }}</span>
+                                <span *ngIf="card.isRevealing" class="mini-loader"></span>
+                            </button>
                         </div>
 
                         <div class="card-body">
-                            <div class="card-number">
+                            <div class="card-number"
+                                (click)="card.showDetails && copyToClipboard(card.cardNumber, 'Card number')"
+                                [class.clickable]="card.showDetails">
                                 <span>{{ card.cardNumber | slice:0:4 }}</span>
                                 <span>{{ card.cardNumber | slice:5:9 }}</span>
                                 <span>{{ card.cardNumber | slice:10:14 }}</span>
@@ -46,11 +53,13 @@
                                 <span>{{ card.holderName }}</span>
                             </div>
                             <div class="card-meta">
+                                <label>CVV</label>
+                                <span class="cvv-value" (click)="card.showDetails && copyToClipboard(card.cvv, 'CVV')"
+                                    [class.clickable]="card.showDetails">{{ card.cvv }}</span>
+                            </div>
+                            <div class="card-meta">
                                 <label>Valid Thru</label>
                                 <span>{{ card.expiryDate }}</span>
-                            </div>
-                            <div class="brand-logo">
-                                {{ card.type.toUpperCase() }}
                             </div>
                         </div>
                     </div>

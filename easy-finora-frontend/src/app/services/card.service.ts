@@ -45,6 +45,13 @@ export class CardService {
         );
     }
 
+    getCardSensitiveDetails(cardId: number): Observable<any> {
+        return this.http.get(`${this.apiUrl}/GetCardSensitiveDetails`, {
+            params: { cardId },
+            headers: this.getHeaders()
+        });
+    }
+
     submitCardApplication(payload: any): Observable<any> {
         console.log('CardService.submitCardApplication payload is:', payload);
         return this.http.post(`${this.apiUrl}/SubmitCardApplication`, payload, { headers: this.getHeaders() }).pipe(
@@ -67,5 +74,12 @@ export class CardService {
 
     rejectCardApplication(input: any): Observable<any> {
         return this.http.post(`${this.apiUrl}/RejectCardApplication`, input, { headers: this.getHeaders() });
+    }
+
+    getApplicationDocument(id: string): Observable<any> {
+        return this.http.get(`${this.apiUrl}/GetApplicationDocument`, {
+            params: { id },
+            headers: this.getHeaders()
+        });
     }
 }

@@ -72,7 +72,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                 // Get ClientRootAddress from platform-specific settings
                 string clientRootAddressSetting = "App.SmartStore.ClientRootAddress";
                 if (platform == "Prime Ship") clientRootAddressSetting = "App.PrimeShip.ClientRootAddress";
-                if (platform == "Easy Finora" || platform == "Global Pay") clientRootAddressSetting = "App.EasyFinora.ClientRootAddress";
+                if (platform == "Easy Finora") clientRootAddressSetting = "App.EasyFinora.ClientRootAddress";
 
                 var clientRootAddress = (await SettingManager.GetSettingValueAsync(clientRootAddressSetting))?.TrimEnd('/');
                 if (string.IsNullOrEmpty(clientRootAddress)) clientRootAddress = "http://localhost:4200";
@@ -80,7 +80,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                 string redirectPath = $"{clientRootAddress}/account/login";
             if (platform == "Smart Store") redirectPath = $"{clientRootAddress}/smartstore/auth";
             if (platform == "Prime Ship") redirectPath = $"{clientRootAddress}/primeship/auth";
-            if (platform == "Easy Finora" || platform == "Global Pay") redirectPath = $"{clientRootAddress}/auth";
+            if (platform == "Easy Finora") redirectPath = $"{clientRootAddress}/auth";
 
                 return new ContentResult
                 {
@@ -142,7 +142,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
 
             if (tenantId == 2) { platformName = "Smart Store"; brandColor = "#ff4500"; }
             else if (tenantId == 3) { platformName = "Easy Finora"; brandColor = "#1de016"; }
-            else if (tenantId == 4) { platformName = "Global Pay"; brandColor = "#28a745"; }
+            else if (tenantId == 4) { platformName = "Easy Finora"; brandColor = "#28a745"; }
 
             await SendVerificationEmail(user, platformName, brandColor);
 
@@ -165,22 +165,116 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
         var verificationLink = $"{serverRootAddress}/api/services/app/Account/VerifyEmail?userId={user.Id}&token={Uri.EscapeDataString(token)}&platform={Uri.EscapeDataString(platformName)}";
 
+        // var emailBody = $@"
+        //     <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #ffffff;'>
+        //         <div style='text-align: center; border-bottom: 2px solid {brandColor}; padding-bottom: 15px;'>
+        //             <h1 style='color: #333; margin: 0;'>{platformName.ToUpper()}</h1>
+        //         </div>
+        //         <div style='padding: 30px; line-height: 1.6; color: #333;'>
+        //             <h2>Welcome to {platformName}!</h2>
+        //             <p>Hi <b>{user.Name}</b>,</p>
+        //             <p>You've successfully registered on {platformName}.</p>
+        //             <div style='text-align: center; margin: 35px 0;'>
+        //                 <a href='{verificationLink}' style='background-color: {brandColor}; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 18px;'>
+        //                     VERIFY MY ACCOUNT
+        //                 </a>
+        //             </div>
+        //         </div>
+        //     </div>";
+
         var emailBody = $@"
-            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #ffffff;'>
-                <div style='text-align: center; border-bottom: 2px solid {brandColor}; padding-bottom: 15px;'>
-                    <h1 style='color: #333; margin: 0;'>{platformName.ToUpper()}</h1>
-                </div>
-                <div style='padding: 30px; line-height: 1.6; color: #333;'>
-                    <h2>Welcome to {platformName}!</h2>
-                    <p>Hi <b>{user.Name}</b>,</p>
-                    <p>You've successfully registered on {platformName}.</p>
-                    <div style='text-align: center; margin: 35px 0;'>
-                        <a href='{verificationLink}' style='background-color: {brandColor}; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 18px;'>
-                            VERIFY MY ACCOUNT
-                        </a>
-                    </div>
-                </div>
-            </div>";
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+</head>
+<body style='margin:0; padding:0; background-color:#f4f6f8; font-family: Arial, Helvetica, sans-serif;'>
+
+    <table width='100%' cellpadding='0' cellspacing='0' style='background-color:#f4f6f8; padding:40px 0;'>
+        <tr>
+            <td align='center'>
+
+                <table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.05);'>
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td style='background:{brandColor}; padding:20px 30px; text-align:center;'>
+                            <h1 style='margin:0; color:#ffffff; font-size:24px; letter-spacing:1px;'>
+                                {platformName}
+                            </h1>
+                        </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td style='padding:40px 30px; color:#333333; font-size:15px; line-height:1.6;'>
+
+                            <h2 style='margin-top:0; font-weight:600;'>Confirm Your Email Address</h2>
+
+                            <p>Dear {user.Name},</p>
+
+                            <p>
+                                Thank you for registering with <strong>{platformName}</strong>. 
+                                To complete your account setup, please confirm your email address by clicking the button below.
+                            </p>
+
+                            <table width='100%' cellpadding='0' cellspacing='0' style='margin:30px 0;'>
+                                <tr>
+                                    <td align='center'>
+                                        <a href='{verificationLink}' 
+                                           style='background:{brandColor}; 
+                                                  color:#ffffff; 
+                                                  padding:14px 28px; 
+                                                  text-decoration:none; 
+                                                  border-radius:5px; 
+                                                  font-weight:bold; 
+                                                  font-size:15px;
+                                                  display:inline-block;'>
+                                            Verify Email Address
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style='font-size:13px; color:#666;'>
+                                If the button above does not work, please copy and paste the following link into your browser:
+                            </p>
+
+                            <p style='word-break:break-all; font-size:12px; color:#888;'>
+                                {verificationLink}
+                            </p>
+
+                            <hr style='border:none; border-top:1px solid #eee; margin:30px 0;' />
+
+                            <p style='font-size:13px; color:#777;'>
+                                If you did not create this account, please ignore this email.
+                                This verification link may expire for security reasons.
+                            </p>
+
+                            <p style='margin-top:30px;'>
+                                Best Regards,<br/>
+                                <strong>{platformName} Team</strong>
+                            </p>
+
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style='background:#f9fafb; padding:20px 30px; text-align:center; font-size:12px; color:#999;'>
+                            © {DateTime.UtcNow.Year} {platformName}. All rights reserved.
+                        </td>
+                    </tr>
+
+                </table>
+
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>";
+
 
         await SendEmailWithCustomSmtp(
             await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.Host") ?? "smtp.azurecomm.net",
@@ -234,7 +328,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
     [HttpPost]
     public async Task RegisterGlobalPayUser(RegisterGlobalPayInput input)
     {
-        await RegisterPlatformUser(input.EmailAddress, 3, StaticRoleNames.Tenants.Reseller, "User", "Global Pay", "GP", "#28a745", input.Password, input.Country, input.PhoneNumber, input.FullName);
+        await RegisterPlatformUser(input.EmailAddress, 3, StaticRoleNames.Tenants.Reseller, "User", "Easy Finora", "GP", "#28a745", input.Password, input.Country, input.PhoneNumber, input.FullName);
     }
 
 
@@ -252,10 +346,10 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             587,
             await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.UserName"),
             await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.Password"),
-            "Global Pay",
+            "Easy Finora",
             fromEmail,
             toEmail,
-            "Sample Email (Global Pay UK Register)",
+            "Sample Email (Easy Finora Register)",
             "<div style='font-family: Arial, sans-serif;'>Sample email from backend API.</div>"
         );
 
@@ -335,7 +429,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
 
         if (!string.IsNullOrEmpty(fromName))
         {
-            if (fromName.Contains("Global Pay") || fromName.Contains("Easy Finora"))
+            if (fromName.Contains("Easy Finora"))
             {
                 senderEmail = "DoNotReply@easyfinora.com";
             }
@@ -480,7 +574,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             string userSmtp = await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.UserName");
             string passSmtp = await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.Password");
 
-            if (tenantId == 3) // Global Pay / Easy Finora
+            if (tenantId == 3 || tenantId == 4) // Easy Finora
             {
                 await SendEmailWithCustomSmtp(
                     host,

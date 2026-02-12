@@ -25,21 +25,21 @@
                         </div>
                     </td>
                     <td>{{ app.contactNumber }}</td>
-                    <td><span class="badge card-type">{{ app.cardType }}</span></td>
+                    <td><span class="badge card-type">{{ app.cardType === 0 ? 'Visa' : (app.cardType === 1 ?
+                            'MasterCard' : 'Amex') }}</span></td>
                     <td>
                         <span class="badge" [ngClass]="app.status.toLowerCase()">
                             {{ app.status }}
                         </span>
                     </td>
-                    <td>{{ app.creationTime | date:'short' }}</td>
+                    <td>{{ app.appliedDate | date:'short' }}</td>
                     <td>
                         <div class="actions" *ngIf="app.status === 'Pending'">
                             <button class="btn-icon approve" (click)="approve(app)" title="Approve">✅</button>
                             <button class="btn-icon reject" (click)="openRejectModal(app)" title="Reject">❌</button>
-                            <button class="btn-icon view" (click)="viewDocument(app.documentBase64)"
-                                title="View ID">📄</button>
+                            <button class="btn-icon view" (click)="viewDocument(app)" title="View ID">📄</button>
                         </div>
-                        <span *ngIf="app.status !== 'Pending'" class="remarks">{{ app.adminRemarks }}</span>
+                        <span *ngIf="app.status !== 'Pending'" class="remarks">{{ app.reviewNotes }}</span>
                     </td>
                 </tr>
                 <tr *ngIf="applications.length === 0 && !isLoading">
@@ -49,15 +49,39 @@
         </table>
     </div>
 
-    <!-- Rejection Modal -->
-    <div class="modal-overlay" *ngIf="selectedApp">
-        <div class="modal-3d">
-            <h2>Reject Application</h2>
-            <p>Reason for rejecting <strong>{{ selectedApp.fullName }}</strong>'s application:</p>
-            <textarea [(ngModel)]="adminRemarks" placeholder="Enter reason..." class="input-3d" rows="4"></textarea>
+    <!-- Confirmation & Rejection Modals -->
+    <div class="modal-overlay" *ngIf="selectedApp && confirmationType">
+        <!-- Rejection Content -->
+        <div class="modal-3d" *ngIf="confirmationType === 'reject'">
+            <div class="modal-header">
+                <h2>Reject Application</h2>
+                <span class="close" (click)="cancelModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Reason for rejecting <strong>{{ selectedApp.fullName }}</strong>'s application:</p>
+                <textarea [(ngModel)]="adminRemarks" placeholder="Enter reason..." class="input-3d" rows="4"></textarea>
+            </div>
             <div class="modal-actions">
-                <button class="btn-3d cancel" (click)="selectedApp = null">Cancel</button>
+                <button class="btn-3d cancel" (click)="cancelModal()">Cancel</button>
                 <button class="btn-3d reject" (click)="reject()" [disabled]="!adminRemarks">Confirm Reject</button>
+            </div>
+        </div>
+
+        <!-- Approval Confirmation Content -->
+        <div class="modal-3d" *ngIf="confirmationType === 'approve'">
+            <div class="modal-header">
+                <h2>Approve Card</h2>
+                <span class="close" (click)="cancelModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="confirm-icon">💳</div>
+                <p class="confirm-text">Are you sure you want to approve card for <br><strong>{{ selectedApp.fullName
+                        }}</strong>?</p>
+
+            </div>
+            <div class="modal-actions">
+                <button class="btn-3d cancel" (click)="cancelModal()">Cancel</button>
+                <button class="btn-3d approve" (click)="confirmApproval()">Yes, Approve Now</button>
             </div>
         </div>
     </div>

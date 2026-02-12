@@ -69,12 +69,16 @@ export class Cards implements OnInit {
             next: (res) => {
                 console.log('Cards: List Response:', res);
                 this.activeCards = res.result.map((c: any) => ({
+                    id: c.cardId,
                     cardNumber: c.cardNumber,
                     type: c.cardType,
                     balance: c.balance,
                     expiryDate: c.expiryDate,
                     status: c.status,
-                    holderName: c.holderName || 'Card Holder'
+                    holderName: c.holderName || 'Card Holder',
+                    showDetails: false,
+                    cvv: '***',
+                    isRevealing: false
                 }));
                 this.isLoading = false;
                 this.cdr.detectChanges();
@@ -85,6 +89,36 @@ export class Cards implements OnInit {
                 this.isLoading = false;
                 this.cdr.detectChanges();
             }
+        });
+    }
+
+    revealDetails(card: any) {
+        if (card.showDetails) {
+            card.showDetails = false;
+            // Optionally revert to masked, but let's keep it simple for now
+            return;
+        }
+
+        card.isRevealing = true;
+        this.cardService.getCardSensitiveDetails(card.id).subscribe({
+            next: (res) => {
+                card.cardNumber = res.result.cardNumber;
+                card.cvv = res.result.cvv;
+                card.showDetails = true;
+                card.isRevealing = false;
+                this.cdr.detectChanges();
+            },
+            error: (err) => {
+                this.toastService.showError('Authentication required to reveal details');
+                card.isRevealing = false;
+                this.cdr.detectChanges();
+            }
+        });
+    }
+
+    copyToClipboard(text: string, label: string) {
+        navigator.clipboard.writeText(text).then(() => {
+            this.toastService.showInfo(`${label} copied to clipboard`);
         });
     }
 

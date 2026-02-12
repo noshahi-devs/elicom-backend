@@ -207,6 +207,30 @@ namespace Elicom.Cards
             return dtos;
         }
 
+        public async Task<VirtualCardDto> GetCardSensitiveDetails(long cardId)
+        {
+            var userId = AbpSession.GetUserId();
+            var card = await _cardRepository.GetAsync(cardId);
+
+            if (card.UserId != userId)
+            {
+                throw new UserFriendlyException("Unauthorized access to card details.");
+            }
+
+            return new VirtualCardDto
+            {
+                CardId = card.Id,
+                CardNumber = FormatCardNumber(card.CardNumber), // FULL
+                CardType = card.CardType,
+                HolderName = card.HolderName,
+                ExpiryDate = card.ExpiryDate,
+                Cvv = card.Cvv, // FULL
+                Balance = card.Balance,
+                Currency = card.Currency,
+                Status = card.Status
+            };
+        }
+
 
         public async Task<CardApplicationDto> SubmitCardApplication(SubmitCardApplicationInput input)
         {
@@ -306,7 +330,7 @@ namespace Elicom.Cards
                         ContactNumber = a.ContactNumber,
                         Address = a.Address,
                         CardType = a.CardType,
-                        DocumentBase64 = a.DocumentBase64, 
+                        DocumentBase64 = null, // Optimized: Don't fetch large data in list
                         DocumentType = a.DocumentType,
                         Status = a.Status.ToString(),
                         AppliedDate = a.AppliedDate,
@@ -318,11 +342,11 @@ namespace Elicom.Cards
             }
             catch (Exception ex)
             {
-                throw new UserFriendlyException($"Error: {ex.Message} | Session: T:{AbpSession.TenantId} U:{AbpSession.UserId} | Inner: {ex.InnerException?.Message}");
+                throw new UserFriendlyException($"Error: {ex.Message}");
             }
         }
 
-        [AbpAuthorize("Admin")]
+        [AbpAuthorize(Authorization.PermissionNames.Pages_Users)]
         public async Task<List<CardApplicationDto>> GetPendingApplications()
         {
             try
@@ -336,7 +360,7 @@ namespace Elicom.Cards
                     ContactNumber = a.ContactNumber,
                     Address = a.Address,
                     CardType = a.CardType,
-                    DocumentBase64 = a.DocumentBase64,
+                    DocumentBase64 = null, // Optimized
                     DocumentType = a.DocumentType,
                     Status = a.Status.ToString(),
                     AppliedDate = a.AppliedDate
@@ -344,11 +368,22 @@ namespace Elicom.Cards
             }
             catch (Exception ex)
             {
-                throw new UserFriendlyException($"Error: {ex.Message} | Inner: {ex.InnerException?.Message}");
+                throw new UserFriendlyException($"Error: {ex.Message}");
             }
         }
 
-        [AbpAuthorize("Admin")]
+        [AbpAuthorize(Authorization.PermissionNames.Pages_Users)]
+        public async Task<string> GetApplicationDocument(Guid id)
+        {
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
+            {
+                var application = await _applicationRepository.FirstOrDefaultAsync(id);
+                if (application == null) throw new UserFriendlyException("Application not found");
+                return application.DocumentBase64;
+            }
+        }
+
+        [AbpAuthorize(Authorization.PermissionNames.Pages_Users)]
         public async Task<VirtualCardDto> ApproveCardApplication([Microsoft.AspNetCore.Mvc.FromBody] ApproveApplicationInput input)
         {
             try
@@ -409,7 +444,7 @@ namespace Elicom.Cards
         }
 
 
-        [AbpAuthorize("Admin")]
+        [AbpAuthorize(Authorization.PermissionNames.Pages_Users)]
         public async Task RejectCardApplication([Microsoft.AspNetCore.Mvc.FromBody] RejectApplicationInput input)
         {
             try

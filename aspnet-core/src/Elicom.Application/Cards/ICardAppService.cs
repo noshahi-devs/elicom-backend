@@ -10,6 +10,7 @@ namespace Elicom.Cards
         Task<VirtualCardDto> CreateVirtualCard(CreateVirtualCardInput input);
 
         Task<List<VirtualCardDto>> GetUserCards();
+        Task<VirtualCardDto> GetCardSensitiveDetails(long cardId);
 
         Task<UserBalanceDto> GetBalance();
 
@@ -28,6 +29,7 @@ namespace Elicom.Cards
         Task RejectCardApplication(RejectApplicationInput input); // Admin only
 
         Task<List<CardApplicationDto>> GetCardApplications();
+        Task<string> GetApplicationDocument(System.Guid id);
         
     }
 

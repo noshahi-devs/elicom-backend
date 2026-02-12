@@ -60,7 +60,7 @@ public static class SeedHelper
         new DefaultTenantBuilder(context).Create();
         new TenantRoleAndUserBuilder(context, 1).Create(); // Smart Store
         new TenantRoleAndUserBuilder(context, 2).Create(); // Prime Ship
-        new TenantRoleAndUserBuilder(context, 3).Create(); // Global Pay
+        new TenantRoleAndUserBuilder(context, 3).Create(); // Easy Finora
     }
 
     private static void WithDbContext<TDbContext>(IIocResolver iocResolver, Action<TDbContext> contextAction)

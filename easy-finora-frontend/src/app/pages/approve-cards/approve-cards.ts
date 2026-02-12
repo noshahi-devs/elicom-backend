@@ -15,6 +15,7 @@ export class ApproveCards implements OnInit {
     applications: any[] = [];
     isLoading = false;
     selectedApp: any = null;
+    confirmationType: 'approve' | 'reject' | null = null;
     adminRemarks = '';
 
     constructor(
@@ -47,22 +48,27 @@ export class ApproveCards implements OnInit {
         console.log('Approve requested for:', app);
         const id = app.id || app.Id;
         if (!id) {
-            console.error('Missing application ID:', app);
             this.toastService.showError('Application ID is missing.');
             return;
         }
 
-        if (!confirm(`Are you sure you want to approve card for ${app.fullName}?`)) return;
+        this.selectedApp = app;
+        this.confirmationType = 'approve';
+    }
+
+    confirmApproval() {
+        if (!this.selectedApp) return;
+        const id = this.selectedApp.id || this.selectedApp.Id;
 
         this.isLoading = true;
         this.cardService.approveCardApplication(id).subscribe({
             next: (res) => {
-                console.log('Approval success:', res);
                 this.toastService.showSuccess('Card approved and generated!');
+                this.selectedApp = null;
+                this.confirmationType = null;
                 this.loadApplications();
             },
             error: (err) => {
-                console.error('Approval error:', err);
                 const msg = err.error?.error?.message || 'Approval failed.';
                 this.toastService.showError(msg);
                 this.isLoading = false;
@@ -73,6 +79,7 @@ export class ApproveCards implements OnInit {
 
     openRejectModal(app: any) {
         this.selectedApp = app;
+        this.confirmationType = 'reject';
         this.adminRemarks = '';
     }
 
@@ -82,22 +89,16 @@ export class ApproveCards implements OnInit {
             return;
         }
 
-        console.log('Rejecting application:', this.selectedApp);
         const id = this.selectedApp?.id || this.selectedApp?.Id;
-        if (!id) {
-            this.toastService.showError('Application ID is missing.');
-            return;
-        }
-
         this.isLoading = true;
         this.cardService.rejectCardApplication({ id: id, adminRemarks: this.adminRemarks }).subscribe({
             next: () => {
                 this.toastService.showSuccess('Application rejected.');
                 this.selectedApp = null;
+                this.confirmationType = null;
                 this.loadApplications();
             },
             error: (err) => {
-                console.error('Rejection error:', err);
                 const msg = err.error?.error?.message || 'Rejection failed.';
                 this.toastService.showError(msg);
                 this.isLoading = false;
@@ -106,37 +107,54 @@ export class ApproveCards implements OnInit {
         });
     }
 
-    viewDocument(doc: string) {
-        if (!doc) return;
+    viewDocument(app: any) {
+        const id = app.id || app.Id;
+        if (!id) return;
 
-        // Detect file type if prefix is missing
-        let fileType = 'png'; // default
-        if (doc.startsWith('JVBERi')) fileType = 'pdf';
-        else if (doc.startsWith('/9j/')) fileType = 'jpg';
-        else if (doc.startsWith('iVBORw0KGgo')) fileType = 'png';
+        this.toastService.showInfo('Loading document...');
+        this.cardService.getApplicationDocument(id).subscribe({
+            next: (res) => {
+                const doc = res.result;
+                if (!doc) {
+                    this.toastService.showError('No document found.');
+                    return;
+                }
 
-        let base64 = doc;
-        if (!doc.startsWith('data:')) {
-            const mimeType = fileType === 'pdf' ? 'application/pdf' : `image/${fileType}`;
-            base64 = `data:${mimeType};base64,${doc}`;
-        }
+                let fileType = 'png';
+                if (doc.startsWith('JVBERi')) fileType = 'pdf';
+                else if (doc.startsWith('/9j/')) fileType = 'jpg';
+                else if (doc.startsWith('iVBORw0KGgo')) fileType = 'png';
 
-        const win = window.open();
-        if (win) {
-            win.document.title = "Document Viewer";
-            if (fileType === 'pdf') {
-                win.document.write(`
-                    <body style="margin:0; background: #525659;">
-                        <iframe src="${base64}" style="width:100%; height:100vh; border:none;"></iframe>
-                    </body>
-                `);
-            } else {
-                win.document.write(`
-                    <body style="margin:0; display:flex; align-items:center; justify-content:center; background:#000;">
-                        <img src="${base64}" style="max-width:100%; max-height:100vh; object-fit:contain;" />
-                    </body>
-                `);
-            }
-        }
+                let base64 = doc;
+                if (!doc.startsWith('data:')) {
+                    const mimeType = fileType === 'pdf' ? 'application/pdf' : `image/${fileType}`;
+                    base64 = `data:${mimeType};base64,${doc}`;
+                }
+
+                const win = window.open();
+                if (win) {
+                    win.document.title = "Document Viewer";
+                    if (fileType === 'pdf') {
+                        win.document.write(`
+                            <body style="margin:0; background: #525659;">
+                                <iframe src="${base64}" style="width:100%; height:100vh; border:none;"></iframe>
+                            </body>
+                        `);
+                    } else {
+                        win.document.write(`
+                            <body style="margin:0; display:flex; align-items:center; justify-content:center; background:#000;">
+                                <img src="${base64}" style="max-width:100%; max-height:100vh; object-fit:contain;" />
+                            </body>
+                        `);
+                    }
+                }
+            },
+            error: () => this.toastService.showError('Failed to load document.')
+        });
+    }
+
+    cancelModal() {
+        this.selectedApp = null;
+        this.confirmationType = null;
     }
 }

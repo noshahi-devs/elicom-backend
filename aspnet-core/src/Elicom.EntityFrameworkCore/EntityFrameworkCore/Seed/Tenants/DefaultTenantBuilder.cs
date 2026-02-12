@@ -23,7 +23,7 @@ public class DefaultTenantBuilder
     private void CreateDefaultTenant()
     {
         // 1. Default Tenant (Smart Store)
-        var defaultTenant = _context.Tenants.IgnoreQueryFilters().FirstOrDefault(t => t.TenancyName == AbpTenantBase.DefaultTenantName);
+        var defaultTenant = _context.Tenants.IgnoreQueryFilters().FirstOrDefault(t => t.Id == 1 || t.TenancyName == AbpTenantBase.DefaultTenantName);
         if (defaultTenant == null)
         {
             defaultTenant = new Tenant(AbpTenantBase.DefaultTenantName, AbpTenantBase.DefaultTenantName) { Id = 1 };
@@ -31,19 +31,19 @@ public class DefaultTenantBuilder
         }
 
         // 2. Prime Ship Tenant
-        var primeShipTenant = _context.Tenants.IgnoreQueryFilters().FirstOrDefault(t => t.TenancyName == "primeship");
+        var primeShipTenant = _context.Tenants.IgnoreQueryFilters().FirstOrDefault(t => t.Id == 2 || t.TenancyName == "primeship");
         if (primeShipTenant == null)
         {
             primeShipTenant = new Tenant("primeship", "Prime Ship") { Id = 2 };
             SeedTenant(primeShipTenant);
         }
 
-        // 3. Global Pay Tenant
-        var globalPayTenant = _context.Tenants.IgnoreQueryFilters().FirstOrDefault(t => t.TenancyName == "globalpay");
-        if (globalPayTenant == null)
+        // 3. Easy Finora Tenant
+        var easyFinoraTenant = _context.Tenants.IgnoreQueryFilters().FirstOrDefault(t => t.Id == 3 || t.TenancyName == "easyfinora" || t.TenancyName == "globalpay");
+        if (easyFinoraTenant == null)
         {
-            globalPayTenant = new Tenant("globalpay", "Global Pay") { Id = 3 };
-            SeedTenant(globalPayTenant);
+            easyFinoraTenant = new Tenant("easyfinora", "Easy Finora") { Id = 3 };
+            SeedTenant(easyFinoraTenant);
         }
     }
 
