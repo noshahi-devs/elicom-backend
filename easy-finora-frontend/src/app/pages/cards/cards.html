@@ -78,8 +78,9 @@
 
                 <div *ngFor="let app of cardApplications">
                     <div *ngIf="app.status === 'Pending'" class="card-3d-item pending-card">
-                        <div class="card-visual" [class.visa]="app.cardType === 0" [class.master]="app.cardType === 1"
-                            [class.amex]="app.cardType === 2">
+                        <div class="card-visual" [class.visa]="app.cardType === 'Visa' || app.cardType === 0"
+                            [class.master]="app.cardType === 'MasterCard' || app.cardType === 1"
+                            [class.amex]="app.cardType === 'Amex' || app.cardType === 2">
 
                             <div class="pending-overlay">
                                 <span class="pending-badge-large">Pending Approval</span>
@@ -109,7 +110,8 @@
                                     <span>{{ app.appliedDate | date:'MM/yy' }}</span>
                                 </div>
                                 <div class="brand-logo">
-                                    {{ (app.cardType === 0 ? 'VISA' : app.cardType === 1 ? 'MASTERCARD' : 'AMEX') }}
+                                    {{ (app.cardType === 'Visa' || app.cardType === 0 ? 'VISA' : (app.cardType ===
+                                    'MasterCard' || app.cardType === 1) ? 'MASTERCARD' : 'AMEX') }}
                                 </div>
                             </div>
                         </div>
@@ -134,21 +136,23 @@
     </div>
 
     <!-- Card Applications (Optional - for UI completeness) -->
+    <!-- Card Applications (Restored & Simplified) -->
     <div class="section" *ngIf="cardApplications.length > 0">
         <h3>Card Applications</h3>
         <div class="table-3d">
             <div class="table-header">
                 <div class="col">Application ID</div>
                 <div class="col">Type</div>
-                <div class="col">Card Number</div>
                 <div class="col">Applied Date</div>
                 <div class="col">Status</div>
             </div>
 
             <div *ngFor="let app of cardApplications" class="table-row">
                 <div class="col">{{ app.id }}</div>
-                <div class="col">{{ app.type }}</div>
-                <div class="col">{{ app.cardNumber }}</div>
+                <div class="col filter-col">
+                    <span class="badge card-type">{{ (app.cardType === 'Visa' || app.cardType === 0) ? 'Visa' :
+                        (app.cardType === 'MasterCard' || app.cardType === 1) ? 'MasterCard' : 'Amex' }}</span>
+                </div>
                 <div class="col">{{ app.appliedDate | date: 'MMM d, y' }}</div>
                 <div class="col">
                     <span class="status-badge" [class]="app.status.toLowerCase()">{{ app.status }}</span>

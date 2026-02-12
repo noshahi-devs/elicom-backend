@@ -13,6 +13,7 @@ namespace Elicom.GlobalPay
         
         // Admin Only
         Task<PagedResultDto<DepositRequestDto>> GetAllRequests(PagedAndSortedResultRequestDto input);
+        Task<string> GetProofImage(Guid id);
         Task Approve(ApproveDepositRequestInput input);
         Task Reject(ApproveDepositRequestInput input);
     }

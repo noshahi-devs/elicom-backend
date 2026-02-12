@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIf, NgFor, CurrencyPipe } from '@angular/common';
+import { NgIf, NgFor, CurrencyPipe, CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ToastService } from '../../shared/toast/toast.service';
 import { DepositService } from '../../services/deposit.service';
@@ -27,7 +27,7 @@ interface BankAccount {
 
 @Component({
     selector: 'app-deposit',
-    imports: [FormsModule, NgIf, NgFor, CurrencyPipe],
+    imports: [FormsModule, CommonModule],
     templateUrl: './deposit.html',
     styleUrl: './deposit.scss',
 })
@@ -35,10 +35,25 @@ export class Deposit implements OnInit {
 
     // Main flow state
     depositMethod: 'p2p' | 'cards' | null = null;
-    amount: number | null = null;
+    private _enteredUsdAmount: number | null = null;
+    get enteredUsdAmount(): number | null { return this._enteredUsdAmount; }
+    set enteredUsdAmount(value: number | null) {
+        if (value !== this._enteredUsdAmount) {
+            console.log(`[TRACE] USD AMOUNT CHANGED: Current: ${this._enteredUsdAmount}, New: ${value}`);
+            if (value && value > 0) {
+                console.trace('Tracing USD Amount Change Path:');
+            }
+            this._enteredUsdAmount = value;
+            this.cdr.detectChanges();
+        }
+    }
+
     userCards: any[] = [];
     selectedTargetCardId: number | null = null;
     isLoading = false;
+    exchangeRates: any = {};
+    localAmount: number = 0;
+    localCurrency: string = 'USD';
 
     // P2P flow (existing)
     currentStep = 1;
@@ -53,6 +68,18 @@ export class Deposit implements OnInit {
 
     ngOnInit() {
         this.loadCards();
+        this.fetchExchangeRates();
+    }
+
+    fetchExchangeRates() {
+        fetch('https://open.er-api.com/v6/latest/USD')
+            .then(res => res.json())
+            .then(data => {
+                this.exchangeRates = data.rates;
+                console.log('Deposit: Exchange Rates:', this.exchangeRates);
+                this.cdr.detectChanges();
+            })
+            .catch(err => console.error('Deposit: Fetch Rates Error:', err));
     }
 
     loadCards() {
@@ -112,7 +139,7 @@ export class Deposit implements OnInit {
             country: 'United States',
             currency: 'USD',
             accountNumber: 'XX-7750',
-            flag: 'https://easyfinora.com/flags/usa.png',
+            flag: 'https://flagcdn.com/w80/us.png',
             region: 'North American',
             accountHolder: 'Henry Thomas',
             bankName: 'JPMorgan Chase Bank',
@@ -127,7 +154,7 @@ export class Deposit implements OnInit {
             country: 'Canada',
             currency: 'CAD',
             accountNumber: 'XX-0072',
-            flag: 'https://easyfinora.com/flags/ca.png',
+            flag: 'https://flagcdn.com/w80/ca.png',
             region: 'North American',
             accountHolder: 'Leo Andrew',
             bankName: 'Royal Bank of Canada (RBC)',
@@ -143,7 +170,7 @@ export class Deposit implements OnInit {
             country: 'United Kingdom',
             currency: 'GBP',
             accountNumber: 'XX-9243',
-            flag: 'https://easyfinora.com/flags/uk.png',
+            flag: 'https://flagcdn.com/w80/gb.png',
             region: 'European',
             accountHolder: 'Jack Robert',
             bankName: 'Barclays Bank',
@@ -158,7 +185,7 @@ export class Deposit implements OnInit {
             country: 'France',
             currency: 'EUR',
             accountNumber: 'XX-3787',
-            flag: 'https://easyfinora.com/flags/fr.png',
+            flag: 'https://flagcdn.com/w80/fr.png',
             region: 'European',
             accountHolder: 'Jean Dupont',
             bankName: 'BNP Paribas',
@@ -173,7 +200,7 @@ export class Deposit implements OnInit {
             country: 'Germany',
             currency: 'EUR',
             accountNumber: 'XX-3900',
-            flag: 'https://easyfinora.com/flags/gr.png',
+            flag: 'https://flagcdn.com/w80/de.png',
             region: 'European',
             accountHolder: 'Hans Müller',
             bankName: 'Deutsche Bank',
@@ -189,7 +216,7 @@ export class Deposit implements OnInit {
             country: 'Dubai',
             currency: 'AED',
             accountNumber: 'XX-9829',
-            flag: 'https://easyfinora.com/flags/uae.png',
+            flag: 'https://flagcdn.com/w80/ae.png',
             region: 'UAE',
             accountHolder: 'Ahmed Al-Mansoori',
             bankName: 'Emirates NBD',
@@ -204,7 +231,7 @@ export class Deposit implements OnInit {
             country: 'Saudi Arabia',
             currency: 'SAR',
             accountNumber: 'XX-5263',
-            flag: 'https://easyfinora.com/flags/sd.png',
+            flag: 'https://flagcdn.com/w80/sa.png',
             region: 'Asian',
             accountHolder: 'Khalid Al-Farsi',
             bankName: 'National Commercial Bank (NCB)',
@@ -219,7 +246,7 @@ export class Deposit implements OnInit {
             country: 'Turkey',
             currency: 'TRY',
             accountNumber: 'XX-2045',
-            flag: 'https://easyfinora.com/flags/tr.png',
+            flag: 'https://flagcdn.com/w80/tr.png',
             region: 'Asian',
             accountHolder: 'Ahmet Yılmaz',
             bankName: 'Garanti BBVA',
@@ -234,7 +261,7 @@ export class Deposit implements OnInit {
             country: 'Pakistan',
             currency: 'PKR',
             accountNumber: 'XX-0011',
-            flag: 'https://easyfinora.com/flags/pk.png',
+            flag: 'https://flagcdn.com/w80/pk.png',
             region: 'Asian',
             accountHolder: 'SHAN ALI',
             bankName: 'Allied Bank Limited',
@@ -248,7 +275,7 @@ export class Deposit implements OnInit {
             country: 'India',
             currency: 'INR',
             accountNumber: 'XX-0239',
-            flag: 'https://easyfinora.com/flags/in.png',
+            flag: 'https://flagcdn.com/w80/in.png',
             region: 'Asian',
             accountHolder: 'Ramesh Gupta',
             bankName: 'State Bank of India (SBI)',
@@ -263,7 +290,7 @@ export class Deposit implements OnInit {
             country: 'Bangladesh',
             currency: 'BDT',
             accountNumber: 'XX-4090',
-            flag: 'https://easyfinora.com/flags/bd.png',
+            flag: 'https://flagcdn.com/w80/bd.png',
             region: 'Asian',
             accountHolder: 'Nasiruddin Ahmed',
             bankName: 'Dutch-Bangla Bank Limited',
@@ -277,7 +304,7 @@ export class Deposit implements OnInit {
             country: 'Sri Lanka',
             currency: 'LKR',
             accountNumber: 'XX-2104',
-            flag: 'https://easyfinora.com/flags/sri.webp',
+            flag: 'https://flagcdn.com/w80/lk.png',
             region: 'Asian',
             accountHolder: 'Mahesh De Silva',
             bankName: 'Commercial Bank of Ceylon',
@@ -299,6 +326,7 @@ export class Deposit implements OnInit {
 
     selectAccount(account: BankAccount) {
         this.selectedAccount = account;
+        this.updateConversion();
         this.currentStep = 2;
     }
 
@@ -322,12 +350,12 @@ export class Deposit implements OnInit {
             return;
         }
 
-        if (!this.amount || this.amount <= 0) {
+        if (!this.enteredUsdAmount || this.enteredUsdAmount <= 0) {
             this.toastService.showError('Please enter a valid amount greater than 0');
             return;
         }
 
-        if (this.amount < 10) {
+        if (this.enteredUsdAmount < 10) {
             this.toastService.showError('Minimum deposit amount is $10');
             return;
         }
@@ -350,29 +378,99 @@ export class Deposit implements OnInit {
         this.isLoading = true;
         this.cdr.detectChanges();
 
-        const input = {
-            cardId: this.selectedTargetCardId,
-            amount: this.amount,
-            country: this.selectedAccount?.country || 'Unknown',
-            method: 'P2P',
-            proofImage: this.proofFile.name // In a real app we'd upload this and get a URL/ID
-        };
+        this.toBase64(this.proofFile).then(base64 => {
+            const input = {
+                cardId: this.selectedTargetCardId,
+                amount: this.enteredUsdAmount || 0, // Raw USD - "Don't touch"
+                localAmount: this.localAmount, // Explicit Converted Value
+                localCurrency: this.localCurrency,
+                country: this.selectedAccount?.country || 'Unknown',
+                method: 'P2P',
+                proofImage: base64
+            };
 
-        console.log('Deposit: Submit Payload (P2P):', input);
+            console.log('DEPOSIT PAYLOAD (P2P):', input);
 
-        this.depositService.submitDepositRequest(input).subscribe({
-            next: (res) => {
-                console.log('Deposit: Submit Response (P2P):', res);
-                this.toastService.showSuccess(`P2P Deposit request for $${this.amount} submitted successfully!`);
-                this.resetForm();
-                this.router.navigate(['/transactions']);
-            },
-            error: (err) => {
-                console.error('Deposit: Submit Error (P2P):', err);
-                this.toastService.showError(err.error?.error?.message || 'Failed to submit deposit request');
-                this.isLoading = false;
-                this.cdr.detectChanges();
-            }
+            console.log('Deposit: Submit Payload (P2P):', input);
+
+            this.depositService.submitDepositRequest(input).subscribe({
+                next: (res) => {
+                    console.log('Deposit: Submit Response (P2P):', res);
+                    this.toastService.showModal(
+                        `Your P2P deposit request for $${this.enteredUsdAmount} (${this.localAmount} ${this.localCurrency}) has been submitted successfully. Our team will verify it within 6-24 hours.`,
+                        'Deposit Submitted!',
+                        'success'
+                    );
+                    this.resetForm();
+                    this.router.navigate(['/deposit-history']);
+                },
+                error: (err) => {
+                    console.error('Deposit: Submit Error (P2P):', err);
+                    this.toastService.showError(err.error?.error?.message || 'Failed to submit deposit request');
+                    this.isLoading = false;
+                    this.cdr.detectChanges();
+                }
+            });
+        });
+    }
+
+    submitCryptoDeposit() {
+        if (!this.cryptoProofFile) {
+            this.toastService.showError('Please upload transaction proof');
+            return;
+        }
+
+        if (!this.selectedTargetCardId) {
+            this.toastService.showError('Please select a target card for the deposit');
+            return;
+        }
+
+        this.isLoading = true;
+        this.cdr.detectChanges();
+
+        this.toBase64(this.cryptoProofFile).then(base64 => {
+            const input = {
+                cardId: this.selectedTargetCardId,
+                amount: this.enteredUsdAmount || 0,
+                localAmount: this.enteredUsdAmount || 0,
+                localCurrency: 'USD',
+                country: 'Crypto',
+                method: 'Crypto',
+                proofImage: base64
+            };
+
+            console.log('DEPOSIT PAYLOAD (Crypto):', input);
+
+            console.log('Deposit: Submit Payload (Crypto):', input);
+
+            this.depositService.submitDepositRequest(input).subscribe({
+                next: (res) => {
+                    console.log('Deposit: Submit Response (Crypto):', res);
+                    this.toastService.showModal(
+                        `Your crypto deposit request for $${this.enteredUsdAmount} USD has been submitted successfully. Please wait for blockchain confirmation and our internal review.`,
+                        'Deposit Received',
+                        'success'
+                    );
+                    this.closeModal();
+                    this.resetForm();
+                    this.router.navigate(['/deposit-history']);
+                },
+                error: (err) => {
+                    console.error('Deposit: Submit Error (Crypto):', err);
+                    this.toastService.showError(err.error?.error?.message || 'Failed to submit crypto deposit request');
+                    this.isLoading = false;
+                    this.cdr.detectChanges();
+                }
+            });
+        });
+    }
+
+    private toBase64(file: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = error => reject(error);
         });
     }
 
@@ -380,7 +478,9 @@ export class Deposit implements OnInit {
         this.currentStep = 1;
         this.selectedAccount = null;
         this.paymentConfirmed = false;
-        this.amount = null;
+        this.enteredUsdAmount = null;
+        this.localAmount = 0;
+        this.localCurrency = 'USD';
         this.proofFile = null;
         this.isLoading = false;
         this.depositMethod = null;
@@ -400,15 +500,41 @@ export class Deposit implements OnInit {
     }
 
     validateAmount(): boolean {
-        if (!this.amount || this.amount <= 0) {
+        if (!this.enteredUsdAmount || this.enteredUsdAmount <= 0) {
             this.toastService.showError('Please enter a valid amount');
             return false;
         }
-        if (this.amount < 10) {
+        if (this.enteredUsdAmount < 10) {
             this.toastService.showError('Minimum deposit amount is $10');
             return false;
         }
         return true;
+    }
+
+    onAmountChange(newVal: any) {
+        console.log('[DEBUG] User Entered Amount:', newVal);
+        this.updateConversion();
+    }
+
+    updateConversion() {
+        const currency = this.selectedAccount?.currency || 'USD';
+        this.localCurrency = currency;
+
+        // If USD, return raw amount EXACTLY with zero math
+        if (currency === 'USD') {
+            this.localAmount = (this.enteredUsdAmount || 0);
+            return;
+        }
+
+        const rate = this.exchangeRates[currency] || 1;
+        const raw = (this.enteredUsdAmount || 0) * rate;
+
+        if (currency === 'PKR') {
+            this.localAmount = Math.round(raw);
+        } else {
+            // For other currencies, keep 2 decimal precision
+            this.localAmount = Math.round(raw * 100) / 100;
+        }
     }
 
     proceedWithP2P() {
@@ -446,51 +572,14 @@ export class Deposit implements OnInit {
                 this.submitCryptoDeposit();
             }
         } else {
-            // Show unavailable message
-            this.toastService.showError('This payment method is currently unavailable. Please use P2P Payments or Crypto via Binance.');
+            // Show premium modal instead of toast
+            this.toastService.showModal(
+                'This payment method is currently undergoing maintenance for your region. Please use P2P Payments or Crypto via Binance for instant deposits.',
+                'Method Unavailable',
+                'warning'
+            );
             this.closeModal();
         }
-    }
-
-    submitCryptoDeposit() {
-        if (!this.cryptoProofFile) {
-            this.toastService.showError('Please upload transaction proof');
-            return;
-        }
-
-        if (!this.selectedTargetCardId) {
-            this.toastService.showError('Please select a target card for the deposit');
-            return;
-        }
-
-        this.isLoading = true;
-        this.cdr.detectChanges();
-
-        const input = {
-            cardId: this.selectedTargetCardId,
-            amount: this.amount,
-            country: 'Crypto',
-            method: 'Crypto',
-            proofImage: this.cryptoProofFile.name
-        };
-
-        console.log('Deposit: Submit Payload (Crypto):', input);
-
-        this.depositService.submitDepositRequest(input).subscribe({
-            next: (res) => {
-                console.log('Deposit: Submit Response (Crypto):', res);
-                this.toastService.showSuccess(`Crypto deposit request for $${this.amount} submitted successfully!`);
-                this.closeModal();
-                this.resetForm();
-                this.router.navigate(['/transactions']);
-            },
-            error: (err) => {
-                console.error('Deposit: Submit Error (Crypto):', err);
-                this.toastService.showError(err.error?.error?.message || 'Failed to submit crypto deposit request');
-                this.isLoading = false;
-                this.cdr.detectChanges();
-            }
-        });
     }
 
     onCryptoFileSelected(event: any) {
@@ -519,5 +608,22 @@ export class Deposit implements OnInit {
     get selectedCardName(): string {
         const card = this.paymentCards.find(c => c.id === this.selectedCard);
         return card?.name || '';
+    }
+
+    get convertedAmount(): number {
+        const currency = this.selectedAccount?.currency || 'USD';
+
+        // If USD, return raw amount EXACTLY with zero math
+        if (currency === 'USD') return (this.enteredUsdAmount || 0);
+
+        const rate = this.exchangeRates[currency] || 1;
+        const raw = (this.enteredUsdAmount || 0) * rate;
+
+        if (currency === 'PKR') {
+            return Math.round(raw);
+        }
+
+        // For other currencies, keep 2 decimal precision
+        return Math.round(raw * 100) / 100;
     }
 }

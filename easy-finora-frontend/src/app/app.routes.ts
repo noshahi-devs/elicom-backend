@@ -1,8 +1,4 @@
 import { Routes } from '@angular/router';
-import { HomeComponent } from './pages/home/home';
-import { ProductDetail } from './pages/product-detail/product-detail';
-import { AddToCart } from './pages/add-to-cart/add-to-cart';
-import { Checkout } from './pages/checkout/checkout';
 import { Dashboard } from './pages/dashboard/dashboard';
 import { Cards } from './pages/cards/cards';
 import { Transactions } from './pages/transactions/transactions';
@@ -32,10 +28,7 @@ export const routes: Routes = [
   { path: '', redirectTo: '/auth', pathMatch: 'full' },
   { path: 'auth', component: Auth },
   { path: 'profile', component: Profile, canActivate: [authGuard] },
-  { path: 'home', component: HomeComponent },
-  { path: 'product-detail', component: ProductDetail },
-  { path: 'add-to-cart', component: AddToCart },
-  { path: 'checkout', component: Checkout },
+  // Deleted dummy routes: home, product-detail, add-to-cart, checkout
   { path: 'dashboard', component: Dashboard, canActivate: [authGuard] },
   { path: 'cards', component: Cards, canActivate: [authGuard] },
   { path: 'apply-card', component: ApplyCard, canActivate: [authGuard] },

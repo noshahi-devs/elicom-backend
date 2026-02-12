@@ -59,6 +59,8 @@ namespace Elicom.Withdrawals
                 Amount = input.Amount,
                 Method = input.Method,
                 PaymentDetails = input.PaymentDetails,
+                LocalAmount = input.LocalAmount,
+                LocalCurrency = input.LocalCurrency,
                 Status = "Pending"
             };
 
@@ -73,6 +75,8 @@ namespace Elicom.Withdrawals
                 Amount = input.Amount,
                 Method = input.Method,
                 PaymentDetails = input.PaymentDetails,
+                LocalAmount = input.LocalAmount,
+                LocalCurrency = input.LocalCurrency,
                 Status = "Pending",
                 CreationTime = request.CreationTime
             };
@@ -102,6 +106,9 @@ namespace Elicom.Withdrawals
                     PaymentDetails = r.PaymentDetails,
                     Status = r.Status,
                     AdminRemarks = r.AdminRemarks,
+                    LocalAmount = r.LocalAmount,
+                    LocalCurrency = r.LocalCurrency,
+                    PaymentProof = r.PaymentProof,
                     CreationTime = r.CreationTime
                 }).ToList()
             );
@@ -148,6 +155,7 @@ namespace Elicom.Withdrawals
             // 3. Update status
             request.Status = "Approved";
             request.AdminRemarks = input.AdminRemarks;
+            request.PaymentProof = input.PaymentProof;
         }
 
         [AbpAuthorize(PermissionNames.Pages_GlobalPay_Admin)]
@@ -188,9 +196,20 @@ namespace Elicom.Withdrawals
                     PaymentDetails = r.PaymentDetails,
                     Status = r.Status,
                     AdminRemarks = r.AdminRemarks,
+                    LocalAmount = r.LocalAmount,
+                    LocalCurrency = r.LocalCurrency,
+                    HasProof = !string.IsNullOrEmpty(r.PaymentProof),
+                    PaymentProof = null, // Lazy load for performance
                     CreationTime = r.CreationTime
                 }).ToList()
             );
+        }
+
+        [AbpAuthorize(PermissionNames.Pages_GlobalPay_Admin)]
+        public async Task<string> GetPaymentProof(long id)
+        {
+            var request = await _withdrawRepository.GetAsync(id);
+            return request.PaymentProof;
         }
     }
 }

@@ -218,6 +218,7 @@ namespace Elicom.EntityFrameworkCore
             builder.Entity<DepositRequest>(b =>
             {
                 b.Property(dr => dr.Amount).HasColumnType("decimal(18,2)");
+                b.Property(dr => dr.LocalAmount).HasColumnType("decimal(18,2)");
             });
 
             builder.Entity<WithdrawRequest>(b =>

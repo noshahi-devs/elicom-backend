@@ -18,6 +18,10 @@ namespace Elicom.Entities
         [Required]
         public decimal Amount { get; set; }
 
+        public decimal? LocalAmount { get; set; }
+
+        public string LocalCurrency { get; set; }
+
         [Required]
         public string Currency { get; set; }
 

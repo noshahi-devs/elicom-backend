@@ -14,6 +14,10 @@ namespace Elicom.Withdrawals.Dto
         public string PaymentDetails { get; set; }
         public string Status { get; set; }
         public string AdminRemarks { get; set; }
+        public decimal LocalAmount { get; set; }
+        public string LocalCurrency { get; set; }
+        public string PaymentProof { get; set; }
+        public bool HasProof { get; set; }
         public DateTime CreationTime { get; set; }
     }
 
@@ -23,11 +27,14 @@ namespace Elicom.Withdrawals.Dto
         public decimal Amount { get; set; }
         public string Method { get; set; }
         public string PaymentDetails { get; set; }
+        public decimal LocalAmount { get; set; }
+        public string LocalCurrency { get; set; }
     }
 
     public class ApproveWithdrawRequestInput
     {
         public long Id { get; set; }
         public string AdminRemarks { get; set; }
+        public string PaymentProof { get; set; }
     }
 }

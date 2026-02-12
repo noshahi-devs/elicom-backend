@@ -294,21 +294,31 @@ namespace Elicom.Cards
         public async Task<List<CardApplicationDto>> GetMyApplications()
         {
             var userId = AbpSession.GetUserId();
-            var applications = await _applicationRepository.GetAllListAsync(a => a.UserId == userId);
+            var applications = await (from app in _applicationRepository.GetAll()
+                                      join card in _cardRepository.GetAll() on app.GeneratedCardId equals card.Id into cardJoin
+                                      from card in cardJoin.DefaultIfEmpty()
+                                      where app.UserId == userId
+                                      orderby app.CreationTime descending
+                                      select new CardApplicationDto
+                                      {
+                                          Id = app.Id,
+                                          FullName = app.FullName,
+                                          ContactNumber = app.ContactNumber,
+                                          Address = app.Address,
+                                          CardType = app.CardType,
+                                          DocumentType = app.DocumentType,
+                                          Status = app.Status.ToString(),
+                                          AppliedDate = app.AppliedDate,
+                                          ReviewedDate = app.ReviewedDate,
+                                          ReviewNotes = app.ReviewNotes,
+                                          
+                                          // Generated Card Info
+                                          GeneratedCardId = app.GeneratedCardId,
+                                          GeneratedCardNumber = card != null ? card.CardNumber : null,
+                                          GeneratedCardType = card != null ? (CardType?)card.CardType : null
+                                      }).ToListAsync();
 
-            return applications.Select(a => new CardApplicationDto
-            {
-                Id = a.Id,
-                FullName = a.FullName,
-                ContactNumber = a.ContactNumber,
-                Address = a.Address,
-                CardType = a.CardType,
-                DocumentType = a.DocumentType,
-                Status = a.Status.ToString(),
-                AppliedDate = a.AppliedDate,
-                ReviewedDate = a.ReviewedDate,
-                ReviewNotes = a.ReviewNotes
-            }).ToList();
+            return applications;
         }
 
         [AbpAuthorize(Authorization.PermissionNames.Pages_Users)] 
@@ -318,26 +328,33 @@ namespace Elicom.Cards
             {
                 using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
                 {
-                    var applications = await _applicationRepository.GetAll()
-                        .Include(a => a.User)
-                        .OrderByDescending(a => a.CreationTime)
-                        .ToListAsync();
+                    var applications = await (from app in _applicationRepository.GetAll()
+                                              join card in _cardRepository.GetAll() on app.GeneratedCardId equals card.Id into cardJoin
+                                              from card in cardJoin.DefaultIfEmpty()
+                                              join user in _userManager.Users on app.UserId equals user.Id
+                                              orderby app.CreationTime descending
+                                              select new CardApplicationDto
+                                              {
+                                                  Id = app.Id,
+                                                  FullName = app.FullName,
+                                                  ContactNumber = app.ContactNumber,
+                                                  Address = app.Address,
+                                                  CardType = app.CardType,
+                                                  DocumentBase64 = null, // Optimized: Excluded from SQL query
+                                                  DocumentType = app.DocumentType,
+                                                  Status = app.Status.ToString(),
+                                                  AppliedDate = app.AppliedDate,
+                                                  ReviewedDate = app.ReviewedDate,
+                                                  ReviewNotes = app.ReviewNotes,
+                                                  UserName = user.UserName ?? "Unknown",
+                                                  
+                                                  // Generated Card Info
+                                                  GeneratedCardId = app.GeneratedCardId,
+                                                  GeneratedCardNumber = card != null ? card.CardNumber : null,
+                                                  GeneratedCardType = card != null ? (CardType?)card.CardType : null
+                                              }).ToListAsync();
 
-                    return applications.Select(a => new CardApplicationDto
-                    {
-                        Id = a.Id,
-                        FullName = a.FullName,
-                        ContactNumber = a.ContactNumber,
-                        Address = a.Address,
-                        CardType = a.CardType,
-                        DocumentBase64 = null, // Optimized: Don't fetch large data in list
-                        DocumentType = a.DocumentType,
-                        Status = a.Status.ToString(),
-                        AppliedDate = a.AppliedDate,
-                        ReviewedDate = a.ReviewedDate,
-                        ReviewNotes = a.ReviewNotes,
-                        UserName = a.User?.UserName ?? "Unknown"
-                    }).ToList();
+                    return applications;
                 }
             }
             catch (Exception ex)
@@ -351,20 +368,23 @@ namespace Elicom.Cards
         {
             try
             {
-                var applications = await _applicationRepository.GetAllListAsync(a => a.Status == CardApplicationStatus.Pending);
+                var applications = await _applicationRepository.GetAll()
+                    .Where(a => a.Status == CardApplicationStatus.Pending)
+                    .Select(a => new CardApplicationDto
+                    {
+                        Id = a.Id,
+                        FullName = a.FullName,
+                        ContactNumber = a.ContactNumber,
+                        Address = a.Address,
+                        CardType = a.CardType,
+                        DocumentBase64 = null, // Optimized: Excluded from SQL query
+                        DocumentType = a.DocumentType,
+                        Status = a.Status.ToString(),
+                        AppliedDate = a.AppliedDate
+                    })
+                    .ToListAsync();
 
-                return applications.Select(a => new CardApplicationDto
-                {
-                    Id = a.Id,
-                    FullName = a.FullName,
-                    ContactNumber = a.ContactNumber,
-                    Address = a.Address,
-                    CardType = a.CardType,
-                    DocumentBase64 = null, // Optimized
-                    DocumentType = a.DocumentType,
-                    Status = a.Status.ToString(),
-                    AppliedDate = a.AppliedDate
-                }).ToList();
+                return applications;
             }
             catch (Exception ex)
             {

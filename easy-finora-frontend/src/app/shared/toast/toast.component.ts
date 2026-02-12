@@ -1,17 +1,19 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NgIf, NgClass, NgFor } from '@angular/common';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ToastService, Toast } from './toast.service';
 import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-toast',
     standalone: true,
-    imports: [NgIf, NgClass, NgFor],
+    imports: [CommonModule, FormsModule],
     templateUrl: './toast.component.html',
     styleUrl: './toast.component.scss'
 })
 export class ToastComponent implements OnInit, OnDestroy {
     toasts: Toast[] = [];
+    adminRemarks: string = '';
     private subscription?: Subscription;
 
     constructor(private toastService: ToastService) { }
@@ -19,9 +21,13 @@ export class ToastComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.subscription = this.toastService.toast$.subscribe(toast => {
             this.toasts.push(toast);
-            setTimeout(() => {
-                this.removeToast(toast);
-            }, toast.duration || 3000);
+
+            // Only auto-remove if not a modal OR if duration is explicitly provided for modal
+            if (!toast.isModal || toast.duration) {
+                setTimeout(() => {
+                    this.removeToast(toast);
+                }, toast.duration || 3000);
+            }
         });
     }
 
@@ -34,5 +40,41 @@ export class ToastComponent implements OnInit, OnDestroy {
         if (index > -1) {
             this.toasts.splice(index, 1);
         }
+    }
+
+    hasToasts() {
+        return this.toasts.some(t => !t.isModal);
+    }
+
+    getToasts() {
+        return this.toasts.filter(t => !t.isModal);
+    }
+
+    hasModalAlerts() {
+        return this.toasts.some(t => !!t.isModal);
+    }
+
+    getModalAlerts() {
+        return this.toasts.filter(t => !!t.isModal);
+    }
+
+    confirm(toast: Toast, remarks: string) {
+        if (toast.onConfirm) {
+            toast.onConfirm(remarks);
+        }
+        this.removeToast(toast);
+    }
+
+    confirmWithReset(toast: Toast) {
+        this.confirm(toast, this.adminRemarks);
+        this.adminRemarks = ''; // Reset for next time
+    }
+
+    cancel(toast: Toast) {
+        if (toast.onCancel) {
+            toast.onCancel();
+        }
+        this.adminRemarks = ''; // Reset on cancel too
+        this.removeToast(toast);
     }
 }

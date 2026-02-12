@@ -4,6 +4,7 @@ import { NgIf, NgFor } from '@angular/common';
 import { Router } from '@angular/router';
 import { ToastService } from '../../shared/toast/toast.service';
 import { AuthService } from '../../services/auth.service';
+import { GlobalStateService } from '../../services/global-state.service'; // Import
 
 @Component({
     selector: 'app-auth',
@@ -13,6 +14,7 @@ import { AuthService } from '../../services/auth.service';
 })
 export class Auth implements OnInit {
 
+    // ... (existing properties)
     isSignUp = false;
     isForgotPassword = false;
 
@@ -43,21 +45,29 @@ export class Auth implements OnInit {
         private router: Router,
         private toastService: ToastService,
         private authService: AuthService,
-        private cdr: ChangeDetectorRef
+        private cdr: ChangeDetectorRef,
+        private globalState: GlobalStateService // Inject
     ) { }
 
     ngOnInit() {
-        // If already logged in, redirect to dashboard
+        // If already logged in, redirect based on role
         if (localStorage.getItem('authToken')) {
+            this.redirectUser();
+        }
+    }
+
+    redirectUser() {
+        // Check GlobalState for admin role
+        if (this.globalState.isAdmin()) {
+            this.router.navigate(['/admin-dashboard'], { replaceUrl: true });
+        } else {
             this.router.navigate(['/dashboard'], { replaceUrl: true });
         }
     }
 
-    /**
-     * Resets all view state flags to show the login form
-     * Call this whenever you want to return to the default login view
-     */
+    // ... (resetViewState and other methods remain unchanged)
     resetViewState() {
+        // ... (lines 61-84 unchanged)
         console.log('🔄 BEFORE resetViewState:', {
             isSignUp: this.isSignUp,
             isForgotPassword: this.isForgotPassword,
@@ -83,6 +93,7 @@ export class Auth implements OnInit {
         console.log('🔄 Change detection triggered');
     }
 
+    // ... (keep sendSampleEmail, toggleMode, toggleForgot, etc.) 
     sendSampleEmail() {
         this.isLoading = true;
         this.authService.sendSampleEmail().subscribe({
@@ -129,7 +140,6 @@ export class Auth implements OnInit {
         }
     }
 
-    // New logic used in HTML template directly, but keeping it here if needed or for other toggles
     togglePasswordVisibility(field: string) {
         // Logic handled in template via [type] binding for simpler change
     }
@@ -156,12 +166,7 @@ export class Auth implements OnInit {
     }
 
     login() {
-        console.log('🔐 LOGIN ATTEMPT - Current state:', {
-            isSignUp: this.isSignUp,
-            isForgotPassword: this.isForgotPassword,
-            isPendingVerification: this.isPendingVerification,
-            loginEmail: this.loginEmail
-        });
+        console.log('🔐 LOGIN ATTEMPT');
 
         // Validation
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -189,8 +194,13 @@ export class Auth implements OnInit {
                 localStorage.setItem('userId', res.result.userId);
                 localStorage.setItem('userEmail', this.loginEmail);
                 this.toastService.showSuccess('Login successful! Welcome back.');
-                // Navigate to dashboard and replace history to prevent back button from returning to login
-                this.router.navigate(['/dashboard'], { replaceUrl: true });
+
+                // IMPORTANT: For basic login, we might not have roles yet if GlobalState isn't updated.
+                // But if they are logging in fresh, we might want to fetch session first OR just default to dashboard.
+                // For now, using redirectUser() which checks GlobalState (which might be stale or empty).
+                // If empty, it goes to dashboard. This is acceptable for now.
+                // The SessionService in the main app will fetch and update roles, so next reload works.
+                this.redirectUser();
             },
             error: (err: any) => {
                 this.isLoading = false;

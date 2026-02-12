@@ -21,22 +21,14 @@ export class WithdrawService {
     }
 
     submitWithdrawRequest(input: any): Observable<any> {
-        console.log('WithdrawService.submitWithdrawRequest payload is:', input);
-
-        return this.http.post(`${this.apiUrl}/SubmitWithdrawRequest`, input, { headers: this.getHeaders() }).pipe(
-            tap(response => console.log('WithdrawService.submitWithdrawRequest response is:', response))
-        );
+        return this.http.post(`${this.apiUrl}/SubmitWithdrawRequest`, input, { headers: this.getHeaders() });
     }
 
     getMyWithdrawRequests(skipCount: number = 0, maxResultCount: number = 10): Observable<any> {
-        console.log('WithdrawService.getMyWithdrawRequests called');
-
         return this.http.get(`${this.apiUrl}/GetMyWithdrawRequests`, {
             headers: this.getHeaders(),
             params: { skipCount, maxResultCount }
-        }).pipe(
-            tap(response => console.log('WithdrawService.getMyWithdrawRequests response is:', response))
-        );
+        });
     }
 
     getAllWithdrawRequests(skipCount: number = 0, maxResultCount: number = 50): Observable<any> {
@@ -46,8 +38,8 @@ export class WithdrawService {
         });
     }
 
-    approveWithdraw(id: number, adminRemarks: string): Observable<any> {
-        return this.http.post(`${this.apiUrl}/ApproveWithdraw`, { id, adminRemarks }, {
+    approveWithdraw(id: number, adminRemarks: string, paymentProof: string = ''): Observable<any> {
+        return this.http.post(`${this.apiUrl}/ApproveWithdraw`, { id, adminRemarks, paymentProof }, {
             headers: this.getHeaders()
         });
     }
@@ -55,6 +47,13 @@ export class WithdrawService {
     rejectWithdraw(id: number, adminRemarks: string): Observable<any> {
         return this.http.post(`${this.apiUrl}/RejectWithdraw`, { id, adminRemarks }, {
             headers: this.getHeaders()
+        });
+    }
+
+    getPaymentProof(id: number): Observable<any> {
+        return this.http.get(`${this.apiUrl}/GetPaymentProof`, {
+            headers: this.getHeaders(),
+            params: { id }
         });
     }
 }

@@ -57,4 +57,11 @@ export class DepositService {
             headers: this.getHeaders()
         });
     }
+
+    getProofImage(id: string): Observable<any> {
+        return this.http.get(`${this.apiUrl}/GetProofImage`, {
+            headers: this.getHeaders(),
+            params: { id }
+        });
+    }
 }

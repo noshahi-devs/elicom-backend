@@ -31,10 +31,15 @@ namespace Elicom.Entities
 
         public string AdminRemarks { get; set; }
 
+        public decimal LocalAmount { get; set; }
+        public string LocalCurrency { get; set; }
+        public string PaymentProof { get; set; }
+
         public WithdrawRequest()
         {
             Status = "Pending";
             Currency = "USD";
+            LocalCurrency = "USD";
         }
     }
 }
