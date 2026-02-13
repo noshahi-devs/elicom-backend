@@ -23,8 +23,6 @@
             </div>
             <div class="col amount-info">
                 <div class="main-amount debit">-{{ w.amount | currency: 'USD' }}</div>
-                <small class="local-amount" *ngIf="w.localAmount">{{ w.localAmount | number }} {{ w.localCurrency
-                    }}</small>
             </div>
             <div class="col">
                 <span class="status-badge" [ngClass]="(w.status || 'pending').toLowerCase()">
@@ -67,9 +65,6 @@
                 <h6>Amount Details</h6>
                 <div class="amount-card">
                     <div class="usd-amount">{{ selectedWithdraw.amount | currency:'USD' }}</div>
-                    <div class="local-amount-large" *ngIf="selectedWithdraw.localAmount">
-                        ≈ {{ selectedWithdraw.localAmount | number }} {{ selectedWithdraw.localCurrency }}
-                    </div>
                 </div>
             </div>
 

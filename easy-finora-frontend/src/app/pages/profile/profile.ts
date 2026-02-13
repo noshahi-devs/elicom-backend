@@ -98,7 +98,7 @@ export class Profile implements OnInit {
         setTimeout(() => {
             this.isLoading = false;
             this.isEditing = false;
-            this.toastService.showSuccess('Profile updated successfully!');
+            this.toastService.showModal('Your profile has been updated successfully!', 'PROFILE UPDATED', 'success');
         }, 1500);
     }
 

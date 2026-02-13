@@ -65,7 +65,7 @@ export class ApproveDepositHistory implements OnInit {
                 this.isLoading = true;
                 this.depositService.approveDeposit(deposit.id, remarks || 'Approved').subscribe({
                     next: () => {
-                        this.toastService.showModal('Deposit has been approved successfully.', 'Success', 'success');
+                        this.toastService.showModal('Deposit has been approved successfully. The funds have been credited to the user\'s card.', 'DEPOSIT APPROVED', 'success');
                         this.fetchHistory();
                     },
                     error: (err) => {
@@ -84,18 +84,18 @@ export class ApproveDepositHistory implements OnInit {
             `Are you sure you want to reject the deposit of ${deposit.amount} ${deposit.currency || 'USD'} for ${this.formatEmail(deposit.userName)}?`,
             (remarks) => {
                 if (!remarks) {
-                    this.toastService.showModal('Please provide a reason for rejection.', 'Reason Required', 'warning');
+                    this.toastService.showModal('Please provide a reason for rejection.', 'REASON REQUIRED', 'warning');
                     return;
                 }
                 this.isLoading = true;
                 this.depositService.rejectDeposit(deposit.id, remarks).subscribe({
                     next: () => {
-                        this.toastService.showModal('Deposit has been rejected.', 'Rejected', 'info');
+                        this.toastService.showModal('Deposit has been rejected.', 'DEPOSIT REJECTED', 'info');
                         this.fetchHistory();
                     },
                     error: (err) => {
                         console.error('Failed to reject deposit', err);
-                        this.toastService.showModal(err.error?.error?.message || 'Failed to reject', 'Error', 'error');
+                        this.toastService.showModal(err.error?.error?.message || 'Failed to reject deposit.', 'ERROR', 'error');
                         this.isLoading = false;
                     }
                 });

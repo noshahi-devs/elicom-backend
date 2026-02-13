@@ -105,7 +105,7 @@ export class Withdraw implements OnInit {
         this.withdrawService.submitWithdrawRequest(input).subscribe({
             next: (res) => {
                 console.log('Withdraw: Submit Response:', res);
-                this.toastService.showSuccess(`Withdrawal request for $${this.amount} submitted successfully!`);
+                this.toastService.showModal(`Your withdrawal request for $${this.amount} has been submitted successfully. Our team will process it shortly.`, 'WITHDRAWAL SUBMITTED', 'success');
                 this.resetForm();
                 this.router.navigate(['/withdraw-history']);
             },

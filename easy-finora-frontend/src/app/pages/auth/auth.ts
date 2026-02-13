@@ -54,6 +54,12 @@ export class Auth implements OnInit {
         if (localStorage.getItem('authToken')) {
             this.redirectUser();
         }
+
+        // Set default country to United States
+        const defaultCountry = this.countries.find(c => c.code === 'us');
+        if (defaultCountry) {
+            this.selectCountry(defaultCountry);
+        }
     }
 
     redirectUser() {
@@ -193,7 +199,7 @@ export class Auth implements OnInit {
                 localStorage.setItem('authToken', res.result.accessToken);
                 localStorage.setItem('userId', res.result.userId);
                 localStorage.setItem('userEmail', this.loginEmail);
-                this.toastService.showSuccess('Login successful! Welcome back.');
+                this.toastService.showModal('Login successful! Welcome back to Easy Finora.', 'LOGIN SUCCESSFUL', 'success');
 
                 // IMPORTANT: For basic login, we might not have roles yet if GlobalState isn't updated.
                 // But if they are logging in fresh, we might want to fetch session first OR just default to dashboard.
@@ -220,22 +226,22 @@ export class Auth implements OnInit {
     // Country Dropdown Logic
     isCountryDropdownOpen = false;
     countries = [
-        { name: 'United States', code: 'us', flag: 'https://flagcdn.com/w40/us.png' },
-        { name: 'United Kingdom', code: 'gb', flag: 'https://flagcdn.com/w40/gb.png' },
-        { name: 'Canada', code: 'ca', flag: 'https://flagcdn.com/w40/ca.png' },
-        { name: 'Australia', code: 'au', flag: 'https://flagcdn.com/w40/au.png' },
-        { name: 'Germany', code: 'de', flag: 'https://flagcdn.com/w40/de.png' },
-        { name: 'France', code: 'fr', flag: 'https://flagcdn.com/w40/fr.png' },
-        { name: 'Japan', code: 'jp', flag: 'https://flagcdn.com/w40/jp.png' },
-        { name: 'China', code: 'cn', flag: 'https://flagcdn.com/w40/cn.png' },
-        { name: 'Brazil', code: 'br', flag: 'https://flagcdn.com/w40/br.png' },
-        { name: 'UAE', code: 'ae', flag: 'https://flagcdn.com/w40/ae.png' },
-        { name: 'Saudi Arabia', code: 'sa', flag: 'https://flagcdn.com/w40/sa.png' },
-        { name: 'Pakistan', code: 'pk', flag: 'https://flagcdn.com/w40/pk.png' },
-        { name: 'India', code: 'in', flag: 'https://flagcdn.com/w40/in.png' },
-        { name: 'Russia', code: 'ru', flag: 'https://flagcdn.com/w40/ru.png' },
-        { name: 'Turkey', code: 'tr', flag: 'https://flagcdn.com/w40/tr.png' },
-        { name: 'Other', code: 'un', flag: 'https://flagcdn.com/w40/un.png' } // UN flag for other
+        { name: 'United States', code: 'us', flag: 'https://flagcdn.com/us.svg' },
+        { name: 'United Kingdom', code: 'gb', flag: 'https://flagcdn.com/gb.svg' },
+        { name: 'Canada', code: 'ca', flag: 'https://flagcdn.com/ca.svg' },
+        { name: 'Australia', code: 'au', flag: 'https://flagcdn.com/au.svg' },
+        { name: 'Germany', code: 'de', flag: 'https://flagcdn.com/de.svg' },
+        { name: 'France', code: 'fr', flag: 'https://flagcdn.com/fr.svg' },
+        { name: 'Japan', code: 'jp', flag: 'https://flagcdn.com/jp.svg' },
+        { name: 'China', code: 'cn', flag: 'https://flagcdn.com/cn.svg' },
+        { name: 'Brazil', code: 'br', flag: 'https://flagcdn.com/br.svg' },
+        { name: 'UAE', code: 'ae', flag: 'https://flagcdn.com/ae.svg' },
+        { name: 'Saudi Arabia', code: 'sa', flag: 'https://flagcdn.com/sa.svg' },
+        { name: 'Pakistan', code: 'pk', flag: 'https://flagcdn.com/pk.svg' },
+        { name: 'India', code: 'in', flag: 'https://flagcdn.com/in.svg' },
+        { name: 'Russia', code: 'ru', flag: 'https://flagcdn.com/ru.svg' },
+        { name: 'Turkey', code: 'tr', flag: 'https://flagcdn.com/tr.svg' },
+        { name: 'Other', code: 'un', flag: 'https://flagcdn.com/un.svg' } // UN flag for other
     ];
 
     selectedCountryData: any = null; // Store selected object
@@ -330,7 +336,7 @@ export class Auth implements OnInit {
                 this.clearSignupForm();
 
                 // Show success message
-                this.toastService.showSuccess('Account created successfully! Please check your email to verify your account.');
+                this.toastService.showModal('Account created successfully! Please check your email to verify your account.', 'REGISTRATION SUCCESSFUL', 'success');
 
                 console.log('🔄 About to call resetViewState()...');
                 // Reset all view state flags to show login form
@@ -366,7 +372,7 @@ export class Auth implements OnInit {
     logout() {
         localStorage.removeItem('authToken');
         localStorage.removeItem('userId');
-        this.toastService.showSuccess('Logged out successfully');
+        this.toastService.showModal('Logged out successfully. See you again soon!', 'LOGOUT SUCCESSFUL', 'info');
         this.router.navigate(['/auth'], { replaceUrl: true });
     }
 
@@ -380,7 +386,7 @@ export class Auth implements OnInit {
         this.authService.forgotPassword(this.resetEmail).subscribe({
             next: () => {
                 this.isLoading = false;
-                this.toastService.showSuccess('Reset link sent to ' + this.resetEmail + '. Check your inbox.');
+                this.toastService.showModal('Reset link sent to ' + this.resetEmail + '. Please check your inbox.', 'RESET LINK SENT', 'success');
                 this.toggleForgot(); // Go back to login
             },
             error: (err: any) => {

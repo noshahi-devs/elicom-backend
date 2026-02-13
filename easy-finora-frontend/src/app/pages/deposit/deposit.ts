@@ -398,7 +398,7 @@ export class Deposit implements OnInit {
                     console.log('Deposit: Submit Response (P2P):', res);
                     this.toastService.showModal(
                         `Your P2P deposit request for $${this.enteredUsdAmount} (${this.localAmount} ${this.localCurrency}) has been submitted successfully. Our team will verify it within 6-24 hours.`,
-                        'Deposit Submitted!',
+                        'DEPOSIT SUBMITTED',
                         'success'
                     );
                     this.resetForm();
@@ -448,7 +448,7 @@ export class Deposit implements OnInit {
                     console.log('Deposit: Submit Response (Crypto):', res);
                     this.toastService.showModal(
                         `Your crypto deposit request for $${this.enteredUsdAmount} USD has been submitted successfully. Please wait for blockchain confirmation and our internal review.`,
-                        'Deposit Received',
+                        'DEPOSIT RECEIVED',
                         'success'
                     );
                     this.closeModal();
@@ -575,7 +575,7 @@ export class Deposit implements OnInit {
             // Show premium modal instead of toast
             this.toastService.showModal(
                 'This payment method is currently undergoing maintenance for your region. Please use P2P Payments or Crypto via Binance for instant deposits.',
-                'Method Unavailable',
+                'METHOD UNAVAILABLE',
                 'warning'
             );
             this.closeModal();

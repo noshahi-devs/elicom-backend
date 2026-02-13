@@ -63,10 +63,13 @@ export class ApproveCards implements OnInit {
         this.isLoading = true;
         this.cardService.approveCardApplication(id).subscribe({
             next: (res) => {
-                this.toastService.showSuccess('Card approved and generated!');
-                this.selectedApp = null;
-                this.confirmationType = null;
-                this.loadApplications();
+                this.toastService.showModal('The card has been approved and successfully generated for the user.', 'CARD APPROVED', 'success');
+                setTimeout(() => {
+                    this.selectedApp = null;
+                    this.confirmationType = null;
+                    this.loadApplications();
+                    this.cdr.detectChanges();
+                });
             },
             error: (err) => {
                 const msg = err.error?.error?.message || 'Approval failed.';
@@ -93,10 +96,13 @@ export class ApproveCards implements OnInit {
         this.isLoading = true;
         this.cardService.rejectCardApplication({ id: id, adminRemarks: this.adminRemarks }).subscribe({
             next: () => {
-                this.toastService.showSuccess('Application rejected.');
-                this.selectedApp = null;
-                this.confirmationType = null;
-                this.loadApplications();
+                this.toastService.showModal('The card application has been rejected.', 'APPLICATION REJECTED', 'info');
+                setTimeout(() => {
+                    this.selectedApp = null;
+                    this.confirmationType = null;
+                    this.loadApplications();
+                    this.cdr.detectChanges();
+                });
             },
             error: (err) => {
                 const msg = err.error?.error?.message || 'Rejection failed.';

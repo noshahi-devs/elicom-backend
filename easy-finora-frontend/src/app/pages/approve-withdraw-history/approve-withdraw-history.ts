@@ -136,12 +136,12 @@ export class ApproveWithdrawHistory implements OnInit {
         this.isLoading = true;
         this.withdrawService.approveWithdraw(withdraw.id, this.adminRemarks, base64Proof).subscribe({
             next: () => {
-                alert('Withdrawal approved successfully! Balance updated.');
+                this.toastService.showModal('Withdrawal request has been approved successfully. The user\'s card balance has been updated.', 'WITHDRAWAL APPROVED', 'success');
                 this.showModal = false;
                 this.fetchHistory();
             },
             error: (err) => {
-                alert('Error: ' + (err.error?.error?.message || 'Failed to approve'));
+                this.toastService.showModal(err.error?.error?.message || 'Failed to approve withdrawal.', 'ERROR', 'error');
                 this.isLoading = false;
             }
         });
@@ -163,12 +163,12 @@ export class ApproveWithdrawHistory implements OnInit {
         this.isLoading = true;
         this.withdrawService.rejectWithdraw(withdraw.id, remarks).subscribe({
             next: () => {
-                alert('Withdrawal rejected.');
+                this.toastService.showModal('Withdrawal request has been rejected.', 'WITHDRAWAL REJECTED', 'info');
                 this.fetchHistory();
             },
             error: (err) => {
                 console.error('Failed to reject withdrawal', err);
-                alert('Error: ' + (err.error?.error?.message || 'Failed to reject'));
+                this.toastService.showModal(err.error?.error?.message || 'Failed to reject withdrawal.', 'ERROR', 'error');
                 this.isLoading = false;
             }
         });

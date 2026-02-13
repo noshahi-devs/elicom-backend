@@ -206,10 +206,10 @@ export class Cards implements OnInit {
 
             this.cardService.submitCardApplication(payload).subscribe({
                 next: (response) => {
-
-                    this.toastService.showSuccess('Application submitted successfully! Approval typically takes 5-8 hours.');
+                    this.toastService.showModal('Your card application has been submitted successfully! Approval typically takes 5-8 hours.', 'APPLICATION SUBMITTED', 'success');
                     this.closeModal();
                     this.loadData();
+                    this.cdr.detectChanges(); // Force detection for global toast trigger
                 },
                 error: (err) => {
                     console.error('Cards: Submit Error:', err);

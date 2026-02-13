@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ToastService, Toast } from './toast.service';
@@ -16,11 +16,24 @@ export class ToastComponent implements OnInit, OnDestroy {
     adminRemarks: string = '';
     private subscription?: Subscription;
 
-    constructor(private toastService: ToastService) { }
+    constructor(
+        private toastService: ToastService,
+        private cdr: ChangeDetectorRef
+    ) { }
 
     ngOnInit() {
         this.subscription = this.toastService.toast$.subscribe(toast => {
-            this.toasts.push(toast);
+            // Using setTimeout to ensure toast is pushed in a new check cycle, avoiding NG0100
+            setTimeout(() => {
+                this.toasts = [...this.toasts, toast];
+
+                // Set default remarks to "Approved" if input is required
+                if (toast.showInput) {
+                    this.adminRemarks = 'Approved';
+                }
+
+                this.cdr.detectChanges();
+            });
 
             // Only auto-remove if not a modal OR if duration is explicitly provided for modal
             if (!toast.isModal || toast.duration) {

@@ -58,7 +58,7 @@ export class Contact {
 
         this.supportService.createTicket(input).subscribe({
             next: () => {
-                this.toastService.showSuccess('Message sent successfully! We will get back to you soon.');
+                this.toastService.showModal('Your message has been sent successfully! Our team will review it and get back to you soon.', 'MESSAGE SENT', 'success');
                 this.isLoading = false;
                 // Reset form
                 this.name = '';

@@ -60,7 +60,7 @@ export class DepositMethods {
             cardHolderName: this.cardHolderName
         });
 
-        this.toastService.showSuccess('Deposit method added successfully!');
+        this.toastService.showModal('Your withdrawal method has been added successfully!', 'WITHDRAW METHOD ADDED', 'success');
 
         // Reset form
         this.paymentMethod = '';
