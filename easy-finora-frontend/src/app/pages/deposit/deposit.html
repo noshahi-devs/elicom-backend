@@ -21,11 +21,12 @@
 
         <!-- Amount Input (Always First) -->
         <div class="amount-section" [class.disabled]="userCards.length === 0">
-            <label for="depositAmount">Amount <span class="required">*</span></label>
+            <label for="depositUsdAmountInput">Amount <span class="required">*</span></label>
             <div class="amount-input-group">
                 <span class="currency-symbol">$</span>
-                <input type="number" id="depositAmount" [(ngModel)]="amount" placeholder="Enter amount" min="10"
-                    step="0.01" class="amount-input" [disabled]="isLoading || userCards.length === 0">
+                <input type="number" id="depositUsdAmountInput" [(ngModel)]="enteredUsdAmount"
+                    (ngModelChange)="onAmountChange($event)" placeholder="Enter amount" min="10" step="0.01"
+                    class="amount-input" [disabled]="isLoading || userCards.length === 0">
                 <span class="currency-code">USD</span>
             </div>
             <div class="fee-info">
@@ -35,7 +36,7 @@
         </div>
 
         <!-- Payment Method Dropdown -->
-        <div class="method-selection" *ngIf="amount && amount >= 10">
+        <div class="method-selection" *ngIf="enteredUsdAmount && enteredUsdAmount >= 10">
             <label for="paymentMethod">Select Deposit Method <span class="required">*</span></label>
             <select id="paymentMethod" [(ngModel)]="depositMethod" (change)="onMethodChange()" class="method-dropdown"
                 [disabled]="isLoading">
@@ -61,9 +62,9 @@
         </div>
 
         <!-- Summary -->
-        <div *ngIf="amount && amount > 0" class="deposit-summary">
+        <div *ngIf="enteredUsdAmount && enteredUsdAmount > 0" class="deposit-summary">
             <span>You'll Deposit:</span>
-            <h3>${{ amount }}</h3>
+            <h3>${{ enteredUsdAmount }}</h3>
         </div>
     </div>
 
@@ -76,7 +77,7 @@
 
         <div class="deposit-summary">
             <span>You'll Deposit:</span>
-            <h3>${{ amount }}</h3>
+            <h3>${{ enteredUsdAmount }}</h3>
         </div>
 
         <div class="action-section">
@@ -118,7 +119,7 @@
 
         <!-- Info Cards -->
         <div class="info-card success-card">
-            <h4>P2P Uber Payments</h4>
+            <h4>P2P EasyFinora Payments</h4>
             <p>Choose bank account from your country region only</p>
         </div>
 
@@ -148,15 +149,7 @@
                         </div>
                         <div class="verified-badge">
                             <span class="check-icon">✓</span>
-                            <span>Verified By Uber Payments</span>
-                        </div>
-                        <hr>
-                        <div class="account-footer">
-                            <div class="last-payment">
-                                <span class="label">Last payment date</span>
-                                <span class="no-payment">{{ account.lastPaymentDate || 'No payments yet' }}</span>
-                            </div>
-                            <button class="btn-history">History</button>
+                            <span>Verified By EasyFinora Payments</span>
                         </div>
                     </div>
                 </div>
@@ -172,16 +165,18 @@
                         <h5>{{ selectedAccount.country }}</h5>
                         <p>{{ selectedAccount.currency }} | {{ selectedAccount.accountNumber }}</p>
                         <span class="verified-badge-small">
-                            <span class="check-icon">✓</span> Verified By Uber Payments
+                            <span class="check-icon">✓</span> Verified By EasyFinora Payments
                         </span>
                     </div>
                 </div>
 
                 <div class="alert-info">
                     <span class="info-icon">ℹ</span>
-                    Use for local bank transfers within {{ selectedAccount.country }} in {{ selectedAccount.currency }}
-                    via
-                    electronic funds transfer (EFT), or direct deposit.
+                    Please send exactly <strong>{{ localAmount | number:'1.0-0' }} {{ localCurrency
+                        }}</strong> (equivalent to ${{ enteredUsdAmount | number:'1.2-2' }} USD) to the account below.
+                    Use local
+                    bank transfer
+                    within {{ selectedAccount.country }} via electronic funds transfer (EFT) or direct deposit.
                 </div>
 
                 <div class="bank-details-grid">
@@ -233,9 +228,13 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="amount">Amount Sent ({{ selectedAccount.currency }})</label>
-                        <input type="number" id="amount" [(ngModel)]="amount" class="form-control"
-                            placeholder="Enter amount you sent" min="10" step="0.01">
+                        <label for="localCurrencyDisplayInput">Amount Sent ({{ localCurrency }})</label>
+                        <div class="input-with-hint">
+                            <input type="number" id="localCurrencyDisplayInput" [ngModel]="localAmount"
+                                class="form-control" placeholder="Enter amount in {{ localCurrency }}" readonly min="0"
+                                step="1">
+                            <small class="hint-text">Required: ${{ enteredUsdAmount | number:'1.2-2' }} USD</small>
+                        </div>
                     </div>
 
                     <div class="button-group">
@@ -275,7 +274,11 @@
                     </div>
                     <div class="summary-row">
                         <span>Amount:</span>
-                        <span class="amount-highlight">{{ amount }} {{ selectedAccount?.currency }}</span>
+                        <div class="amount-stack">
+                            <span class="amount-highlight">{{ localAmount | number:'1.0-0' }} {{
+                                localCurrency }}</span>
+                            <span class="amount-sub">(${{ enteredUsdAmount | number:'1.2-2' }} USD)</span>
+                        </div>
                     </div>
                 </div>
 
@@ -301,7 +304,7 @@
             <div class="modal-body">
                 <div class="amount-display">
                     <span>Amount to Deposit:</span>
-                    <h2>${{ amount }} USD</h2>
+                    <h2>${{ enteredUsdAmount }} USD</h2>
                 </div>
 
                 <!-- Crypto Form -->

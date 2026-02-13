@@ -22,27 +22,21 @@ export class CardService {
 
     createVirtualCard(cardType: string): Observable<any> {
         const payload = { cardType };
-        console.log('CardService.createVirtualCard payload is:', payload);
 
-        return this.http.post(`${this.apiUrl}/CreateVirtualCard`, payload, { headers: this.getHeaders() }).pipe(
-            tap(response => console.log('CardService.createVirtualCard response is:', response))
-        );
+
+        return this.http.post(`${this.apiUrl}/CreateVirtualCard`, payload, { headers: this.getHeaders() });
     }
 
     getUserCards(): Observable<any> {
-        console.log('CardService.getUserCards called');
 
-        return this.http.get(`${this.apiUrl}/GetUserCards`, { headers: this.getHeaders() }).pipe(
-            tap(response => console.log('CardService.getUserCards response is:', response))
-        );
+
+        return this.http.get(`${this.apiUrl}/GetUserCards`, { headers: this.getHeaders() });
     }
 
     getBalance(): Observable<any> {
-        console.log('CardService.getBalance called');
 
-        return this.http.get(`${this.apiUrl}/GetBalance`, { headers: this.getHeaders() }).pipe(
-            tap(response => console.log('CardService.getBalance response is:', response))
-        );
+
+        return this.http.get(`${this.apiUrl}/GetBalance`, { headers: this.getHeaders() });
     }
 
     getCardSensitiveDetails(cardId: number): Observable<any> {
@@ -53,10 +47,8 @@ export class CardService {
     }
 
     submitCardApplication(payload: any): Observable<any> {
-        console.log('CardService.submitCardApplication payload is:', payload);
-        return this.http.post(`${this.apiUrl}/SubmitCardApplication`, payload, { headers: this.getHeaders() }).pipe(
-            tap(response => console.log('CardService.submitCardApplication response is:', response))
-        );
+
+        return this.http.post(`${this.apiUrl}/SubmitCardApplication`, payload, { headers: this.getHeaders() });
     }
 
     getMyApplications(): Observable<any> {
@@ -68,7 +60,7 @@ export class CardService {
     }
 
     approveCardApplication(id: string): Observable<any> {
-        console.log('CardService.approveCardApplication id is:', id);
+
         return this.http.post(`${this.apiUrl}/ApproveCardApplication`, { id }, { headers: this.getHeaders() });
     }
 

@@ -62,7 +62,7 @@ export class Transfer {
 
         this.walletService.transfer(input).subscribe({
             next: () => {
-                this.toastService.showSuccess(`Transfer of $${this.amount} to ${this.recipient} successful!`);
+                this.toastService.showModal(`Transfer of $${this.amount} to ${this.recipient} was successful! The funds have been moved.`, 'TRANSFER SUCCESSFUL', 'success');
                 this.isLoading = false;
                 this.router.navigate(['/transactions']);
             },

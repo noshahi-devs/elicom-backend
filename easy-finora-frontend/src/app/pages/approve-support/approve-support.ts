@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DatePipe, SlicePipe } from '@angular/common';
 import { SupportService } from '../../services/support.service';
 import { Loader } from '../../shared/loader/loader';
+import { ToastService } from '../../shared/toast/toast.service';
 
 @Component({
     selector: 'app-approve-support',
@@ -17,6 +18,7 @@ export class ApproveSupport implements OnInit {
 
     constructor(
         private supportService: SupportService,
+        private toastService: ToastService,
         private cdr: ChangeDetectorRef
     ) { }
 
@@ -49,12 +51,12 @@ export class ApproveSupport implements OnInit {
         this.isLoading = true;
         this.supportService.updateStatus(ticket.id, 'Replied', remarks).subscribe({
             next: () => {
-                alert('Ticket replied/updated successfully.');
+                this.toastService.showModal('Ticket replied/updated successfully.', 'TICKET REPLIED', 'success');
                 this.fetchTickets();
             },
             error: (err) => {
                 console.error('Failed to update ticket', err);
-                alert('Error: ' + (err.error?.error?.message || 'Failed to update'));
+                this.toastService.showModal(err.error?.error?.message || 'Failed to update ticket.', 'ERROR', 'error');
                 this.isLoading = false;
             }
         });
@@ -69,12 +71,12 @@ export class ApproveSupport implements OnInit {
         this.isLoading = true;
         this.supportService.updateStatus(ticket.id, 'Closed', remarks).subscribe({
             next: () => {
-                alert('Ticket closed.');
+                this.toastService.showModal('The ticket has been closed.', 'TICKET CLOSED', 'info');
                 this.fetchTickets();
             },
             error: (err) => {
                 console.error('Failed to close ticket', err);
-                alert('Error: ' + (err.error?.error?.message || 'Failed to close'));
+                this.toastService.showModal(err.error?.error?.message || 'Failed to close ticket.', 'ERROR', 'error');
                 this.isLoading = false;
             }
         });

@@ -47,7 +47,7 @@ export class ApproveSupportHistory implements OnInit {
         this.isLoading = true;
         this.supportService.updateStatus(ticket.id, status, remarks).subscribe({
             next: () => {
-                this.toastService.showSuccess('Ticket updated successfully!');
+                this.toastService.showModal('The ticket status and remarks have been updated successfully.', 'TICKET UPDATED', 'success');
                 this.fetchTickets();
             },
             error: (err) => {

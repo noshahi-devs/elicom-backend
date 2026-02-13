@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIf, NgFor, CurrencyPipe } from '@angular/common';
+import { NgIf, NgFor, CurrencyPipe, CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ToastService } from '../../shared/toast/toast.service';
 import { WithdrawService } from '../../services/withdraw.service';
@@ -8,7 +8,7 @@ import { CardService } from '../../services/card.service';
 
 @Component({
     selector: 'app-withdraw',
-    imports: [FormsModule, NgIf, NgFor, CurrencyPipe],
+    imports: [FormsModule, CommonModule],
     templateUrl: './withdraw.html',
     styleUrl: './withdraw.scss',
 })
@@ -18,6 +18,7 @@ export class Withdraw implements OnInit {
     userCards: any[] = [];
     selectedSourceCardId: number | null = null;
     isLoading = false;
+    exchangeRates: any = {};
 
     // Editable bank account details
     bankDetails = {
@@ -37,12 +38,22 @@ export class Withdraw implements OnInit {
 
     ngOnInit() {
         this.loadCards();
+        this.fetchExchangeRates();
+    }
+
+    fetchExchangeRates() {
+        fetch('https://open.er-api.com/v6/latest/USD')
+            .then(res => res.json())
+            .then(data => {
+                this.exchangeRates = data.rates;
+                this.cdr.detectChanges();
+            })
+            .catch(err => console.error('Withdraw: Fetch Rates Error:', err));
     }
 
     loadCards() {
         this.cardService.getUserCards().subscribe({
             next: (res) => {
-                console.log('Withdraw: Cards Response:', res);
                 this.userCards = res.result;
                 if (this.userCards.length > 0) {
                     this.selectedSourceCardId = this.userCards[0].cardId;
@@ -84,7 +95,9 @@ export class Withdraw implements OnInit {
             cardId: this.selectedSourceCardId,
             amount: this.amount,
             method: 'Bank Transfer',
-            paymentDetails: paymentDetails
+            paymentDetails: paymentDetails,
+            localAmount: this.calculateLocalAmount(),
+            localCurrency: 'PKR' // Defaulting to PKR for user's request context
         };
 
         console.log('Withdraw: Submit Payload:', input);
@@ -92,9 +105,9 @@ export class Withdraw implements OnInit {
         this.withdrawService.submitWithdrawRequest(input).subscribe({
             next: (res) => {
                 console.log('Withdraw: Submit Response:', res);
-                this.toastService.showSuccess(`Withdrawal request for $${this.amount} submitted successfully!`);
+                this.toastService.showModal(`Your withdrawal request for $${this.amount} has been submitted successfully. Our team will process it shortly.`, 'WITHDRAWAL SUBMITTED', 'success');
                 this.resetForm();
-                this.router.navigate(['/transactions']);
+                this.router.navigate(['/withdraw-history']);
             },
             error: (err) => {
                 console.error('Withdraw: Submit Error:', err);
@@ -103,6 +116,11 @@ export class Withdraw implements OnInit {
                 this.cdr.detectChanges();
             }
         });
+    }
+
+    calculateLocalAmount(): number {
+        const rate = this.exchangeRates['PKR'] || 280; // Fallback to 280 if fetch fails
+        return Math.round((this.amount || 0) * rate);
     }
 
     resetForm() {

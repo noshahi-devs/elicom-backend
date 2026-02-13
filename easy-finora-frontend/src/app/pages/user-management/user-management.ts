@@ -57,7 +57,7 @@ export class UserManagement implements OnInit {
 
         obs.subscribe({
             next: () => {
-                this.toastService.showSuccess(`User ${action}d successfully`);
+                this.toastService.showModal(`User ${user.userName} has been ${action}d successfully.`, 'USER UPDATED', 'success');
                 this.fetchUsers();
             },
             error: (err) => {

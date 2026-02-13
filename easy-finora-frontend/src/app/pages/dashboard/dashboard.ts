@@ -1,5 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { NgFor, NgIf, CurrencyPipe, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../shared/toast/toast.service';
@@ -12,12 +12,13 @@ import { Loader } from '../../shared/loader/loader';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [NgFor, NgIf, CurrencyPipe, DatePipe, RouterLink, Loader],
+  imports: [CommonModule, RouterLink], // Removed individual pipes
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
 export class Dashboard implements OnInit {
 
+  // Initial default values (will show loader)
   walletData = {
     balance: 0,
     walletId: '---',
@@ -31,8 +32,9 @@ export class Dashboard implements OnInit {
     { label: 'Active Cards', value: 0, icon: '💳', color: '#4a90e2' }
   ];
 
-  recentTransactions: any[] = [];
-  isLoading = false;
+  // Localized Loaders
+  isLoadingBalance = true;
+  isLoadingStats = true;
 
   constructor(
     private authService: AuthService,
@@ -45,50 +47,60 @@ export class Dashboard implements OnInit {
   ) { }
 
   ngOnInit() {
+    // Load live data in background, but don't block UI
     this.loadData();
   }
 
   loadData() {
-    this.isLoading = true;
-    this.cdr.detectChanges();
-
+    // 1. Load Balance & Wallet
     forkJoin({
       balance: this.cardService.getBalance(),
-      cards: this.cardService.getUserCards(),
-      history: this.transactionService.getHistory(0, 5),
       wallet: this.walletService.getMyWallet()
     }).subscribe({
       next: (res: any) => {
-        console.log('Dashboard: Loaded Data:', res);
-
-        // Update Wallet
-        this.walletData.balance = res.balance.result.totalBalance;
-        this.walletData.walletId = res.wallet.result.id || '---';
-
-        // Update Transactions
-        this.recentTransactions = res.history.result.items.map((t: any) => ({
-          id: t.id,
-          type: t.category,
-          amount: t.movementType === 'Debit' ? -t.amount : t.amount,
-          status: 'Completed',
-          date: t.creationTime
-        }));
-
-        // Update Stats
-        const credits = this.recentTransactions.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
-        const debits = Math.abs(this.recentTransactions.filter(t => t.amount < 0).reduce((sum, t) => sum + t.amount, 0));
-
-        this.stats[0].value = credits;
-        this.stats[1].value = debits;
-        this.stats[2].value = res.history.result.totalCount;
-        this.stats[3].value = res.cards.result.length;
-
-        this.isLoading = false;
+        if (res.balance?.result) {
+          this.walletData.balance = res.balance.result.totalBalance;
+        }
+        if (res.wallet?.result?.id) {
+          this.walletData.walletId = res.wallet.result.id;
+        }
+        this.isLoadingBalance = false;
         this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('Dashboard: Load Error:', err);
-        this.isLoading = false;
+        console.error('Dashboard: Balance Load Error', err);
+        this.isLoadingBalance = false;
+        this.cdr.detectChanges();
+      }
+    });
+
+    // 2. Load Stats (Cards & History Count)
+    forkJoin({
+      cards: this.cardService.getUserCards(),
+      history: this.transactionService.getHistory(0, 5) // Just for stats count
+    }).subscribe({
+      next: (res: any) => {
+        if (res.history?.result) {
+          // We only use this for stats summary now
+          const items = res.history.result.items || [];
+          const credits = items.filter((t: any) => t.movementType !== 'Debit').reduce((sum: number, t: any) => sum + t.amount, 0);
+          const debits = items.filter((t: any) => t.movementType === 'Debit').reduce((sum: number, t: any) => sum + t.amount, 0);
+
+          this.stats[0].value = credits; // Total Credits (approx from recent)
+          this.stats[1].value = debits;  // Total Debits (approx)
+          this.stats[2].value = res.history.result.totalCount;
+        }
+
+        if (res.cards?.result) {
+          this.stats[3].value = res.cards.result.length;
+        }
+
+        this.isLoadingStats = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Dashboard: Stats Load Error', err);
+        this.isLoadingStats = false;
         this.cdr.detectChanges();
       }
     });

@@ -19,5 +19,10 @@ namespace Elicom.Cards.Dto
         public DateTime AppliedDate { get; set; }
         public DateTime? ReviewedDate { get; set; }
         public string ReviewNotes { get; set; }
+        
+        // Generated Card Information (for approved applications)
+        public long? GeneratedCardId { get; set; }
+        public string GeneratedCardNumber { get; set; }
+        public CardType? GeneratedCardType { get; set; }
     }
 }

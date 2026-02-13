@@ -47,7 +47,7 @@ export class Cards implements OnInit {
         // Fetch Balance
         this.cardService.getBalance().subscribe({
             next: (res) => {
-                console.log('Cards: Balance Response:', res);
+
                 this.totalBalance = res.result.totalBalance;
                 this.cdr.detectChanges();
             },
@@ -57,7 +57,7 @@ export class Cards implements OnInit {
         // Fetch Applications
         this.cardService.getMyApplications().subscribe({
             next: (res) => {
-                console.log('Cards: Applications Response:', res);
+
                 this.cardApplications = res.result;
                 this.cdr.detectChanges();
             },
@@ -67,7 +67,7 @@ export class Cards implements OnInit {
         // Fetch Cards
         this.cardService.getUserCards().subscribe({
             next: (res) => {
-                console.log('Cards: List Response:', res);
+
                 this.activeCards = res.result.map((c: any) => ({
                     id: c.cardId,
                     cardNumber: c.cardNumber,
@@ -202,14 +202,14 @@ export class Cards implements OnInit {
                 documentType: fileExtension
             };
 
-            console.log('Cards: Submit Payload:', { ...payload, documentBase64: '[BASE64_DATA]' });
+
 
             this.cardService.submitCardApplication(payload).subscribe({
                 next: (response) => {
-                    console.log('Cards: Submit Response:', response);
-                    this.toastService.showSuccess('Application submitted successfully! Approval typically takes 5-8 hours.');
+                    this.toastService.showModal('Your card application has been submitted successfully! Approval typically takes 5-8 hours.', 'APPLICATION SUBMITTED', 'success');
                     this.closeModal();
                     this.loadData();
+                    this.cdr.detectChanges(); // Force detection for global toast trigger
                 },
                 error: (err) => {
                     console.error('Cards: Submit Error:', err);

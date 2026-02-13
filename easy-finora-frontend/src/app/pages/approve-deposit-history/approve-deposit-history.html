@@ -8,11 +8,12 @@
 
     <div class="history-table-3d">
         <div class="table-header">
-            <div class="col">User</div>
+            <div class="col">User Email</div>
             <div class="col">Amount</div>
             <div class="col">Method</div>
             <div class="col">Status</div>
             <div class="col">Date</div>
+            <div class="col">Attachment</div>
             <div class="col actions">Actions</div>
         </div>
 
@@ -21,16 +22,28 @@
         @for (deposit of deposits; track deposit.id) {
         <div class="table-row admin-row">
             <div class="col user-info">
-                <span class="user-email">{{ deposit.userName || 'Unknown' }}</span>
-                <small class="ref-id">{{ deposit.id | slice:0:8 }}</small>
+                <span class="user-email-only">{{ formatEmail(deposit.userName) }}</span>
             </div>
-            <div class="col amount">{{ deposit.amount | currency: (deposit.currency || 'USD') }}</div>
+            <div class="col amount-stack">
+                <span class="usd-amount">{{ deposit.amount | currency: (deposit.currency || 'USD') }}</span>
+                <span
+                    *ngIf="deposit.localAmount && (deposit.localAmount !== deposit.amount || deposit.localCurrency !== (deposit.currency || 'USD'))"
+                    class="local-amount">
+                    {{ deposit.localAmount | number:'1.0-2' }} {{ deposit.localCurrency }}
+                </span>
+            </div>
             <div class="col">{{ deposit.method }}</div>
             <div class="col">
                 <span class="status-badge" [ngClass]="(deposit.status || 'pending').toLowerCase()">{{ deposit.status
                     }}</span>
             </div>
             <div class="col">{{ deposit.creationTime | date: 'MMM d, y h:mm a' }}</div>
+            <div class="col proof-col">
+                <button *ngIf="deposit.hasProof" class="btn-view-proof" (click)="viewProof(deposit)">
+                    View
+                </button>
+                <span *ngIf="!deposit.hasProof" class="no-proof">No Proof</span>
+            </div>
             <div class="col actions">
                 <ng-container *ngIf="deposit.status === 'Pending'">
                     <button class="btn-approve" (click)="approve(deposit)">Approve</button>

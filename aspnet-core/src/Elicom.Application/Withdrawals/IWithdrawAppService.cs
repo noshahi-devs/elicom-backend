@@ -12,5 +12,6 @@ namespace Elicom.Withdrawals
         Task ApproveWithdraw(ApproveWithdrawRequestInput input);
         Task RejectWithdraw(ApproveWithdrawRequestInput input);
         Task<PagedResultDto<WithdrawRequestDto>> GetAllWithdrawRequests(PagedAndSortedResultRequestDto input);
+        Task<string> GetPaymentProof(long id);
     }
 }

@@ -25,8 +25,9 @@
                         </div>
                     </td>
                     <td>{{ app.contactNumber }}</td>
-                    <td><span class="badge card-type">{{ app.cardType === 0 ? 'Visa' : (app.cardType === 1 ?
-                            'MasterCard' : 'Amex') }}</span></td>
+                    <td><span class="badge card-type">{{ (app.cardType === 'Visa' || app.cardType === 0) ? 'Visa' :
+                            (app.cardType === 'MasterCard' || app.cardType === 1) ?
+                            'MasterCard' : 'Amex' }}</span></td>
                     <td>
                         <span class="badge" [ngClass]="app.status.toLowerCase()">
                             {{ app.status }}

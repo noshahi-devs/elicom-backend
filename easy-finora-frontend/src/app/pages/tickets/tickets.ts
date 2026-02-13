@@ -66,7 +66,7 @@ export class Tickets implements OnInit {
         this.isLoading = true;
         this.supportService.createTicket(ticketPayload).subscribe({
             next: () => {
-                this.toastService.showSuccess('Ticket created successfully!');
+                this.toastService.showModal('Your support ticket has been created successfully! Our team will get back to you soon.', 'TICKET CREATED', 'success');
                 this.isCreating = false;
                 this.newTicket = { title: '', priority: 'Medium', message: '' };
                 this.fetchTickets();

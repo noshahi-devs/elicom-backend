@@ -50,6 +50,8 @@ namespace Elicom.GlobalPay
                 UserId = user.Id,
                 CardId = input.CardId,
                 Amount = input.Amount,
+                LocalAmount = input.LocalAmount,
+                LocalCurrency = input.LocalCurrency,
                 Country = input.Country,
                 ProofImage = input.ProofImage,
                 Status = "Pending",
@@ -94,10 +96,36 @@ namespace Elicom.GlobalPay
                 .Take(input.MaxResultCount)
                 .ToListAsync();
 
+            var dtos = items.Select(item =>
+            {
+                var dto = ObjectMapper.Map<DepositRequestDto>(item);
+                dto.HasProof = !string.IsNullOrEmpty(item.ProofImage);
+                dto.ProofImage = null; // Don't send large base64 in list
+                
+                if (item.User != null)
+                {
+                    dto.Name = item.User.Name;
+                    dto.Surname = item.User.Surname;
+                    dto.FullName = (item.User.Name + " " + item.User.Surname).Trim();
+                    if (string.IsNullOrWhiteSpace(dto.FullName))
+                    {
+                        dto.FullName = item.User.UserName;
+                    }
+                }
+                return dto;
+            }).ToList();
+
             return new PagedResultDto<DepositRequestDto>(
                 totalCount,
-                ObjectMapper.Map<List<DepositRequestDto>>(items)
+                dtos
             );
+        }
+
+        [AbpAuthorize(PermissionNames.Pages_GlobalPay_Admin)]
+        public async Task<string> GetProofImage(Guid id)
+        {
+            var request = await _depositRequestRepository.GetAsync(id);
+            return request.ProofImage;
         }
 
         [AbpAuthorize(PermissionNames.Pages_GlobalPay_Admin)]

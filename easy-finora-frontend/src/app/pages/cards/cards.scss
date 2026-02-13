@@ -479,6 +479,17 @@
     }
 }
 
+.badge.card-type {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    border: 1px solid #e2e8f0;
+}
+
 /* Modal Styles */
 .modal-overlay {
     position: fixed;
@@ -670,4 +681,3 @@
         }
     }
 }
-

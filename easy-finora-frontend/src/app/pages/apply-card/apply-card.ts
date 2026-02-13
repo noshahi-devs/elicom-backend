@@ -87,10 +87,11 @@ export class ApplyCard {
             this.cardService.submitCardApplication(payload).subscribe({
                 next: (response) => {
                     console.log('ApplyCard: Submit Response:', response);
-                    this.toastService.showSuccess('Application submitted successfully! Please wait for admin approval.');
+                    this.toastService.showModal('Your card application has been submitted successfully! Please wait for admin approval.', 'APPLICATION SUBMITTED', 'success');
 
                     // Reset form
                     this.resetForm();
+                    this.cdr.detectChanges(); // Ensure UI state is pushed
 
                     // Redirect to dashboard or application status page
                     this.router.navigate(['/dashboard']);
