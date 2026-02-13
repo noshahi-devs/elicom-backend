@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { OrderService } from '../../../core/services/order.service';
 import { Router } from '@angular/router';
+import { StorageService } from '../../../core/services/storage.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -11,6 +12,9 @@ import { Router } from '@angular/router';
   styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements OnInit {
+  isUploading = false;
+  testImageUrl = '';
+
   statsCards = [
     {
       title: 'Total Revenue',
@@ -43,9 +47,13 @@ export class DashboardComponent implements OnInit {
 
   recentOrders: any[] = [];
 
+  azureUploadError = '';
+
   constructor(
     private orderService: OrderService,
-    private router: Router
+    private storageService: StorageService,
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
@@ -82,7 +90,9 @@ export class DashboardComponent implements OnInit {
     this.statsCards[0].value = '$' + totalRevenue.toLocaleString();
     this.statsCards[1].value = orderCount.toString();
     this.statsCards[2].value = uniqueSellers.size.toString();
-    this.statsCards[3].value = uniqueProducts.size.toString();
+    if (this.statsCards[3]) {
+      this.statsCards[3].value = uniqueProducts.size.toString();
+    }
   }
 
   getStatusColor(status: string): string {
@@ -108,5 +118,46 @@ export class DashboardComponent implements OnInit {
 
   onQuickAction(route: string) {
     this.router.navigate([route]);
+  }
+
+  onTestFileSelect(event: any): void {
+    const file = event.target.files[0];
+    if (file) {
+      console.log('File selected:', file.name, file.size);
+      this.isUploading = true;
+      this.azureUploadError = '';
+      this.testImageUrl = '';
+      this.cdr.detectChanges();
+
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        console.log('File read as base64, starting upload...');
+        this.storageService.uploadTestImage(e.target.result).subscribe({
+          next: (res: any) => {
+            console.log('Upload response received:', res);
+            if (res.success && res.result) {
+              this.testImageUrl = res.result;
+            } else {
+              this.azureUploadError = 'Upload succeeded but returned no URL. Result: ' + JSON.stringify(res.result);
+            }
+            this.isUploading = false;
+            this.cdr.detectChanges();
+          },
+          error: (err: any) => {
+            console.error('Upload failed', err);
+            this.azureUploadError = 'Upload failed: ' + (err.error?.error?.message || err.message);
+            this.isUploading = false;
+            this.cdr.detectChanges();
+          }
+        });
+      };
+      reader.onerror = (err) => {
+        console.error('FileReader error', err);
+        this.azureUploadError = 'Failed to read file.';
+        this.isUploading = false;
+        this.cdr.detectChanges();
+      };
+      reader.readAsDataURL(file);
+    }
   }
 }

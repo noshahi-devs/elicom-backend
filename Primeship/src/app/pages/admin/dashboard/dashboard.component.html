@@ -3,6 +3,50 @@
   <div class="page-header">
     <h1 class="page-title">Admin Dashboard</h1>
     <p class="page-subtitle">Sourcing Platform Oversight - Real-time Performance Metrics</p>
+
+    <!-- Azure Storage Test Section (Temporary) -->
+    <div class="azure-test-section"
+      style="margin-top: 20px; padding: 15px; background: rgba(255, 255, 255, 0.1); border-radius: 8px; border: 1px dashed rgba(255, 255, 255, 0.2);">
+      <h3 style="color: #fff; margin-bottom: 10px;">🧪 Azure Storage Test</h3>
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <input type="file" #testFileInput hidden (change)="onTestFileSelect($event)" [disabled]="isUploading">
+        <button (click)="testFileInput.click()" [disabled]="isUploading"
+          style="background: #f85606; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+          {{ isUploading ? '🚀 Uploading...' : '📁 Select & Upload' }}
+        </button>
+        <span *ngIf="isUploading" style="color: #f85606;">Processing...</span>
+      </div>
+
+      <div *ngIf="azureUploadError"
+        style="margin-top: 15px; color: #ff4d4d; background: rgba(255, 77, 77, 0.1); padding: 10px; border-radius: 4px;">
+        ❌ {{ azureUploadError }}
+      </div>
+
+      <div *ngIf="testImageUrl"
+        style="margin-top: 15px; padding: 15px; background: rgba(76, 209, 55, 0.1); border-radius: 4px; border: 1px solid rgba(76, 209, 55, 0.2);">
+        <p style="color: #4cd137; margin-bottom: 10px;">✅ Uploaded Successfully!</p>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <input type="text" [value]="testImageUrl" readonly
+            style="background: rgba(0,0,0,0.3); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 4px; font-size: 12px; width: 100%;">
+
+          <div style="display: flex; gap: 10px;">
+            <a [href]="testImageUrl" target="_blank"
+              style="background: #4cd137; color: #fff; padding: 5px 15px; border-radius: 4px; text-decoration: none; font-size: 14px; display: inline-block;">
+              View Image ↗
+            </a>
+            <button (click)="testImageUrl = ''"
+              style="background: transparent; color: #aaa; border: 1px solid #555; padding: 5px 15px; border-radius: 4px; cursor: pointer;">
+              Clear
+            </button>
+          </div>
+
+          <div style="margin-top: 10px;">
+            <img [src]="testImageUrl" alt="Test Preview"
+              style="max-width: 100%; max-height: 200px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Stats Cards Grid -->
