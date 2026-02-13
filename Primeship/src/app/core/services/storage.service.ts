@@ -7,11 +7,11 @@ import { environment } from '../../../environments/environment';
     providedIn: 'root'
 })
 export class StorageService {
-    private apiUrl = `${environment.apiUrl}/api/services/app/StorageTest`;
+    private apiUrl = `${environment.apiUrl}/api/services/app/Storage`;
 
     constructor(private http: HttpClient) { }
 
-    uploadTestImage(base64Image: string): Observable<any> {
-        return this.http.post(`${this.apiUrl}/UploadTestImage`, { base64Image });
+    uploadImage(base64Image: string, fileName?: string): Observable<any> {
+        return this.http.post(`${this.apiUrl}/UploadImage`, { base64Image, fileName });
     }
 }

@@ -130,13 +130,42 @@ export class ProductService {
   // Helper Utilities used by components
   parseImages(images: any): string[] {
     if (!images) return [];
+
+    // If it's already an array, just return it
     if (Array.isArray(images)) return images;
-    try {
-      return JSON.parse(images);
-    } catch (e) {
-      if (typeof images === 'string' && images.startsWith('http')) return [images];
-      return [];
+
+    // If it's an object with Images or images property (PascalCase vs camelCase fallback)
+    if (typeof images === 'object') {
+      const val = images.images || images.Images;
+      if (val) return this.parseImages(val);
     }
+
+    if (typeof images !== 'string') return [];
+
+    const trimmed = images.trim();
+    if (!trimmed) return [];
+
+    // Try parsing as JSON array
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) return parsed;
+      if (typeof parsed === 'string') return [parsed];
+    } catch (e) {
+      // Not valid JSON, continue to raw string checks
+    }
+
+    // Handle single URL or raw Base64 string
+    // Many older entries might just be a single string instead of a JSON array
+    if (trimmed.startsWith('http') || trimmed.startsWith('data:image')) {
+      return [trimmed];
+    }
+
+    // If it's a long string and doesn't look like JSON, it might be a raw base64 without prefix
+    if (trimmed.length > 100) {
+      return [trimmed];
+    }
+
+    return [];
   }
 
   stringifyImages(images: string[]): string {

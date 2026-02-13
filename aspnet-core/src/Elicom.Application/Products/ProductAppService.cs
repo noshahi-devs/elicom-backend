@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Elicom.Storage;
 
 namespace Elicom.Products
 {
@@ -85,7 +86,7 @@ namespace Elicom.Products
         [AbpAuthorize(PermissionNames.Pages_Products_Create)]
         public async Task<ProductDto> Create(CreateProductDto input)
         {
-            input.Images = await ProcessImages(input.Images);
+            input.Images = await ProcessImages(input.Images, input.Name);
             var product = ObjectMapper.Map<Product>(input);
             product.TenantId = input.TenantId ?? AbpSession.TenantId; // Use DTO tenantId if provided
             
@@ -96,7 +97,7 @@ namespace Elicom.Products
         [AbpAuthorize(PermissionNames.Pages_Products_Edit)]
         public async Task<ProductDto> Update(UpdateProductDto input)
         {
-            input.Images = await ProcessImages(input.Images);
+            input.Images = await ProcessImages(input.Images, input.Name);
             var product = await _productRepo.GetAsync(input.Id);
             ObjectMapper.Map(input, product);
             
@@ -113,39 +114,74 @@ namespace Elicom.Products
             return ObjectMapper.Map<ProductDto>(product);
         }
 
-        private async Task<string> ProcessImages(string imagesJson)
+        private async Task<string> ProcessImages(string imagesJson, string productName)
         {
             if (string.IsNullOrEmpty(imagesJson)) return imagesJson;
 
+            List<string> images;
+            bool isJsonArray = false;
+
             try
             {
-                var images = Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(imagesJson);
-                if (images == null) return imagesJson;
+                images = Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(imagesJson);
+                isJsonArray = images != null;
+            }
+            catch
+            {
+                // Not a JSON array, treat as a single string if it's base64 or a URL
+                images = new List<string> { imagesJson };
+            }
 
-                bool changed = false;
-                for (int i = 0; i < images.Count; i++)
+            if (images == null || images.Count == 0) return imagesJson;
+
+            bool changed = false;
+            var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+            var sanitizedName = SanitizeName(productName);
+
+            for (int i = 0; i < images.Count; i++)
+            {
+                if (IsBase64(images[i]))
                 {
-                    if (IsBase64(images[i]))
+                    try
                     {
-                        var fileName = $"prod-{Guid.NewGuid()}.png";
-                        images[i] = await _blobStorageService.UploadImageAsync(images[i], fileName);
-                        changed = true;
+                        var fileName = $"Product_{sanitizedName}_{timestamp}_{i}.png";
+                        var url = await _blobStorageService.UploadImageAsync(images[i], fileName);
+                        if (!string.IsNullOrEmpty(url))
+                        {
+                            images[i] = url;
+                            changed = true;
+                            Logger.Info($"[BlobStorage] Converted image {i} for {productName}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error($"[BlobStorage] Failed to convert image {i} for {productName}", ex);
+                        // Continue to next image even if one fails
                     }
                 }
+            }
 
-                return changed ? Newtonsoft.Json.JsonConvert.SerializeObject(images) : imagesJson;
-            }
-            catch (Exception ex)
+            if (changed)
             {
-                Logger.Error("Error processing product images", ex);
-                return imagesJson;
+                // If it was originally a JSON array, return as JSON array
+                // If it was a single string, return as JSON array anyway (standardizing)
+                return Newtonsoft.Json.JsonConvert.SerializeObject(images);
             }
+
+            return imagesJson;
         }
 
         private bool IsBase64(string base64String)
         {
             if (string.IsNullOrEmpty(base64String)) return false;
             return base64String.Contains("base64,") || base64String.Length > 1000;
+        }
+
+        private string SanitizeName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "Product";
+            string sanitized = System.Text.RegularExpressions.Regex.Replace(name, @"[^a-zA-Z0-9_\-]", "");
+            return !string.IsNullOrWhiteSpace(sanitized) ? sanitized : "Product";
         }
 
         [AbpAuthorize(PermissionNames.Pages_Products_Delete)]

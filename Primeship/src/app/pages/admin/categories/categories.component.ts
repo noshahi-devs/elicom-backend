@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef, ViewChild, ElementRef } from '@an
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CategoryService, CategoryDto, CreateCategoryDto, UpdateCategoryDto } from '../../../core/services/category.service';
+import { StorageService } from '../../../core/services/storage.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { GameLoaderComponent } from '../../../shared/components/game-loader/game-loader.component';
 
@@ -286,7 +287,8 @@ export class CategoriesComponent implements OnInit {
         const base64 = e.target.result;
         this.imagePreviewUrl = base64; // Show local preview immediately
 
-        this.storageService.uploadTestImage(base64).subscribe({
+        const categoryName = this.addCategoryForm.get('name')?.value || 'Category';
+        this.storageService.uploadImage(base64, `Category_${categoryName}`).subscribe({
           next: (res: any) => {
             if (res.success && res.result) {
               this.addCategoryForm.patchValue({ imageUrl: res.result });
@@ -326,7 +328,8 @@ export class CategoriesComponent implements OnInit {
         const base64 = e.target.result;
         this.editImagePreviewUrl = base64; // Show local preview immediately
 
-        this.storageService.uploadTestImage(base64).subscribe({
+        const categoryName = this.editCategoryForm.get('name')?.value || 'Category';
+        this.storageService.uploadImage(base64, `Category_${categoryName}`).subscribe({
           next: (res: any) => {
             if (res.success && res.result) {
               this.editCategoryForm.patchValue({ imageUrl: res.result });

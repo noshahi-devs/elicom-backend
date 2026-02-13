@@ -123,7 +123,6 @@ export class DashboardComponent implements OnInit {
   onTestFileSelect(event: any): void {
     const file = event.target.files[0];
     if (file) {
-      console.log('File selected:', file.name, file.size);
       this.isUploading = true;
       this.azureUploadError = '';
       this.testImageUrl = '';
@@ -131,14 +130,14 @@ export class DashboardComponent implements OnInit {
 
       const reader = new FileReader();
       reader.onload = (e: any) => {
-        console.log('File read as base64, starting upload...');
-        this.storageService.uploadTestImage(e.target.result).subscribe({
+        // Use generic name for dashboard uploads
+        const fileNamePrefix = `Dashboard_${file.name.split('.')[0]}`;
+        this.storageService.uploadImage(e.target.result, fileNamePrefix).subscribe({
           next: (res: any) => {
-            console.log('Upload response received:', res);
             if (res.success && res.result) {
               this.testImageUrl = res.result;
             } else {
-              this.azureUploadError = 'Upload succeeded but returned no URL. Result: ' + JSON.stringify(res.result);
+              this.azureUploadError = 'Upload succeeded but returned no URL.';
             }
             this.isUploading = false;
             this.cdr.detectChanges();

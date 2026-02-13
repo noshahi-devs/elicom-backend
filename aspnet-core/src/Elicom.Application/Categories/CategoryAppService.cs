@@ -12,8 +12,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Elicom.Storage;
 using Abp.UI;
 using Microsoft.EntityFrameworkCore;
+using Elicom.Storage;
 
 namespace Elicom.Categories
 {
@@ -57,14 +59,26 @@ namespace Elicom.Categories
                 return new ListResultDto<CategoryDto>(_mapper.Map<List<CategoryDto>>(categories));
             }
         }
-
         [AbpAuthorize(PermissionNames.Pages_Categories_Create)]
         public async Task<CategoryDto> Create(CreateCategoryDto input)
         {
             if (IsBase64(input.ImageUrl))
             {
-                var fileName = $"cat-{Guid.NewGuid()}.png";
-                input.ImageUrl = await _blobStorageService.UploadImageAsync(input.ImageUrl, fileName);
+                try
+                {
+                    var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+                    var sanitizedName = SanitizeName(input.Name);
+                    var fileName = $"Category_{sanitizedName}_{timestamp}.png";
+                    var url = await _blobStorageService.UploadImageAsync(input.ImageUrl, fileName);
+                    if (!string.IsNullOrEmpty(url))
+                    {
+                        input.ImageUrl = url;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error($"[BlobStorage] Failed to convert category image for {input.Name}", ex);
+                }
             }
 
             var entity = _mapper.Map<Category>(input);
@@ -79,8 +93,21 @@ namespace Elicom.Categories
         {
             if (IsBase64(input.ImageUrl))
             {
-                var fileName = $"cat-{Guid.NewGuid()}.png";
-                input.ImageUrl = await _blobStorageService.UploadImageAsync(input.ImageUrl, fileName);
+                try
+                {
+                    var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+                    var sanitizedName = SanitizeName(input.Name);
+                    var fileName = $"Category_{sanitizedName}_{timestamp}.png";
+                    var url = await _blobStorageService.UploadImageAsync(input.ImageUrl, fileName);
+                    if (!string.IsNullOrEmpty(url))
+                    {
+                        input.ImageUrl = url;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error($"[BlobStorage] Failed to convert category image for {input.Name}", ex);
+                }
             }
 
             var entity = await _categoryRepository.GetAsync(input.Id);
@@ -102,6 +129,14 @@ namespace Elicom.Categories
         {
             if (string.IsNullOrEmpty(base64String)) return false;
             return base64String.Contains("base64,") || base64String.Length > 1000;
+        }
+
+        private string SanitizeName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "Category";
+            // Remove invalid chars
+            string sanitized = System.Text.RegularExpressions.Regex.Replace(name, @"[^a-zA-Z0-9_\-]", "");
+            return !string.IsNullOrWhiteSpace(sanitized) ? sanitized : "Category";
         }
 
         public async Task<ListResultDto<CategoryLookupDto>> GetLookup()

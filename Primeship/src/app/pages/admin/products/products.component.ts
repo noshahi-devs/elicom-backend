@@ -172,7 +172,7 @@ export class ProductsComponent implements OnInit {
         // Add template compatibility properties
         this.products = products.map(p => ({
           ...p,
-          images: this.productService.parseImages(p.images as string), // Parse JSON string to array
+          images: this.productService.parseImages(p.images || (p as any).Images), // Parse JSON string to array with PascalCase fallback
           category: p.categoryName, // Alias
           price: p.resellerMaxPrice, // Use reseller price as base
           discountPrice: p.discountPercentage > 0 ? p.resellerMaxPrice - (p.resellerMaxPrice * p.discountPercentage / 100) : 0,
@@ -339,7 +339,11 @@ export class ProductsComponent implements OnInit {
       this.imagePreviewUrls.push(base64);
       this.cdr.detectChanges();
 
-      this.storageService.uploadTestImage(base64).subscribe({
+      const productName = this.addProductModalVisible
+        ? this.addProductForm.get('name')?.value
+        : this.editProductForm.get('name')?.value;
+
+      this.storageService.uploadImage(base64, `Product_${productName || 'Product'}`).subscribe({
         next: (res: any) => {
           if (res.success && res.result) {
             this.imageUrls[index] = res.result;
