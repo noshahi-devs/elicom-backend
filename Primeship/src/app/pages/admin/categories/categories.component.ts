@@ -56,6 +56,7 @@ export class CategoriesComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private categoryService: CategoryService,
+    private storageService: StorageService,
     private toastService: ToastService,
     private cdr: ChangeDetectorRef
   ) { }
@@ -278,12 +279,32 @@ export class CategoriesComponent implements OnInit {
       }
 
       this.isUploading = true;
+      this.cdr.detectChanges();
+
       const reader = new FileReader();
       reader.onload = (e: any) => {
-        this.imagePreviewUrl = e.target.result;
-        this.addCategoryForm.patchValue({ imageUrl: e.target.result });
-        this.isUploading = false;
-        this.cdr.detectChanges();
+        const base64 = e.target.result;
+        this.imagePreviewUrl = base64; // Show local preview immediately
+
+        this.storageService.uploadTestImage(base64).subscribe({
+          next: (res: any) => {
+            if (res.success && res.result) {
+              this.addCategoryForm.patchValue({ imageUrl: res.result });
+              this.imagePreviewUrl = res.result; // Update preview with Azure URL
+              this.toastService.showSuccess('Image uploaded to Azure successfully');
+            } else {
+              this.toastService.showError('Image uploaded but no URL returned. Using local copy for now.');
+            }
+            this.isUploading = false;
+            this.cdr.detectChanges();
+          },
+          error: (err: any) => {
+            console.error('Azure upload failed', err);
+            this.toastService.showError('Failed to upload image to Azure. Using local copy.');
+            this.isUploading = false;
+            this.cdr.detectChanges();
+          }
+        });
       };
       reader.readAsDataURL(file);
     }
@@ -298,12 +319,32 @@ export class CategoriesComponent implements OnInit {
       }
 
       this.isUploading = true;
+      this.cdr.detectChanges();
+
       const reader = new FileReader();
       reader.onload = (e: any) => {
-        this.editImagePreviewUrl = e.target.result;
-        this.editCategoryForm.patchValue({ imageUrl: e.target.result });
-        this.isUploading = false;
-        this.cdr.detectChanges();
+        const base64 = e.target.result;
+        this.editImagePreviewUrl = base64; // Show local preview immediately
+
+        this.storageService.uploadTestImage(base64).subscribe({
+          next: (res: any) => {
+            if (res.success && res.result) {
+              this.editCategoryForm.patchValue({ imageUrl: res.result });
+              this.editImagePreviewUrl = res.result; // Update preview with Azure URL
+              this.toastService.showSuccess('Image updated in Azure successfully');
+            } else {
+              this.toastService.showError('Image uploaded but no URL returned.');
+            }
+            this.isUploading = false;
+            this.cdr.detectChanges();
+          },
+          error: (err: any) => {
+            console.error('Azure upload failed', err);
+            this.toastService.showError('Failed to upload image to Azure.');
+            this.isUploading = false;
+            this.cdr.detectChanges();
+          }
+        });
       };
       reader.readAsDataURL(file);
     }

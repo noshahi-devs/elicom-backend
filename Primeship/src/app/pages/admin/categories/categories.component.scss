@@ -190,12 +190,52 @@ $shadow-medium: rgba(0, 0, 0, 0.15);
   }
 
   // Category Thumbnail
+  .category-image-wrapper {
+    position: relative;
+    width: 60px;
+    height: 60px;
+
+    &:hover {
+      .view-image-link {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    .view-image-link {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      @include transition();
+      z-index: 2;
+
+      &:hover {
+        background: $primary-color;
+      }
+
+      i {
+        font-size: 0.9rem;
+      }
+    }
+  }
+
   .category-thumb {
     width: 60px;
     height: 60px;
     object-fit: cover;
     border-radius: 8px;
     border: 1px solid $border-color;
+    display: block;
   }
 
   .no-image {
@@ -210,6 +250,39 @@ $shadow-medium: rgba(0, 0, 0, 0.15);
     font-size: 0.75rem;
     color: $text-light;
     text-align: center;
+  }
+
+  // Azure Status UI
+  .azure-status {
+    margin-top: 0.75rem;
+    padding: 0.6rem 0.85rem;
+    background: #ecfdf5;
+    border-radius: 8px;
+    border: 1px solid #d1fae5;
+    @include flex-center(0.75rem);
+    justify-content: space-between;
+
+    .status-success {
+      color: #065f46;
+      font-size: 0.85rem;
+      font-weight: 500;
+      @include flex-center(0.4rem);
+
+      i {
+        font-size: 1rem;
+      }
+    }
+
+    .view-link {
+      color: $primary-color;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
   }
 
 

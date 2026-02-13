@@ -62,8 +62,15 @@
         <tr *ngFor="let category of paginatedCategories">
           <td>{{ category.id }}</td>
           <td>
-            <img *ngIf="category.imageUrl" [src]="category.imageUrl" alt="{{ category.name }}" class="category-thumb" />
-            <div *ngIf="!category.imageUrl" class="no-image">No Image</div>
+            <div class="category-image-wrapper">
+              <img *ngIf="category.imageUrl" [src]="category.imageUrl" alt="{{ category.name }}"
+                class="category-thumb" />
+              <div *ngIf="!category.imageUrl" class="no-image">No Image</div>
+              <a *ngIf="category.imageUrl && category.imageUrl.startsWith('http')" [href]="category.imageUrl"
+                target="_blank" class="view-image-link" title="View Full Image">
+                <i class="pi pi-external-link"></i>
+              </a>
+            </div>
           </td>
           <td>{{ category.name }}</td>
           <td>
@@ -139,6 +146,10 @@
               <span>Uploading...</span>
             </div>
           </div>
+          <div *ngIf="imagePreviewUrl && imagePreviewUrl.startsWith('http')" class="azure-status">
+            <span class="status-success"><i class="pi pi-check-circle"></i> Hosted on Azure</span>
+            <a [href]="imagePreviewUrl" target="_blank" class="view-link">View Full Image ↗</a>
+          </div>
         </div>
 
         <div class="form-group checkbox">
@@ -201,6 +212,10 @@
               <i class="pi pi-spin pi-spinner"></i>
               <span>Uploading...</span>
             </div>
+          </div>
+          <div *ngIf="editImagePreviewUrl && editImagePreviewUrl.startsWith('http')" class="azure-status">
+            <span class="status-success"><i class="pi pi-check-circle"></i> Hosted on Azure</span>
+            <a [href]="editImagePreviewUrl" target="_blank" class="view-link">View Full Image ↗</a>
           </div>
         </div>
 

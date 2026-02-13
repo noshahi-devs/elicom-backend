@@ -22,15 +22,18 @@ namespace Elicom.Categories
         private readonly IRepository<Category, Guid> _categoryRepository;
         private readonly IRepository<Product, Guid> _productRepository;
         private readonly IMapper _mapper;
+        private readonly IBlobStorageService _blobStorageService;
 
         public CategoryAppService(
             IRepository<Category, Guid> categoryRepository,
             IRepository<Product, Guid> productRepository,
-            IMapper mapper)
+            IMapper mapper,
+            IBlobStorageService blobStorageService)
         {
             _categoryRepository = categoryRepository;
             _productRepository = productRepository;
             _mapper = mapper;
+            _blobStorageService = blobStorageService;
         }
 
         [AbpAuthorize(PermissionNames.Pages_Categories)]
@@ -58,6 +61,12 @@ namespace Elicom.Categories
         [AbpAuthorize(PermissionNames.Pages_Categories_Create)]
         public async Task<CategoryDto> Create(CreateCategoryDto input)
         {
+            if (IsBase64(input.ImageUrl))
+            {
+                var fileName = $"cat-{Guid.NewGuid()}.png";
+                input.ImageUrl = await _blobStorageService.UploadImageAsync(input.ImageUrl, fileName);
+            }
+
             var entity = _mapper.Map<Category>(input);
             entity.TenantId = input.TenantId ?? AbpSession.TenantId;
             
@@ -68,6 +77,12 @@ namespace Elicom.Categories
         [AbpAuthorize(PermissionNames.Pages_Categories_Edit)]
         public async Task<CategoryDto> Update(UpdateCategoryDto input)
         {
+            if (IsBase64(input.ImageUrl))
+            {
+                var fileName = $"cat-{Guid.NewGuid()}.png";
+                input.ImageUrl = await _blobStorageService.UploadImageAsync(input.ImageUrl, fileName);
+            }
+
             var entity = await _categoryRepository.GetAsync(input.Id);
             _mapper.Map(input, entity);
             
@@ -81,6 +96,12 @@ namespace Elicom.Categories
             }
 
             return _mapper.Map<CategoryDto>(entity);
+        }
+
+        private bool IsBase64(string base64String)
+        {
+            if (string.IsNullOrEmpty(base64String)) return false;
+            return base64String.Contains("base64,") || base64String.Length > 1000;
         }
 
         public async Task<ListResultDto<CategoryLookupDto>> GetLookup()

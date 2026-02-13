@@ -19,10 +19,14 @@ namespace Elicom.Products
     public class ProductAppService : ElicomAppServiceBase, IProductAppService
     {
         private readonly IRepository<Product, Guid> _productRepo;
+        private readonly IBlobStorageService _blobStorageService;
 
-        public ProductAppService(IRepository<Product, Guid> productRepo)
+        public ProductAppService(
+            IRepository<Product, Guid> productRepo,
+            IBlobStorageService blobStorageService)
         {
             _productRepo = productRepo;
+            _blobStorageService = blobStorageService;
         }
 
         public async Task<ListResultDto<ProductDto>> GetAll()
@@ -81,6 +85,7 @@ namespace Elicom.Products
         [AbpAuthorize(PermissionNames.Pages_Products_Create)]
         public async Task<ProductDto> Create(CreateProductDto input)
         {
+            input.Images = await ProcessImages(input.Images);
             var product = ObjectMapper.Map<Product>(input);
             product.TenantId = input.TenantId ?? AbpSession.TenantId; // Use DTO tenantId if provided
             
@@ -91,6 +96,7 @@ namespace Elicom.Products
         [AbpAuthorize(PermissionNames.Pages_Products_Edit)]
         public async Task<ProductDto> Update(UpdateProductDto input)
         {
+            input.Images = await ProcessImages(input.Images);
             var product = await _productRepo.GetAsync(input.Id);
             ObjectMapper.Map(input, product);
             
@@ -105,6 +111,41 @@ namespace Elicom.Products
             }
 
             return ObjectMapper.Map<ProductDto>(product);
+        }
+
+        private async Task<string> ProcessImages(string imagesJson)
+        {
+            if (string.IsNullOrEmpty(imagesJson)) return imagesJson;
+
+            try
+            {
+                var images = Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(imagesJson);
+                if (images == null) return imagesJson;
+
+                bool changed = false;
+                for (int i = 0; i < images.Count; i++)
+                {
+                    if (IsBase64(images[i]))
+                    {
+                        var fileName = $"prod-{Guid.NewGuid()}.png";
+                        images[i] = await _blobStorageService.UploadImageAsync(images[i], fileName);
+                        changed = true;
+                    }
+                }
+
+                return changed ? Newtonsoft.Json.JsonConvert.SerializeObject(images) : imagesJson;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Error processing product images", ex);
+                return imagesJson;
+            }
+        }
+
+        private bool IsBase64(string base64String)
+        {
+            if (string.IsNullOrEmpty(base64String)) return false;
+            return base64String.Contains("base64,") || base64String.Length > 1000;
         }
 
         [AbpAuthorize(PermissionNames.Pages_Products_Delete)]

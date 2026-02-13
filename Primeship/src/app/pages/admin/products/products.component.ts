@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ProductService, ProductDto, CreateProductDto, UpdateProductDto } from '../../../core/services/product.service';
 import { CategoryService, CategoryDto } from '../../../core/services/category.service';
+import { StorageService } from '../../../core/services/storage.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { GameLoaderComponent } from '../../../shared/components/game-loader/game-loader.component';
 
@@ -54,12 +55,14 @@ export class ProductsComponent implements OnInit {
   // Template compatibility properties
   imagePreviewUrls: string[] = []; // For template compatibility
   isUploading = false; // For template compatibility
+  uploadingIndexes = new Set<number>();
 
 
   constructor(
     private fb: FormBuilder,
     public productService: ProductService,
     private categoryService: CategoryService,
+    private storageService: StorageService,
     private toastService: ToastService,
     private cdr: ChangeDetectorRef
   ) { }
@@ -324,14 +327,39 @@ export class ProductsComponent implements OnInit {
       return;
     }
 
+    const index = this.imageUrls.length;
+    this.uploadingIndexes.add(index);
     this.isUploading = true;
+    this.cdr.detectChanges();
+
     const reader = new FileReader();
     reader.onload = (e: any) => {
-      const result = e.target.result;
-      this.imageUrls.push(result);
-      this.imagePreviewUrls.push(result);
-      this.isUploading = false;
+      const base64 = e.target.result;
+      this.imageUrls.push(base64); // Temporary local preview
+      this.imagePreviewUrls.push(base64);
       this.cdr.detectChanges();
+
+      this.storageService.uploadTestImage(base64).subscribe({
+        next: (res: any) => {
+          if (res.success && res.result) {
+            this.imageUrls[index] = res.result;
+            this.imagePreviewUrls[index] = res.result;
+            this.toastService.showSuccess(`Image ${index + 1} uploaded to Azure`);
+          } else {
+            this.toastService.showError(`Image ${index + 1} uploaded but no URL returned.`);
+          }
+          this.uploadingIndexes.delete(index);
+          this.isUploading = this.uploadingIndexes.size > 0;
+          this.cdr.detectChanges();
+        },
+        error: (err: any) => {
+          console.error('Azure upload failed', err);
+          this.toastService.showError(`Failed to upload image ${index + 1} to Azure.`);
+          this.uploadingIndexes.delete(index);
+          this.isUploading = this.uploadingIndexes.size > 0;
+          this.cdr.detectChanges();
+        }
+      });
     };
     reader.readAsDataURL(file);
   }

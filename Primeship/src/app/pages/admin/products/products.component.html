@@ -258,9 +258,26 @@
             </div>
 
             <div class="image-previews" *ngIf="imagePreviewUrls.length > 0">
-              <div class="image-preview" *ngFor="let image of imagePreviewUrls; let i = index">
+              <div class="image-preview" *ngFor="let image of imagePreviewUrls; let i = index"
+                [ngClass]="{'uploading': uploadingIndexes.has(i)}">
                 <img [src]="image" [alt]="'Product image ' + (i + 1)" />
-                <button type="button" class="remove-image" (click)="removeImage(i)">
+
+                <div *ngIf="uploadingIndexes.has(i)" class="upload-loading">
+                  <i class="pi pi-spin pi-spinner"></i>
+                  <span>Uploading...</span>
+                </div>
+
+                <div *ngIf="image && image.startsWith('http')" class="azure-badge">
+                  <i class="pi pi-check-circle"></i> Azure
+                </div>
+
+                <a *ngIf="image && image.startsWith('http')" [href]="image" target="_blank" class="image-view-link"
+                  (click)="$event.stopPropagation()">
+                  View ↗
+                </a>
+
+                <button type="button" class="remove-image" (click)="removeImage(i)"
+                  [disabled]="uploadingIndexes.has(i)">
                   <i class="pi pi-trash"></i>
                 </button>
               </div>
@@ -388,9 +405,26 @@
           <h4><i class="pi pi-image"></i> Product Images</h4>
           <div class="image-upload-area" (paste)="onPaste($event)" tabindex="0">
             <div class="image-previews">
-              <div class="image-preview" *ngFor="let image of imagePreviewUrls; let i = index">
+              <div class="image-preview" *ngFor="let image of imagePreviewUrls; let i = index"
+                [ngClass]="{'uploading': uploadingIndexes.has(i)}">
                 <img [src]="image" [alt]="'Product image ' + (i + 1)" />
-                <button type="button" class="remove-image" (click)="removeImage(i)">
+
+                <div *ngIf="uploadingIndexes.has(i)" class="upload-loading">
+                  <i class="pi pi-spin pi-spinner"></i>
+                  <span>Uploading...</span>
+                </div>
+
+                <div *ngIf="image && image.startsWith('http')" class="azure-badge">
+                  <i class="pi pi-check-circle"></i> Azure
+                </div>
+
+                <a *ngIf="image && image.startsWith('http')" [href]="image" target="_blank" class="image-view-link"
+                  (click)="$event.stopPropagation()">
+                  View ↗
+                </a>
+
+                <button type="button" class="remove-image" (click)="removeImage(i)"
+                  [disabled]="uploadingIndexes.has(i)">
                   <i class="pi pi-trash"></i>
                 </button>
               </div>
