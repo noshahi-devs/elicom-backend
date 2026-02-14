@@ -56,24 +56,16 @@
   padding: 1.5rem 1.5rem 1rem;
 }
 
-.logo-3d {
-  width: 40px;
-  height: 40px;
-  background: #F85606;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  animation: float 3s ease-in-out infinite;
+.logo-sidebar-img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  transform-style: preserve-3d;
-}
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.1));
 
-.logo-3d:hover {
-  transform: scale(1.1) rotateY(180deg);
-  box-shadow: 0 8px 24px rgba(248, 86, 6, 0.3);
+  &:hover {
+    transform: scale(1.1) rotate(5deg);
+  }
 }
 
 .brand-info h3 {

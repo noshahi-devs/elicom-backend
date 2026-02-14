@@ -63,12 +63,9 @@ import { PublicService } from '../../core/services/public.service';
       <header class="main-header">
         <div class="header-container">
           <div class="header-content">
-            <!-- Premium Brand Logo -->
+            <!-- Premium Brand Logo with Ship Icon -->
             <a routerLink="/" class="brand-logo">
-              <div class="logo-icon">
-                <span class="logo-letter">P</span>
-                <div class="logo-shine"></div>
-              </div>
+              <img src="/logo.png" alt="Prime Ship" class="logo-ship-img">
               <div class="brand-text">
                 <span class="brand-name">PRIME</span>
                 <span class="brand-tagline">SHIP</span>
@@ -210,7 +207,10 @@ import { PublicService } from '../../core/services/public.service';
         <div class="footer-container">
           <div class="footer-grid">
             <div class="footer-col footer-brand-col">
-              <h3 class="footer-brand">PRIME<span>SHIP</span></h3>
+              <div class="footer-brand-logo">
+                <img src="/logo.png" alt="Prime Ship" class="footer-logo-img">
+                <h3 class="footer-brand">PRIME<span>SHIP</span></h3>
+              </div>
               <p class="footer-desc">Your trusted global marketplace for premium products.</p>
             </div>
             <div class="footer-col">
@@ -262,6 +262,7 @@ import { PublicService } from '../../core/services/public.service';
                 <span class="payment-badge mastercard">Mastercard</span>
                 <span class="payment-badge paypal">PayPal</span>
                 <span class="payment-badge amex">AMEX</span>
+                <a href="https://easyfinora.com" target="_blank" class="payment-badge easy-finora">Easy Finora</a>
               </div>
             </div>
           </div>
@@ -438,40 +439,10 @@ import { PublicService } from '../../core/services/public.service';
       transform: scale(1.05);
     }
     
-    .logo-icon { 
-      width: 52px; 
-      height: 52px; 
-      background: linear-gradient(135deg, #F85606 0%, #FF2E00 100%); 
-      border-radius: 14px; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      box-shadow: 0 8px 20px rgba(248, 86, 6, 0.35);
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .logo-letter { 
-      color: #fff; 
-      font-weight: 900; 
-      font-size: 28px;
-      position: relative;
-      z-index: 2;
-    }
-    
-    .logo-shine {
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
-      animation: shine 3s infinite;
-    }
-    
-    @keyframes shine {
-      0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-      100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    .logo-ship-img { 
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
     }
     
     .brand-text { 
@@ -1012,11 +983,25 @@ import { PublicService } from '../../core/services/public.service';
       flex-direction: column;
     }
     
+    
+    .footer-brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 1rem;
+    }
+
+    .footer-logo-img {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+    }
+
     .footer-brand { 
       font-size: 1.5rem; 
       font-weight: 800; 
       color: #1a202c; 
-      margin-bottom: 1rem;
+      margin: 0;
     }
     .footer-brand span { 
       color: var(--primary); 
@@ -1119,7 +1104,8 @@ import { PublicService } from '../../core/services/public.service';
       letter-spacing: 0.5px;
       border: 1.5px solid;
       transition: all 0.2s;
-      cursor: default;
+      cursor: pointer;
+      text-decoration: none;
     }
     
     .payment-badge.visa {
@@ -1144,6 +1130,12 @@ import { PublicService } from '../../core/services/public.service';
       background: #006FCF;
       color: #fff;
       border-color: #006FCF;
+    }
+
+    .payment-badge.easy-finora {
+      background: #22c55e;
+      color: #fff;
+      border-color: #22c55e;
     }
     
     .payment-badge:hover {

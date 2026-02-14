@@ -66,12 +66,10 @@ export class CheckoutComponent implements OnInit {
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      phone: ['', Validators.required],
-      address: ['', Validators.required],
-      city: ['', Validators.required],
-      state: ['', Validators.required],
-      country: ['United States', Validators.required],
+      address1: ['', Validators.required],
+      address2: [''],
       zipCode: ['', Validators.required],
+      city: ['', Validators.required],
       paymentMethod: ['mastercard', Validators.required],
       cardNumber: [''],
       expiryDate: [''],
@@ -215,12 +213,16 @@ export class CheckoutComponent implements OnInit {
       this.cdr.detectChanges();
 
       const val = this.checkoutForm.value;
+      const fullAddress = val.address2
+        ? `${val.address1}, ${val.address2}, ${val.city}, ${val.zipCode}`
+        : `${val.address1}, ${val.city}, ${val.zipCode}`;
+
       const orderInput: CreateWholesaleOrderInput = {
         items: this.cartItems.map(item => ({
           productId: item.product.id,
           quantity: item.quantity
         })),
-        shippingAddress: `${val.address}, ${val.city}, ${val.state} ${val.zipCode}, ${val.country}`,
+        shippingAddress: fullAddress,
         customerName: `${val.firstName} ${val.lastName}`,
         paymentMethod: val.paymentMethod,
         cardNumber: val.cardNumber,

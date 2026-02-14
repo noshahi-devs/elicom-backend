@@ -49,9 +49,19 @@ interface CategoryWithCount extends CategoryDto {
         </div>
 
         <ng-template #loader>
-          <div class="loader-container">
-            <i class="pi pi-spin pi-spinner"></i>
-            <p>Curating collections...</p>
+          <div class="loader-container interactive-loader">
+            <div class="luxury-loader">
+              <div class="loader-ring"></div>
+              <div class="loader-ring"></div>
+              <div class="loader-ring"></div>
+              <i class="pi pi-compass loader-icon"></i>
+            </div>
+            <div class="loader-text-wrap">
+              <p class="loader-msg">{{ loadingMessage }}</p>
+              <div class="loader-progress">
+                <div class="progress-bar"></div>
+              </div>
+            </div>
           </div>
         </ng-template>
 
@@ -219,18 +229,97 @@ interface CategoryWithCount extends CategoryDto {
       transform: translateX(8px);
     }
 
-    .loader-container, .no-data {
+    /* Interactive Loader Styles */
+    .loader-container {
+      padding: 8rem 0;
+      text-align: center;
+      background: #fff;
+      border-radius: 32px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.05);
+      border: 1px solid rgba(248, 86, 6, 0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .luxury-loader {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .loader-ring {
+      position: absolute;
+      border: 2px solid var(--primary);
+      border-radius: 50%;
+      opacity: 0;
+      animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+    }
+
+    .loader-ring:nth-child(2) { animation-delay: 0.5s; }
+    .loader-ring:nth-child(3) { animation-delay: 1s; }
+
+    @keyframes pulse-ring {
+      0% { transform: scale(0.3); opacity: 0.8; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+
+    .loader-icon {
+      font-size: 2.5rem;
+      color: var(--primary);
+      filter: drop-shadow(0 0 10px rgba(248, 86, 6, 0.3));
+      animation: bounce-rotate 3s ease-in-out infinite;
+    }
+
+    @keyframes bounce-rotate {
+      0%, 100% { transform: translateY(0) rotate(0); }
+      50% { transform: translateY(-10px) rotate(15deg); }
+    }
+
+    .loader-text-wrap {
+      max-width: 300px;
+    }
+
+    .loader-msg {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 1.5rem;
+      height: 1.5em;
+      transition: all 0.5s;
+    }
+
+    .loader-progress {
+      width: 200px;
+      height: 4px;
+      background: #f1f5f9;
+      border-radius: 2px;
+      overflow: hidden;
+      margin: 0 auto;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), #ff916a);
+      animation: progress-slide 1.5s infinite linear;
+      transform-origin: 0% 50%;
+    }
+
+    @keyframes progress-slide {
+      0% { transform: translate(-100%); }
+      100% { transform: translate(100%); }
+    }
+
+    .no-data {
       padding: 6rem;
       text-align: center;
       background: #fff;
       border-radius: 24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-    }
-
-    .loader-container i {
-      font-size: 3rem;
-      color: var(--primary);
-      margin-bottom: 1.5rem;
     }
 
     .no-data i {
@@ -243,6 +332,17 @@ interface CategoryWithCount extends CategoryDto {
 export class CategoryListComponent implements OnInit {
   categories: CategoryWithCount[] = [];
   isLoading = true;
+  loadingMessage = 'Loading categories...';
+  private messageInterval: any;
+  private readonly loadingMessages = [
+    'Loading categories...',
+    'Finding top items...',
+    'Best products for you...',
+    'Checking latest stocks...',
+    'Getting things ready...',
+    'Almost there...'
+  ];
+
 
   constructor(
     private publicService: PublicService,
@@ -251,6 +351,7 @@ export class CategoryListComponent implements OnInit {
 
   ngOnInit(): void {
     this.isLoading = true;
+    this.startLoadingMessages();
     forkJoin({
       categories: this.publicService.getCategories(),
       products: this.publicService.getProducts()
@@ -264,13 +365,34 @@ export class CategoryListComponent implements OnInit {
           ).length
         }));
         this.isLoading = false;
+        this.stopLoadingMessages();
       },
       error: (err) => {
         console.error('CategoryListComponent: Error fetching data', err);
         this.isLoading = false;
+        this.stopLoadingMessages();
       }
     });
   }
+
+  ngOnDestroy(): void {
+    this.stopLoadingMessages();
+  }
+
+  private startLoadingMessages(): void {
+    let index = 0;
+    this.messageInterval = setInterval(() => {
+      index = (index + 1) % this.loadingMessages.length;
+      this.loadingMessage = this.loadingMessages[index];
+    }, 2500);
+  }
+
+  private stopLoadingMessages(): void {
+    if (this.messageInterval) {
+      clearInterval(this.messageInterval);
+    }
+  }
+
 
   onCategoryClick(cat: CategoryDto): void {
     this.router.navigate(['/category', cat.slug]);

@@ -17,4 +17,5 @@ export interface Product {
   isFeatured?: boolean;
   isNew?: boolean;
   brand?: string;
+  sku?: string;
 }

@@ -681,3 +681,83 @@
   opacity: 0.6;
   margin-top: 8px;
 }
+
+/* 7. Skeleton / Loading State Styles */
+.skeleton-pulse {
+  background: #f7fafc;
+  background: linear-gradient(90deg, #f7fafc 0%, #edf2f7 50%, #f7fafc 100%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 2s infinite linear;
+  border-radius: var(--radius-md);
+}
+
+.skeleton-text {
+  height: 12px;
+  background: #f7fafc;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  animation: skeleton-pulse 1.5s infinite ease-in-out;
+
+  &.title {
+    width: 80%;
+    height: 18px;
+  }
+
+  &.category {
+    width: 40%;
+    height: 10px;
+    margin-bottom: 5px;
+  }
+
+  &.price {
+    width: 30%;
+  }
+
+  &.mx-auto {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.luxury-categories.skeleton-load {
+  .circle-wrap {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    margin-bottom: 15px;
+  }
+}
+
+.products-grid-3d {
+  .pro-card-premium {
+    .pro-img-box.skeleton-pulse {
+      aspect-ratio: 1;
+      border-radius: var(--radius-md);
+      margin-bottom: 15px;
+    }
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes skeleton-pulse {
+  0% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.6;
+  }
+}

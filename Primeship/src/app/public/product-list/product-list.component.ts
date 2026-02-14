@@ -26,7 +26,18 @@ export class ProductListComponent implements OnInit, OnDestroy {
   filteredProducts: any[] = [];
   categories: CategoryDto[] = [];
   categoriesWithCount: any[] = [];
-  isLoading = false; // Initialized to false, will be set true in the stream
+  isLoading = false;
+  loadingMessage = 'Loading products...';
+  private messageInterval: any;
+  private readonly loadingMessages = [
+    'Loading products...',
+    'Finding top items...',
+    'Best products for you...',
+    'Checking latest stocks...',
+    'Getting things ready...',
+    'Almost there...'
+  ];
+
 
   // Selection
   selectedProducts: Set<string> = new Set();
@@ -74,9 +85,11 @@ export class ProductListComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$),
         switchMap(([params, queryParams]) => {
           this.isLoading = true;
+          this.startLoadingMessages();
           this.products = [];
           this.filteredProducts = [];
           this.cdr.detectChanges();
+
 
           const slug = params.get('slug') || '';
           const q = queryParams.get('q') || '';
@@ -96,6 +109,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
           return this.publicService.getProductsByCategory(slug, q).pipe(
             finalize(() => {
               this.isLoading = false;
+              this.stopLoadingMessages();
               this.cdr.detectChanges();
             }),
             catchError(err => {
@@ -153,6 +167,7 @@ export class ProductListComponent implements OnInit, OnDestroy {
       originalPrice: p.resellerMaxPrice ?? p.ResellerMaxPrice ?? 0,
       discount: p.discountPercentage ?? p.DiscountPercentage ?? 0,
       brand: p.brandName || p.BrandName || 'Generic',
+      sku: p.sku || p.Sku,
       reviewCount: Math.floor(Math.random() * 80) + 12
     }));
 
@@ -226,7 +241,12 @@ export class ProductListComponent implements OnInit, OnDestroy {
   // Actions
   // -------------------------------------------------------------------------
   onProductClick(p: any): void {
-    this.router.navigate(['/product', p.slug]);
+    this.router.navigate(['/product', p.slug], {
+      queryParams: {
+        id: p.id,
+        sku: p.sku || p.Sku
+      }
+    });
   }
 
   onCategoryToggle(cat: any): void {
@@ -271,4 +291,21 @@ export class ProductListComponent implements OnInit, OnDestroy {
     this.selectedProducts.clear();
     this.isAllSelected = false;
   }
+  private startLoadingMessages(): void {
+    if (this.messageInterval) return;
+    let index = 0;
+    this.messageInterval = setInterval(() => {
+      index = (index + 1) % this.loadingMessages.length;
+      this.loadingMessage = this.loadingMessages[index];
+      this.cdr.detectChanges();
+    }, 2500);
+  }
+
+  private stopLoadingMessages(): void {
+    if (this.messageInterval) {
+      clearInterval(this.messageInterval);
+      this.messageInterval = null;
+    }
+  }
 }
+

@@ -29,6 +29,7 @@ interface Product {
   isFeatured?: boolean;
   isNew?: boolean;
   brand?: string;
+  sku?: string;
 }
 
 @Component({
@@ -43,7 +44,9 @@ export class HomeComponent implements OnInit {
   categories: Category[] = [];
   featuredProducts: Product[] = [];
   latestProducts: Product[] = [];
-  isLoading = true;
+  isCategoriesLoading = true;
+  isProductsLoading = true;
+
   flashSaleTime = { hours: 12, minutes: 45, seconds: 30 };
 
   // Pagination for products
@@ -62,9 +65,16 @@ export class HomeComponent implements OnInit {
   ngOnInit(): void {
     console.log('🏠 HomeComponent initialized');
     this.startCountdown();
+    this.loadContent();
+  }
+
+  private loadContent(): void {
+    // Both triggered but independent
     this.loadCategories();
     this.loadProducts();
   }
+
+
 
   private startCountdown() {
     this.ngZone.runOutsideAngular(() => {
@@ -88,59 +98,69 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  private loadCategories(): void {
+  private async loadCategories(): Promise<void> {
     console.log('📥 Loading categories from Public API...');
+    this.isCategoriesLoading = true;
 
-    this.publicService.getCategories().subscribe({
-      next: (categories: CategoryDto[]) => {
-        console.log('✅ Categories loaded:', categories.length);
+    return new Promise((resolve) => {
+      this.publicService.getCategories().subscribe({
+        next: (categories: CategoryDto[]) => {
+          console.log('✅ Categories loaded:', categories.length);
 
-        // Convert CategoryDto to Category for template compatibility
-        this.categories = categories
-          .slice(0, 6) // Show first 6 categories
-          .map(c => ({
-            id: c.id,
-            name: c.name,
-            slug: c.slug,
-            image: c.imageUrl || this.getDefaultCategoryImage(c.name)
-          }));
+          this.categories = categories
+            .slice(0, 6)
+            .map(c => ({
+              id: c.id,
+              name: c.name,
+              slug: c.slug,
+              image: c.imageUrl || this.getDefaultCategoryImage(c.name)
+            }));
 
-        console.log('✅ Categories formatted for display:', this.categories.length);
-      },
-      error: (error) => {
-        console.error('❌ Error loading categories:', error);
-        // Fallback to default categories if API fails
-        this.loadDefaultCategories();
-      }
+          this.isCategoriesLoading = false;
+          resolve();
+        },
+        error: (error) => {
+          console.error('❌ Error loading categories:', error);
+          this.loadDefaultCategories();
+          this.isCategoriesLoading = false;
+          resolve();
+        }
+      });
+
     });
   }
 
-  private loadProducts(): void {
+
+  private async loadProducts(): Promise<void> {
     console.log('📥 Loading products from Public API...');
+    this.isProductsLoading = true;
 
-    this.publicService.getProducts().subscribe({
-      next: (products: ProductDto[]) => {
-        console.log('✅ Products loaded:', products.length);
+    return new Promise((resolve) => {
+      // Request minimum products (8) for fastest initial load
+      this.publicService.getProducts(undefined, 0, 8).subscribe({
+        next: (products: ProductDto[]) => {
+          console.log('✅ Products loaded:', products.length);
 
-        // Convert ProductDto to Product for template compatibility
-        const convertedProducts = products
-          .map(p => this.convertProductDto(p));
+          const convertedProducts = products
+            .map(p => this.convertProductDto(p));
 
-        // Split into featured and latest
-        this.featuredProducts = convertedProducts.slice(0, 20); // First 20 as featured
-        this.latestProducts = convertedProducts.slice(0, 20).reverse(); // Reverse for latest
+          this.featuredProducts = convertedProducts;
+          this.latestProducts = [...convertedProducts].reverse();
 
-        this.isLoading = false;
-        console.log('✅ Products formatted - Featured:', this.featuredProducts.length, 'Latest:', this.latestProducts.length);
-      },
-      error: (error) => {
-        console.error('❌ Error loading products:', error);
-        this.isLoading = false;
-        // Fallback to default products if API fails
-        this.loadDefaultProducts();
-      }
+          this.isProductsLoading = false;
+          resolve();
+        },
+        error: (error) => {
+          console.error('❌ Error loading products:', error);
+          this.loadDefaultProducts();
+          this.isProductsLoading = false;
+          resolve();
+        }
+      });
+
     });
   }
+
 
   private convertProductDto(dto: ProductDto): Product {
     // Parse images
@@ -168,7 +188,8 @@ export class HomeComponent implements OnInit {
       inStock: dto.stockQuantity > 0,
       isFeatured: true,
       isNew: true,
-      brand: dto.brandName || 'Generic'
+      brand: dto.brandName || 'Generic',
+      sku: dto.sku
     };
   }
 
@@ -272,6 +293,12 @@ export class HomeComponent implements OnInit {
 
   onProductSelected(product: Product): void {
     console.log('📦 Product selected:', product.name);
-    this.router.navigate(['/product', product.slug]);
+    // Include ID and SKU in query params for more robust fetching in detail page
+    this.router.navigate(['/product', product.slug], {
+      queryParams: {
+        id: product.id,
+        sku: product.sku
+      }
+    });
   }
 }

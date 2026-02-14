@@ -78,12 +78,21 @@
       <section class="main-content">
         <div class="products-grid-container">
           <!-- Loading State -->
-          <div class="loading-wrapper" *ngIf="isLoading">
-            <div class="loader-content">
-              <i class="pi pi-spin pi-spinner spinner-icon"></i>
-              <p class="loading-text">Curating best collection...</p>
+          <div class="loading-wrapper interactive-loader" *ngIf="isLoading">
+            <div class="luxury-loader">
+              <div class="loader-ring"></div>
+              <div class="loader-ring"></div>
+              <div class="loader-ring"></div>
+              <i class="pi pi-compass loader-icon"></i>
+            </div>
+            <div class="loader-text-wrap">
+              <p class="loader-msg">{{ loadingMessage }}</p>
+              <div class="loader-progress">
+                <div class="progress-bar"></div>
+              </div>
             </div>
           </div>
+
 
           <!-- Empty State -->
           <div class="empty-state-card" *ngIf="!isLoading && filteredProducts.length === 0">

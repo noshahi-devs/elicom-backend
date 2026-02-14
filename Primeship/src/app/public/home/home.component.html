@@ -1,6 +1,6 @@
 <div class="home-view animate-fade">
 
-    <!-- 1. Stunning Hero Section -->
+    <!-- 1. Stunning Hero Section (Static) -->
     <section class="hero-wrapper">
         <div class="container">
             <div class="hero-glass-card shadow-premium">
@@ -26,7 +26,7 @@
         </div>
     </section>
 
-    <!-- 2. Trust & Features Bar -->
+    <!-- 2. Trust & Features Bar (Static) -->
     <section class="trust-bar">
         <div class="container">
             <div class="trust-content">
@@ -62,7 +62,7 @@
         </div>
     </section>
 
-    <!-- 3. Luxury Category Navigation -->
+    <!-- 3. Luxury Category Navigation (Dynamic) -->
     <section class="section-premium pt-0">
         <div class="container">
             <div class="section-head">
@@ -73,7 +73,15 @@
                 <a routerLink="/categories" class="view-more-btn">All Categories <i class="pi pi-chevron-right"></i></a>
             </div>
 
-            <div class="luxury-categories">
+            <!-- Loader for Categories -->
+            <div *ngIf="isCategoriesLoading" class="luxury-categories skeleton-load">
+                <div class="luxury-cat-card" *ngFor="let i of [1,2,3,4,5,6]">
+                    <div class="circle-wrap skeleton-pulse"></div>
+                    <div class="skeleton-text title mx-auto"></div>
+                </div>
+            </div>
+
+            <div *ngIf="!isCategoriesLoading" class="luxury-categories">
                 <div class="luxury-cat-card" *ngFor="let cat of categories" (click)="onCategorySelected(cat)">
                     <div class="circle-wrap">
                         <div class="img-inner">
@@ -86,7 +94,7 @@
         </div>
     </section>
 
-    <!-- 4. Flash Sales (The "Wow" Grid) -->
+    <!-- 4. Flash Sales (The "Wow" Grid) (Dynamic) -->
     <section class="section-premium bg-white">
         <div class="container">
             <div class="section-head">
@@ -104,7 +112,19 @@
                 <a routerLink="/shop" class="view-more-btn">View All Deals</a>
             </div>
 
-            <div class="products-grid-3d">
+            <!-- Loader for Products -->
+            <div *ngIf="isProductsLoading" class="products-grid-3d">
+                <div class="pro-card-premium" *ngFor="let i of [1,2,3,4]">
+                    <div class="pro-img-box skeleton-pulse"></div>
+                    <div class="pro-info">
+                        <div class="skeleton-text category"></div>
+                        <div class="skeleton-text title"></div>
+                        <div class="skeleton-text price"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div *ngIf="!isProductsLoading" class="products-grid-3d">
                 <div class="pro-card-premium" *ngFor="let product of visibleFeaturedProducts"
                     (click)="onProductSelected(product)">
                     <div class="pro-img-box">
@@ -149,13 +169,14 @@
                     <span>Show More Products</span>
                     <i class="pi pi-chevron-down"></i>
                 </button>
-                <p class="text-muted small">Showing {{ visibleFeaturedCount }} of {{ featuredProducts.length }} products
+                <p class="text-muted small">Showing {{ visibleFeaturedCount }} of {{ featuredProducts.length }}
+                    products
                 </p>
             </div>
         </div>
     </section>
 
-    <!-- 5. Promo Banner (Amazon Inspired) -->
+    <!-- 5. Promo Banner (Amazon Inspired) (Static) -->
     <section class="section-premium pt-0">
         <div class="container">
             <div class="promo-banner-luxury"
@@ -170,7 +191,7 @@
         </div>
     </section>
 
-    <!-- 6. Featured Carousel / CTA Section -->
+    <!-- 6. Featured Carousel / CTA Section (Static) -->
     <section class="section-premium">
         <div class="container">
             <div
@@ -186,7 +207,7 @@
         </div>
     </section>
 
-    <!-- 6. Recommended For You -->
+    <!-- 6. Recommended For You (Dynamic) -->
     <section class="section-premium pt-0">
         <div class="container">
             <div class="section-head">
@@ -196,7 +217,18 @@
                 </div>
             </div>
 
-            <div class="products-grid-3d">
+            <!-- Loader for Products -->
+            <div *ngIf="isProductsLoading" class="products-grid-3d">
+                <div class="pro-card-premium" *ngFor="let i of [1,2,3,4]">
+                    <div class="pro-img-box skeleton-pulse"></div>
+                    <div class="pro-info">
+                        <div class="skeleton-text title"></div>
+                        <div class="skeleton-text price"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div *ngIf="!isProductsLoading" class="products-grid-3d">
                 <div class="pro-card-premium" *ngFor="let product of visibleLatestProducts"
                     (click)="onProductSelected(product)">
                     <div class="pro-img-box">
@@ -233,9 +265,9 @@
                     <span>Show More Products</span>
                     <i class="pi pi-chevron-down"></i>
                 </button>
-                <p class="text-muted small">Showing {{ visibleLatestCount }} of {{ latestProducts.length }} products</p>
+                <p class="text-muted small">Showing {{ visibleLatestCount }} of {{ latestProducts.length }} products
+                </p>
             </div>
         </div>
     </section>
-
 </div>

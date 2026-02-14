@@ -118,7 +118,6 @@
           <th>Date</th>
           <th>Status</th>
           <th>Total</th>
-          <th>My Revenue</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -148,12 +147,7 @@
           <td class="total-cell">
             {{ formatPrice(getOrderTotal(order)) }}
           </td>
-          <td class="earnings-cell">
-            <span class="earnings-amount"
-              [ngClass]="order.sellerEarnings && order.sellerEarnings > 0 ? 'positive' : 'zero'">
-              {{ formatPrice(order.sellerEarnings || 0) }}
-            </span>
-          </td>
+
           <td class="actions">
             <button type="button" class="btn small primary icon-only" (click)="openView(order)" title="View Details">
               <i class="pi pi-eye"></i>

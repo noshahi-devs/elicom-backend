@@ -293,7 +293,7 @@ export class CategoriesComponent implements OnInit {
             if (res.success && res.result) {
               this.addCategoryForm.patchValue({ imageUrl: res.result });
               this.imagePreviewUrl = res.result; // Update preview with Azure URL
-              this.toastService.showSuccess('Image uploaded to Azure successfully');
+              this.toastService.showSuccess('Image uploaded successfully');
             } else {
               this.toastService.showError('Image uploaded but no URL returned. Using local copy for now.');
             }

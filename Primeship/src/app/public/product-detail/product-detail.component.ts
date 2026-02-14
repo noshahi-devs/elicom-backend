@@ -3,9 +3,10 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
+import { Observable } from 'rxjs';
 import { PublicService } from '../../core/services/public.service';
 import { ProductService, ProductDto } from '../../core/services/product.service';
-import { Product3DViewerComponent } from '../../shared/components/product-3d-viewer/product-3d-viewer.component';
+
 import { Product } from '../../core/models';
 import { AuthService } from '../../core/services/auth.service';
 import { CartService } from '../../core/services/cart.service';
@@ -14,7 +15,8 @@ import { ToastService } from '../../core/services/toast.service';
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, ButtonModule, FormsModule, ReactiveFormsModule, Product3DViewerComponent],
+  imports: [CommonModule, ButtonModule, FormsModule, ReactiveFormsModule],
+
   templateUrl: './product-detail.component.html',
   styleUrls: ['./product-detail.component.scss']
 })
@@ -27,56 +29,24 @@ export class ProductDetailComponent implements OnInit {
   isLoading = true;
 
   // New properties for enhanced functionality
-  activeVisualTab: 'images' | '3d' = 'images';
+
   activeTab: 'description' | 'specifications' | 'reviews' = 'description';
 
   // Gallery items for product images
-  galleryItems = [
-    { image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop&crop=center', title: 'Main View' },
-    { image: 'https://images.unsplash.com/photo-1484704849700-f032be544e0e?w=400&h=300&fit=crop&crop=center', title: 'Side View' },
-    { image: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop&crop=center', title: 'Back View' },
-    { image: 'https://images.unsplash.com/photo-1484704849700-f032be544e0e?w=400&h=300&fit=crop&crop=center', title: 'Detail View' }
-  ];
+  galleryItems: { image: string, title: string }[] = [];
 
   // Key features for the product
-  keyFeatures = [
-    { icon: 'pi pi-volume-up', text: 'Industry-leading noise cancellation' },
-    { icon: 'pi pi-clock', text: '30-hour battery life' },
-    { icon: 'pi pi-hand', text: 'Touch sensor controls' },
-    { icon: 'pi pi-compress', text: 'Foldable design' },
-    { icon: 'pi pi-bluetooth', text: 'Bluetooth 5.0 connectivity' },
-    { icon: 'pi pi-shield', text: 'Premium build quality' }
-  ];
+  keyFeatures: { icon: string, text: string }[] = [];
 
   // Default specifications if none provided
-  defaultSpecs = [
-    { key: 'Brand', value: 'AudioTech' },
-    { key: 'Model', value: 'WH-1000XM4' },
-    { key: 'Battery Life', value: '30 hours' },
-    { key: 'Connectivity', value: 'Bluetooth 5.0' },
-    { key: 'Weight', value: '254g' },
-    { key: 'Driver Size', value: '40mm' },
-    { key: 'Frequency Response', value: '4Hz-40,000Hz' },
-    { key: 'Charging Time', value: '3 hours' }
-  ];
+  specs: { key: string, value: string }[] = [];
+
 
   sizes: string[] = [];
   colors: string[] = [];
 
-  reviews = [
-    {
-      author: 'John Doe',
-      rating: 5,
-      date: '2024-01-15',
-      content: 'Great product! Exactly as described and fast shipping.'
-    },
-    {
-      author: 'Jane Smith',
-      rating: 4,
-      date: '2024-01-10',
-      content: 'Good quality, but sizing runs a bit small.'
-    }
-  ];
+  reviews = [];
+
 
   // Additional properties for related products
   isLoadingMore = false;
@@ -97,101 +67,135 @@ export class ProductDetailComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadProduct();
-    this.loadRelatedProducts();
   }
 
+
   private loadProduct(): void {
+    const id = this.route.snapshot.queryParamMap.get('id');
+    const sku = this.route.snapshot.queryParamMap.get('sku');
     const slug = this.route.snapshot.paramMap.get('slug');
-    if (!slug) {
+
+    if (!id && !sku && !slug) {
       this.router.navigate(['/home']);
       return;
     }
 
     this.isLoading = true;
-    this.publicService.getProductBySlug(slug).subscribe({
-      next: (dto: ProductDto) => {
-        // Parse images
-        const images = this.productService.parseImages(dto.images);
 
-        // Parse sizes and colors
-        this.sizes = this.productService.parseSizeOptions(dto.sizeOptions);
-        this.colors = this.productService.parseColorOptions(dto.colorOptions);
+    // Strategy: Try looking up by ID (Marketplace/Supplier direct), then SKU, then Slug.
+    // All these now hit the clean PublicAppService which has no "Store" dependency.
+    let lookup$: Observable<ProductDto>;
 
-        // Map DTO to template model
-        const originalPrice = dto.resellerMaxPrice;
-        const discount = dto.discountPercentage || 0;
-        // Update: Use SupplierPrice (Wholesale) instead of retail discounted price
-        const price = (dto as any).SupplierPrice || dto.supplierPrice || 0;
+    if (id) {
+      lookup$ = this.publicService.getProductDetail(id);
+    } else if (sku) {
+      lookup$ = this.publicService.getProductBySku(sku);
+    } else {
+      lookup$ = this.publicService.getProductBySlug(slug!);
+    }
 
-        this.product = {
-          id: dto.id,
-          name: dto.name,
-          slug: dto.slug,
-          price: price,
-          originalPrice: originalPrice,
-          discount: discount,
-          rating: 4.8,
-          reviewCount: 156,
-          image: images.length > 0 ? images[0] : 'https://via.placeholder.com/400',
-          images: images.length > 0 ? images : ['https://via.placeholder.com/400'],
-          inStock: dto.stockQuantity > 0,
-          description: dto.description,
-          fullDescription: dto.description,
-          category: dto.categoryName,
-          specifications: [
-            { key: 'SKU', value: dto.sku },
-            { key: 'Brand', value: dto.brandName || 'Store Brand' },
-            { key: 'Stock', value: `${dto.stockQuantity} units` }
-          ],
-          brand: dto.brandName || (dto as any).BrandName || 'Generic'
-        };
-
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('❌ Error loading product:', error);
-        this.router.navigate(['/home']);
-      }
+    lookup$.subscribe({
+      next: (dto: ProductDto) => this.handleProductLoadSuccess(dto),
+      error: (err) => this.handleLoadError(err)
     });
   }
 
-  private loadRelatedProducts(): void {
-    // TODO: Replace with actual API call
-    this.relatedProducts = [
-      {
-        id: 'prod-2',
-        name: 'Wireless Earbuds Pro',
-        slug: 'wireless-earbuds-pro',
-        price: 199,
-        originalPrice: 249,
-        discount: 20,
-        rating: 4,
-        reviewCount: 156,
-        image: 'https://images.unsplash.com/photo-1588423771023-c78a61730421?w=400&h=400&fit=crop&crop=center',
-        images: [
-          'https://images.unsplash.com/photo-1588423771023-c78a61730421?w=400&h=400&fit=crop&crop=center'
-        ],
-        inStock: true,
-        category: 'electronics'
-      },
-      {
-        id: 'prod-3',
-        name: 'Bluetooth Speaker',
-        slug: 'bluetooth-speaker',
-        price: 89,
-        originalPrice: 129,
-        discount: 31,
-        rating: 4,
-        reviewCount: 89,
-        image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400&h=400&fit=crop&crop=center',
-        images: [
-          'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400&h=400&fit=crop&crop=center'
-        ],
-        inStock: true,
-        category: 'electronics'
-      }
+  private handleProductLoadSuccess(dto: ProductDto): void {
+    // Robust normalization for ProductDto (Public Marketplace Model)
+    const id = dto.id;
+    const name = dto.name;
+    const description = dto.description || '';
+    const brand = dto.brandName || 'Generic';
+
+    // Image handling
+    const images = this.productService.parseImages(dto.images);
+    const mainImage = images.length > 0 ? images[0] : `https://placehold.co/600x400/f85606/ffffff?text=${encodeURIComponent(name)}`;
+
+    // Price and Stock handling
+    const price = (dto as any).supplierPrice || (dto as any).SupplierPrice || 0;
+    const originalPrice = (dto as any).resellerMaxPrice || (dto as any).ResellerMaxPrice || price;
+    const discount = (dto as any).discountPercentage || (dto as any).DiscountPercentage || 0;
+    const inStock = dto.stockQuantity > 0;
+    const sku = dto.sku || (dto as any).SKU || 'N/A';
+
+    // Options mapping
+    this.sizes = this.productService.parseSizeOptions(dto.sizeOptions);
+    this.colors = this.productService.parseColorOptions(dto.colorOptions);
+
+    // Populate Gallery/Specs as before
+    this.galleryItems = images.map((img: string, idx: number) => ({
+      image: img,
+      title: idx === 0 ? 'Main View' : `Detail View ${idx}`
+    }));
+
+    const categoryName = dto.categoryName || 'Marketplace';
+
+    this.specs = [
+      { key: 'SKU', value: sku },
+      { key: 'Brand', value: brand },
+      { key: 'Category', value: categoryName },
+      { key: 'Origin', value: 'Global' }
     ];
+
+    this.keyFeatures = [
+      { icon: 'pi pi-check-circle', text: 'Verified Authenticity' },
+      { icon: 'pi pi-box', text: 'Wholesale Ready' },
+      { icon: 'pi pi-globe', text: 'Global Sourcing' }
+    ];
+
+    this.product = {
+      id,
+      name,
+      slug: dto.slug || '',
+      price,
+      originalPrice,
+      discount,
+      rating: 4.8,
+      reviewCount: Math.floor(Math.random() * 50) + 10,
+      image: mainImage,
+      images,
+      inStock,
+      description,
+      fullDescription: description,
+      category: categoryName,
+      specifications: this.specs,
+      brand,
+      sku
+    };
+
+    this.isLoading = false;
+    if (dto.categoryId) {
+      this.loadRelatedProducts(dto.categoryId);
+    }
   }
+
+  private handleLoadError(error: any): void {
+    console.error('❌ Error loading product:', error);
+    this.router.navigate(['/home']);
+  }
+
+  private loadRelatedProducts(categoryId: string): void {
+    this.publicService.getProductsByCategory('', undefined, categoryId).subscribe({
+      next: (products) => {
+
+        this.relatedProducts = (products || [])
+          .filter(p => p.slug !== this.product?.slug)
+          .slice(0, 4)
+          .map(p => ({
+            ...p,
+            images: this.productService.parseImages(p.images),
+            image: this.getFirstImage(p),
+            price: (p as any).SupplierPrice || p.supplierPrice || 0,
+            originalPrice: p.resellerMaxPrice || 0,
+            discount: p.discountPercentage || 0,
+            reviewCount: Math.floor(Math.random() * 20) + 5
+          }));
+
+      },
+      error: (err) => console.error('Error loading related products:', err)
+    });
+  }
+
 
   increaseQuantity(): void {
     if (this.quantity < 10) {
@@ -249,11 +253,17 @@ export class ProductDetailComponent implements OnInit {
     }
   }
 
+  getFirstImage(p: any): string {
+    const images = this.productService.parseImages(p.images);
+    return images.length > 0 ? images[0] : `https://placehold.co/600x400/f85606/ffffff?text=${encodeURIComponent(p.name)}`;
+  }
+
   selectImage(product: Product, imageIndex: number): void {
     if (product.images && product.images[imageIndex]) {
       product.image = product.images[imageIndex];
     }
   }
+
 
   buyNow(): void {
     if (this.product) {

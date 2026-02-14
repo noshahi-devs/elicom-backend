@@ -36,10 +36,10 @@ export class PublicService {
         return this.cachedCategories$;
     }
 
-    getProducts(searchTerm?: string): Observable<ProductDto[]> {
-        let url = this.apiUrl + '/GetProducts';
+    getProducts(searchTerm?: string, skipCount: number = 0, maxResultCount: number = 8): Observable<ProductDto[]> {
+        let url = this.apiUrl + '/GetProducts?skipCount=' + skipCount + '&maxResultCount=' + maxResultCount;
         if (searchTerm) {
-            url += `?searchTerm=${encodeURIComponent(searchTerm)}`;
+            url += `&searchTerm=${encodeURIComponent(searchTerm)}`;
         }
         return this.http.get<any>(url, {
             headers: new HttpHeaders({ 'Abp-TenantId': this.tenantId })
@@ -55,17 +55,68 @@ export class PublicService {
         );
     }
 
+
     getProductBySlug(slug: string): Observable<ProductDto> {
         return this.http.get<any>(`${this.apiUrl}/GetProductBySlug?slug=${slug}`, {
             headers: new HttpHeaders({ 'Abp-TenantId': this.tenantId })
         }).pipe(
+            map(res => {
+                const result = res?.result || res;
+                if (!result || result.error) throw new Error('Product not found');
+                return result;
+            }),
+            catchError(err => {
+                console.warn(`⚠️ GetProductBySlug failed for [${slug}]. Attempting fallback search...`);
+
+                // Fallback: Search for the product using the slug (replacing dashes with spaces)
+                const searchTerm = slug.replace(/-/g, ' ');
+                return this.getProducts(searchTerm).pipe(
+                    map(products => {
+                        const found = products.find(p => p.slug === slug || p.name?.toLowerCase() === searchTerm.toLowerCase());
+                        if (found) return found;
+                        throw err; // Re-throw original error if fallback also fails
+                    })
+                );
+            })
+        );
+    }
+
+    getProductDetail(productId: string): Observable<any> {
+        return this.http.get<any>(`${this.apiUrl}/GetProductById?productId=${productId}`, {
+            headers: new HttpHeaders({ 'Abp-TenantId': this.tenantId })
+        }).pipe(
             map(res => res?.result || res),
             catchError(err => {
-                console.error('PublicService: GetProductBySlug Error', err);
+                console.error(`❌ getProductDetail failed for ID [${productId}]`, err);
                 return throwError(() => err);
             })
         );
     }
+
+    getProductFromMarketplace(productId: string): Observable<any> {
+        return this.http.get<any>(`${environment.apiUrl}/api/services/app/ResellerMarketplace/GetProductDetails?productId=${productId}`, {
+            headers: new HttpHeaders({ 'Abp-TenantId': this.tenantId })
+        }).pipe(
+            map(res => res?.result || res),
+            catchError(err => {
+                console.error(`❌ getProductFromMarketplace failed for ID [${productId}]`, err);
+                return throwError(() => err);
+            })
+        );
+    }
+
+    getProductBySku(sku: string): Observable<ProductDto> {
+        return this.http.get<any>(`${this.apiUrl}/GetProductBySku?sku=${sku}`, {
+            headers: new HttpHeaders({ 'Abp-TenantId': this.tenantId })
+        }).pipe(
+            map(res => res?.result || res),
+            catchError(err => {
+                console.error(`❌ getProductBySku failed for SKU [${sku}]`, err);
+                return throwError(() => err);
+            })
+        );
+    }
+
 
     getProductsByCategory(slug: string, searchTerm?: string, categoryId?: string): Observable<ProductDto[]> {
         let url = `${this.apiUrl}/GetProductsByCategory?`;
