@@ -75,6 +75,7 @@ export class RegisterComponent implements OnInit {
       this.cdr.detectChanges();
 
       const registerData = {
+        fullName: this.registerForm.value.name,
         emailAddress: this.registerForm.value.email,
         password: this.registerForm.value.password,
         phoneNumber: this.registerForm.value.phone,

@@ -54,9 +54,14 @@ export class AuthService {
      * Register a new Prime Ship Seller
      */
     registerSeller(input: any): Observable<any> {
+        let fullName = input.fullName;
+        if (!fullName && (input.firstName || input.lastName)) {
+            fullName = `${input.firstName || ''} ${input.lastName || ''}`.trim();
+        }
+
         const data = {
             ...input,
-            fullName: input.fullName || `${input.firstName} ${input.lastName}`
+            fullName: fullName || input.emailAddress || 'User'
         };
         return this.http.post(
             `${this.apiUrl}/services/app/Account/RegisterPrimeShipSeller`,
@@ -71,9 +76,14 @@ export class AuthService {
      * Register a new Prime Ship Customer
      */
     registerCustomer(input: any): Observable<any> {
+        let fullName = input.fullName;
+        if (!fullName && (input.firstName || input.lastName)) {
+            fullName = `${input.firstName || ''} ${input.lastName || ''}`.trim();
+        }
+
         const data = {
             ...input,
-            fullName: input.fullName || `${input.firstName} ${input.lastName}`
+            fullName: fullName || input.emailAddress || 'User'
         };
         return this.http.post(
             `${this.apiUrl}/services/app/Account/RegisterPrimeShipCustomer`,
