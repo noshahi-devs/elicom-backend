@@ -71,7 +71,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
 
                 // Get ClientRootAddress from platform-specific settings
                 string clientRootAddressSetting = "App.SmartStore.ClientRootAddress";
-                if (platform == "Prime Ship") clientRootAddressSetting = "App.PrimeShip.ClientRootAddress";
+                if (platform == "Prime Ship" || platform == "Prime Ship UK") clientRootAddressSetting = "App.PrimeShip.ClientRootAddress";
                 if (platform == "Easy Finora") clientRootAddressSetting = "App.EasyFinora.ClientRootAddress";
 
                 var clientRootAddress = (await SettingManager.GetSettingValueAsync(clientRootAddressSetting))?.TrimEnd('/');
@@ -79,7 +79,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
 
                 string redirectPath = $"{clientRootAddress}/account/login";
             if (platform == "Smart Store") redirectPath = $"{clientRootAddress}/smartstore/auth";
-            if (platform == "Prime Ship") redirectPath = $"{clientRootAddress}/primeship/auth";
+            if (platform == "Prime Ship" || platform == "Prime Ship UK") redirectPath = $"{clientRootAddress}/auth/login";
             if (platform == "Easy Finora") redirectPath = $"{clientRootAddress}/auth";
 
                 return new ContentResult
@@ -537,13 +537,13 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
     [HttpPost]
     public async Task RegisterPrimeShipSeller(RegisterPrimeShipInput input)
     {
-        await RegisterPlatformUser(input.EmailAddress, 2, StaticRoleNames.Tenants.Seller, "Seller", "Prime Ship", "PS", "#007bff", input.Password, input.Country, input.PhoneNumber, input.FullName);
+        await RegisterPlatformUser(input.EmailAddress, 2, StaticRoleNames.Tenants.Seller, "Seller", "Prime Ship UK", "PS", "#f85606", input.Password, input.Country, input.PhoneNumber, input.FullName);
     }
 
     [HttpPost]
     public async Task RegisterPrimeShipCustomer(RegisterPrimeShipInput input)
     {
-        await RegisterPlatformUser(input.EmailAddress, 2, StaticRoleNames.Tenants.Buyer, "Customer", "Prime Ship", "PS", "#007bff", input.Password, input.Country, input.PhoneNumber, input.FullName);
+        await RegisterPlatformUser(input.EmailAddress, 2, StaticRoleNames.Tenants.Buyer, "Customer", "Prime Ship UK", "PS", "#f85606", input.Password, input.Country, input.PhoneNumber, input.FullName);
     }
 
     [HttpPost]
