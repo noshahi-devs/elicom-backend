@@ -187,20 +187,20 @@ public class TenantRoleAndUserBuilder
         string roleToAssign = StaticRoleNames.Tenants.Reseller;
 
         // Determine test user based on tenant
-        if (_tenantId == 1) // Smart Store
+        if (_tenantId == 1) // Prime Ship
         {
             // Create Admin
-            CreateUser("admin@worldcartus.com", "SS_admin@worldcartus.com", StaticRoleNames.Tenants.Admin, passwordHasher);
+            CreateUser("admin@primeshipuk.com", "PS_admin@primeshipuk.com", StaticRoleNames.Tenants.Admin, passwordHasher);
 
             // Create Seller
-            testEmail = "noshahis@worldcart.com";
-            userName = "SS_noshahis@worldcart.com";
+            testEmail = "noshahis@primeshipuk.com";
+            userName = "PS_noshahis@primeshipuk.com";
             roleToAssign = StaticRoleNames.Tenants.Reseller;
             CreateUser(testEmail, userName, roleToAssign, passwordHasher);
 
             // Create Customer
-            testEmail = "noshahic@worldcart.com";
-            userName = "SS_noshahic@worldcart.com";
+            testEmail = "noshahic@primeshipuk.com";
+            userName = "PS_noshahic@primeshipuk.com";
             roleToAssign = StaticRoleNames.Tenants.Buyer;
             CreateUser(testEmail, userName, roleToAssign, passwordHasher);
         }

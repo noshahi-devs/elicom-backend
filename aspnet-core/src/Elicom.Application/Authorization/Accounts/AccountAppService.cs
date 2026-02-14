@@ -140,7 +140,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             string platformName = "Elicom";
             string brandColor = "#007bff";
 
-            if (tenantId == 2) { platformName = "Smart Store"; brandColor = "#ff4500"; }
+            if (tenantId == 1 || tenantId == 2) { platformName = "Prime Ship UK"; brandColor = "#f85606"; }
             else if (tenantId == 3) { platformName = "Easy Finora"; brandColor = "#1de016"; }
             else if (tenantId == 4) { platformName = "Easy Finora"; brandColor = "#28a745"; }
 
@@ -654,13 +654,9 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             {
                 senderEmail = "DoNotReply@easyfinora.com";
             }
-            else if (fromName.Contains("Prime Ship"))
+            else if (fromName.Contains("Prime Ship") || fromName.Contains("Primeship") || fromName.Contains("Smart Store"))
             {
                 senderEmail = "DoNotReply@primeshipuk.com";
-            }
-            else if (fromName.Contains("Smart Store"))
-            {
-                senderEmail = "DoNotReply@smartstoreus.com";
             }
         }
         else if (!string.IsNullOrEmpty(fromEmail) && (fromEmail.Contains("easyfinora.com") || fromEmail.Contains("globalpay")))

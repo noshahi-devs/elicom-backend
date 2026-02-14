@@ -103,8 +103,8 @@ namespace Elicom.Stores
             }
             
             var recipientEmail = !string.IsNullOrEmpty(store.SupportEmail) ? store.SupportEmail : owner.EmailAddress;
-            var brandColor = "#1de016"; // Success Green
-            var platformName = "Smart Store";
+            var brandColor = "#f85606"; // Prime Ship Orange
+            var platformName = "Primeship UK";
 
             var emailBody = $@"
                 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #ffffff;'>
