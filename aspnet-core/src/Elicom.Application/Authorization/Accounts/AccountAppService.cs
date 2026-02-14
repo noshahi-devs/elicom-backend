@@ -627,15 +627,33 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             user.IsActive = true;
             await _userManager.UpdateAsync(user);
 
+            // 2. Ensure Role exists for this tenant before assigning
+            var role = await RoleManager.RoleExistsAsync(roleName);
+            if (!role)
+            {
+                Logger.Info($"Role {roleName} not found for tenant {tenantId}. Creating it now.");
+                var newRole = new Elicom.Authorization.Roles.Role(tenantId, roleName, roleName) { IsStatic = true };
+                await RoleManager.CreateAsync(newRole);
+            }
+
             // Set/Update roles within the tenant context
             var currentRoles = await _userManager.GetRolesAsync(user);
             if (!currentRoles.Contains(roleName))
             {
                 await _userManager.AddToRoleAsync(user, roleName);
+                Logger.Info($"Assigned role {roleName} to user {userName}");
             }
 
-            // Send Email using unified helper
-            await SendVerificationEmail(user, platformName, brandColor);
+            // 3. Send Verification Email (Wrapped in try-catch to prevent registration failure on email error)
+            try
+            {
+                await SendVerificationEmail(user, platformName, brandColor);
+            }
+            catch (Exception emailEx)
+            {
+                Logger.Error($"Registration succeeded but verification email failed for {email}: {emailEx.Message}");
+                // We DON'T throw here, so the user registration still completes.
+            }
         }
     }
 
