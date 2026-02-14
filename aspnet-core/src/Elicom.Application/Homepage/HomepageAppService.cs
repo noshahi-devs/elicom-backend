@@ -97,7 +97,7 @@ namespace Elicom.Homepage
             }
         }
 
-        public async Task<ProductDetailDto> GetProductDetail(Guid productId, Guid storeProductId)
+        public async Task<ProductDetailDto> GetProductDetail(Guid productId, Guid? storeProductId = null)
         {
             using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
             {
@@ -111,9 +111,13 @@ namespace Elicom.Homepage
                 if (product == null)
                     throw new UserFriendlyException("Product not found.");
 
-                var storeProduct = product.StoreProducts.FirstOrDefault(sp => sp.Id == storeProductId);
+                // If storeProductId is not provided, take the first available listing
+                var storeProduct = storeProductId.HasValue 
+                    ? product.StoreProducts.FirstOrDefault(sp => sp.Id == storeProductId.Value)
+                    : product.StoreProducts.FirstOrDefault();
+
                 if (storeProduct == null)
-                    throw new UserFriendlyException("Product is not available in the selected store.");
+                    throw new UserFriendlyException("Product is not available in any store.");
 
                 // Other stores selling the same product
                 var otherStores = product.StoreProducts

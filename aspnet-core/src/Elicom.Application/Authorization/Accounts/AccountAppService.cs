@@ -182,7 +182,111 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
         //         </div>
         //     </div>";
 
-        var emailBody = $@"
+        // Platform-specific email templates for complete brand separation
+        string emailBody;
+
+        if (platformName == "Prime Ship")
+        {
+            // PRIME SHIP UK - Compact Professional Theme (Orange to match website)
+            emailBody = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+</head>
+<body style='margin:0; padding:0; background-color:#fff5f0; font-family: ""Segoe UI"", Tahoma, Geneva, Verdana, sans-serif;'>
+
+    <table width='100%' cellpadding='0' cellspacing='0' style='background-color:#fff5f0; padding:30px 20px;'>
+        <tr>
+            <td align='center'>
+
+                <table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff; border-radius:10px; overflow:hidden; box-shadow:0 4px 20px rgba(248,86,6,0.15);'>
+                    
+                    <!-- Compact Header with Orange Theme -->
+                    <tr>
+                        <td style='background: linear-gradient(135deg, #F85606 0%, #FF2E00 100%); padding:25px 30px; text-align:center;'>
+                            <div style='display:inline-block; background:rgba(255,255,255,0.15); width:60px; height:60px; border-radius:50%; line-height:60px; margin-bottom:10px; border:2px solid rgba(255,255,255,0.3);'>
+                                <span style='font-size:30px;'>🚢</span>
+                            </div>
+                            <h1 style='margin:0; color:#ffffff; font-size:26px; font-weight:700; letter-spacing:2px;'>
+                                PRIME SHIP UK
+                            </h1>
+                            <p style='margin:5px 0 0; color:rgba(255,255,255,0.9); font-size:12px;'>Your Trusted Wholesale Partner</p>
+                        </td>
+                    </tr>
+
+                    <!-- Compact Body -->
+                    <tr>
+                        <td style='padding:30px 35px; color:#2c3e50; font-size:15px; line-height:1.6;'>
+
+                            <h2 style='margin:0 0 15px; font-weight:600; color:#F85606; font-size:20px;'>Verify Your Account</h2>
+
+                            <p style='margin:0 0 12px;'>Dear <strong>{(string.IsNullOrEmpty(user.Name) ? user.UserName : user.Name)}</strong>,</p>
+
+                            <p style='margin:0 0 18px;'>
+                                Welcome to Prime Ship UK! Please verify your email to access our wholesale marketplace.
+                            </p>
+
+                            <!-- CTA Button -->
+                            <table width='100%' cellpadding='0' cellspacing='0' style='margin:25px 0;'>
+                                <tr>
+                                    <td align='center'>
+                                        <a href='{verificationLink}' 
+                                           style='background: linear-gradient(135deg, #F85606 0%, #FF2E00 100%);
+                                                  color:#ffffff; 
+                                                  padding:14px 40px; 
+                                                  text-decoration:none; 
+                                                  border-radius:6px; 
+                                                  font-weight:700; 
+                                                  font-size:15px;
+                                                  display:inline-block;
+                                                  box-shadow: 0 4px 12px rgba(248,86,6,0.3);
+                                                  text-transform:uppercase;
+                                                  letter-spacing:0.5px;'>
+                                            ✓ Verify Email
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style='font-size:12px; color:#7f8c8d; background:#fff9e6; padding:12px; border-radius:5px; margin:0 0 18px; border-left:3px solid #ffc107;'>
+                                🔒 This link expires in 24 hours. Didn't sign up? Ignore this email.
+                            </p>
+
+                            <p style='margin:0; font-size:14px; color:#2c3e50;'>
+                                Kind Regards,<br/>
+                                <strong style='color:#F85606;'>Prime Ship UK Team</strong>
+                            </p>
+
+                        </td>
+                    </tr>
+
+                    <!-- Compact Footer with Orange Theme -->
+                    <tr>
+                        <td style='background:#F85606; padding:18px 30px; text-align:center;'>
+                            <p style='margin:0; font-size:12px; color:rgba(255,255,255,0.95);'>
+                                📍 London, UK | 📧 support@primeshipuk.com
+                            </p>
+                            <p style='margin:8px 0 0; font-size:11px; color:rgba(255,255,255,0.8);'>
+                                © {DateTime.UtcNow.Year} Prime Ship UK. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>";
+        }
+        else if (platformName == "Easy Finora")
+        {
+            // EASY FINORA - Keep existing green financial theme (DON'T TOUCH)
+            emailBody = $@"
 <!DOCTYPE html>
 <html>
 <head>
@@ -274,7 +378,124 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
 
 </body>
 </html>";
+        }
+        else // Smart Store or other platforms
+        {
+            // SMART STORE - E-commerce Orange Theme
+            emailBody = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+</head>
+<body style='margin:0; padding:0; background-color:#fff5f0; font-family: Arial, Helvetica, sans-serif;'>
 
+    <table width='100%' cellpadding='0' cellspacing='0' style='background-color:#fff5f0; padding:40px 20px;'>
+        <tr>
+            <td align='center'>
+
+                <table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff; border-radius:10px; overflow:hidden; box-shadow:0 3px 15px rgba(255,69,0,0.15);'>
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td style='background:linear-gradient(135deg, #ff9900 0%, #ff6600 100%); padding:30px; text-align:center;'>
+                            <h1 style='margin:0; color:#ffffff; font-size:28px; font-weight:700; letter-spacing:1.5px;'>
+                                🛒 {platformName}
+                            </h1>
+                            <p style='margin:8px 0 0; color:#ffe6cc; font-size:13px;'>Your Online Shopping Destination</p>
+                        </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td style='padding:40px 35px; color:#333333; font-size:15px; line-height:1.7;'>
+
+                            <h2 style='margin:0 0 18px; font-weight:600; color:#ff6600;'>Verify Your Email</h2>
+
+                            <p>Hello <strong>{user.Name}</strong>,</p>
+
+                            <p>
+                                Welcome to <strong>{platformName}</strong>! We're excited to have you join our shopping community.
+                            </p>
+
+                            <p>
+                                Please verify your email address to unlock your account and start shopping:
+                            </p>
+
+                            <table width='100%' cellpadding='0' cellspacing='0' style='margin:30px 0;'>
+                                <tr>
+                                    <td align='center'>
+                                        <a href='{verificationLink}' 
+                                           style='background:linear-gradient(135deg, #ff9900 0%, #ff6600 100%);
+                                                  color:#ffffff; 
+                                                  padding:15px 40px; 
+                                                  text-decoration:none; 
+                                                  border-radius:25px; 
+                                                  font-weight:bold; 
+                                                  font-size:15px;
+                                                  display:inline-block;
+                                                  box-shadow:0 4px 12px rgba(255,102,0,0.3);'>
+                                            Verify My Email
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style='font-size:13px; color:#666; margin:25px 0;'>
+                                Can't click the button? Copy this link into your browser:
+                            </p>
+
+                            <p style='word-break:break-all; font-size:12px; color:#999; background:#fff9f5; padding:12px; border-radius:5px;'>
+                                {verificationLink}
+                            </p>
+
+                            <hr style='border:none; border-top:1px solid #ffe6cc; margin:30px 0;' />
+
+                            <p style='font-size:13px; color:#777;'>
+                                Didn't sign up? You can safely ignore this email.
+                            </p>
+
+                            <p style='margin-top:25px;'>
+                                Happy Shopping!<br/>
+                                <strong style='color:#ff6600;'>{platformName} Team</strong>
+                            </p>
+
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style='background:#fff5f0; padding:20px 30px; text-align:center; font-size:12px; color:#999;'>
+                            © {DateTime.UtcNow.Year} {platformName}. All rights reserved.
+                        </td>
+                    </tr>
+
+                </table>
+
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>";
+        }
+
+
+
+        // Platform-specific email subjects
+        string emailSubject;
+        if (platformName == "Prime Ship")
+        {
+            emailSubject = "🚢 Verify Your Prime Ship UK Account - Wholesale Access Awaits";
+        }
+        else if (platformName == "Easy Finora")
+        {
+            emailSubject = "Action Required: Verify Your Easy Finora Account";
+        }
+        else
+        {
+            emailSubject = $"Verify Your {platformName} Account";
+        }
 
         await SendEmailWithCustomSmtp(
             await SettingManager.GetSettingValueAsync("Abp.Net.Mail.Smtp.Host") ?? "smtp.azurecomm.net",
@@ -284,7 +505,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             platformName,
             null, // senderAddress will be determined inside SendEmailWithCustomSmtp based on platformName
             user.EmailAddress,
-            $"Action Required: Verify Your {platformName} Account",
+            emailSubject,
             emailBody
         );
     }

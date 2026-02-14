@@ -116,37 +116,61 @@ namespace Elicom.Public
 
         public async Task<ProductDto> GetProductBySlug(string slug)
         {
-            var product = await _productRepository.GetAll()
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(p => p.Slug == slug);
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
+            {
+                var product = await _productRepository.GetAll()
+                    .Include(p => p.Category)
+                    .FirstOrDefaultAsync(p => p.Slug == slug);
 
-            if (product == null)
-                throw new UserFriendlyException("Product not found");
+                if (product == null)
+                    throw new UserFriendlyException("Product not found");
 
-            return ObjectMapper.Map<ProductDto>(product);
+                return ObjectMapper.Map<ProductDto>(product);
+            }
         }
 
         public async Task<ProductDto> GetProductBySku(string sku)
         {
-            var product = await _productRepository.GetAll()
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(p => p.SKU == sku || p.Name.Contains(sku));
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
+            {
+                var product = await _productRepository.GetAll()
+                    .Include(p => p.Category)
+                    .FirstOrDefaultAsync(p => p.SKU == sku || p.Name.Contains(sku));
 
-            if (product == null)
-                throw new UserFriendlyException("Product not found");
+                if (product == null)
+                    throw new UserFriendlyException("Product not found");
 
-            return ObjectMapper.Map<ProductDto>(product);
+                return ObjectMapper.Map<ProductDto>(product);
+            }
+        }
+
+        public async Task<ProductDto> GetProductById(Guid productId)
+        {
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
+            {
+                var product = await _productRepository.GetAll()
+                    .Include(p => p.Category)
+                    .FirstOrDefaultAsync(p => p.Id == productId);
+
+                if (product == null)
+                    throw new UserFriendlyException("Product not found");
+
+                return ObjectMapper.Map<ProductDto>(product);
+            }
         }
 
         public async Task<List<ProductDto>> GetProductsBySearch(string term)
         {
-            var products = await _productRepository.GetAll()
-                .Include(p => p.Category)
-                .Where(p => p.Name.Contains(term) || p.SKU.Contains(term))
-                .Take(10)
-                .ToListAsync();
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
+            {
+                var products = await _productRepository.GetAll()
+                    .Include(p => p.Category)
+                    .Where(p => p.Name.Contains(term) || p.SKU.Contains(term))
+                    .Take(10)
+                    .ToListAsync();
 
-            return ObjectMapper.Map<List<ProductDto>>(products);
+                return ObjectMapper.Map<List<ProductDto>>(products);
+            }
         }
 
         public async Task<List<ProductDto>> GetProductsByCategory(string categorySlug, string searchTerm = null, Guid? categoryId = null)
@@ -240,6 +264,7 @@ namespace Elicom.Public
         Task<ListResultDto<ProductDto>> GetProducts(string searchTerm = null, int skipCount = 0, int maxResultCount = 8);
         Task<ProductDto> GetProductBySlug(string slug);
         Task<ProductDto> GetProductBySku(string sku);
+        Task<ProductDto> GetProductById(Guid productId);
         Task<List<ProductDto>> GetProductsBySearch(string term);
         Task<List<ProductDto>> GetProductsByCategory(string categorySlug, string searchTerm = null, Guid? categoryId = null);
         Task<object> GetProfile();
