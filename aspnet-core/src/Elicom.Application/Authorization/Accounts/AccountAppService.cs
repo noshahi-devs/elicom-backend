@@ -525,7 +525,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
     [HttpPost]
     public async Task RegisterSmartStoreSeller(RegisterSmartStoreInput input)
     {
-        await RegisterPlatformUser(input.EmailAddress, 1, StaticRoleNames.Tenants.Seller, "Seller", "Smart Store", "SS", "#ff9900", input.Password, input.Country, input.PhoneNumber, input.FullName);
+        await RegisterPlatformUser(input.EmailAddress, 1, StaticRoleNames.Tenants.Supplier, "Seller", "Smart Store", "SS", "#ff9900", input.Password, input.Country, input.PhoneNumber, input.FullName);
     }
 
     [HttpPost]
@@ -537,13 +537,13 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
     [HttpPost]
     public async Task RegisterPrimeShipSeller(RegisterPrimeShipInput input)
     {
-        await RegisterPlatformUser(input.EmailAddress, 2, StaticRoleNames.Tenants.Seller, "Seller", "Prime Ship UK", "PS", "#f85606", input.Password, input.Country, input.PhoneNumber, input.FullName);
+        await RegisterPlatformUser(input.EmailAddress, 2, StaticRoleNames.Tenants.Supplier, "Seller", "Prime Ship UK", "PS", "#f85606", input.Password, input.Country, input.PhoneNumber, input.FullName);
     }
 
     [HttpPost]
     public async Task RegisterPrimeShipCustomer(RegisterPrimeShipInput input)
     {
-        await RegisterPlatformUser(input.EmailAddress, 2, StaticRoleNames.Tenants.Buyer, "Customer", "Prime Ship UK", "PS", "#f85606", input.Password, input.Country, input.PhoneNumber, input.FullName);
+        await RegisterPlatformUser(input.EmailAddress, 2, StaticRoleNames.Tenants.Reseller, "Customer", "Prime Ship UK", "PS", "#f85606", input.Password, input.Country, input.PhoneNumber, input.FullName);
     }
 
     [HttpPost]
@@ -623,8 +623,8 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                 Logger.Info($"Platform user {userName} already exists. Resending verification email.");
             }
 
-            // Ensure user is inactive until verified
-            user.IsActive = false;
+            // Ensure user is active (Verification is handled by email link, but we set Active true for troubleshooting)
+            user.IsActive = true;
             await _userManager.UpdateAsync(user);
 
             // Set/Update roles within the tenant context

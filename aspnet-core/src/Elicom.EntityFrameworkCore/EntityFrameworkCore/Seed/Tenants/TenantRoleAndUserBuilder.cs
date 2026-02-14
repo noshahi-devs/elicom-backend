@@ -101,6 +101,14 @@ public class TenantRoleAndUserBuilder
             _context.SaveChanges();
         }
 
+        // Seller role
+        var sellerRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Seller);
+        if (sellerRole == null)
+        {
+            _context.Roles.Add(new Role(_tenantId, StaticRoleNames.Tenants.Seller, StaticRoleNames.Tenants.Seller) { IsStatic = true });
+            _context.SaveChanges();
+        }
+
         // Admin user
 
         var adminUser = _context.Users.IgnoreQueryFilters().FirstOrDefault(u => u.TenantId == _tenantId && u.UserName == AbpUserBase.AdminUserName);
@@ -161,6 +169,21 @@ public class TenantRoleAndUserBuilder
             GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_StoreProducts);
             GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_StoreProducts_Create);
             GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_StoreProducts_Edit);
+        }
+
+        var sellerRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Seller);
+        if (sellerRole != null)
+        {
+            GrantPermissionIfNotExists(sellerRole, PermissionNames.Pages_PrimeShip);
+            GrantPermissionIfNotExists(sellerRole, PermissionNames.Pages_Stores);
+            GrantPermissionIfNotExists(sellerRole, PermissionNames.Pages_Stores_Create);
+            GrantPermissionIfNotExists(sellerRole, PermissionNames.Pages_SmartStore_Seller);
+        }
+
+        var buyerRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Buyer);
+        if (buyerRole != null)
+        {
+            GrantPermissionIfNotExists(buyerRole, PermissionNames.Pages_PrimeShip);
         }
     }
 
