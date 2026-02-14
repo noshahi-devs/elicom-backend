@@ -32,6 +32,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
     private readonly IEmailSender _emailSender;
     private readonly UserManager _userManager;
     private readonly RoleManager _roleManager;
+    private readonly IPermissionManager _permissionManager;
     private readonly Microsoft.Extensions.Configuration.IConfiguration _configuration;
 
     public AccountAppService(
@@ -39,12 +40,14 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
         IEmailSender emailSender,
         UserManager userManager,
         RoleManager roleManager,
+        IPermissionManager permissionManager,
         Microsoft.Extensions.Configuration.IConfiguration configuration)
     {
         _userRegistrationManager = userRegistrationManager;
         _emailSender = emailSender;
         _userManager = userManager;
         _roleManager = roleManager;
+        _permissionManager = permissionManager;
         _configuration = configuration;
     }
 
@@ -601,8 +604,8 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                 name = parts[0];
             }
         }
+
         using (CurrentUnitOfWork.SetTenantId(tenantId))
-        using (CurrentUnitOfWork.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
         {
             string userName = $"{prefix}_{email}";
 
@@ -611,53 +614,51 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             
             if (user == null)
             {
-                // Create new user
+                // Create new user (RegisterAsync also handles Wallet creation and sets IsActive=true)
                 user = await _userRegistrationManager.RegisterAsync(
                     name,
                     surname,
                     email,
                     userName,
                     password,
-                    false,
+                    false, // Email not confirmed
                     phoneNumber,
                     country
                 );
             }
             else
             {
-                Logger.Info($"Platform user {userName} already exists. Resending verification email.");
+                Logger.Info($"Platform user {userName} already exists. Resending verification email if necessary.");
             }
 
-            // Ensure user is active (Verification is handled by email link, but we set Active true for troubleshooting)
-            user.IsActive = true;
-            await _userManager.UpdateAsync(user);
-
             // 2. Ensure Role exists for this tenant before assigning
+            // We search without disabling filters to ensure we only get a role belonging to this tenant
             var role = await _roleManager.FindByNameAsync(roleName);
             if (role == null)
             {
                 Logger.Info($"Role {roleName} not found for tenant {tenantId}. Creating it now.");
                 role = new Elicom.Authorization.Roles.Role(tenantId, roleName, roleName) { IsStatic = true };
                 await _roleManager.CreateAsync(role);
+                await CurrentUnitOfWork.SaveChangesAsync(); // Save immediately to get Role ID
                 
                 // Grant basic Page.PrimeShip permission to this role if it's for Prime Ship platform
                 if (platformName.Contains("Prime Ship"))
                 {
-                    await _roleManager.SetGrantedPermissionsAsync(role, new[] { 
-                        PermissionFinder.GetAllPermissions(new ElicomAuthorizationProvider())
-                            .FirstOrDefault(p => p.Name == PermissionNames.Pages_PrimeShip) 
-                    }.Where(p => p != null));
+                    var permission = _permissionManager.GetPermission(PermissionNames.Pages_PrimeShip);
+                    if (permission != null)
+                    {
+                        await _roleManager.SetGrantedPermissionsAsync(role, new[] { permission });
+                        await CurrentUnitOfWork.SaveChangesAsync();
+                    }
                 }
-                
-                await CurrentUnitOfWork.SaveChangesAsync(); // Mandatory save after role creation
             }
 
-            // Set/Update roles within the tenant context
+            // Set/Update user roles
             var currentRoles = await _userManager.GetRolesAsync(user);
             if (!currentRoles.Contains(roleName))
             {
                 await _userManager.AddToRoleAsync(user, roleName);
-                await CurrentUnitOfWork.SaveChangesAsync(); // Mandatory save after role assignment
+                await CurrentUnitOfWork.SaveChangesAsync();
                 Logger.Info($"Assigned role {roleName} to user {userName}");
             }
 
@@ -669,7 +670,6 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             catch (Exception emailEx)
             {
                 Logger.Error($"Registration succeeded but verification email failed for {email}: {emailEx.Message}");
-                // We DON'T throw here, so the user registration still completes.
             }
         }
     }
