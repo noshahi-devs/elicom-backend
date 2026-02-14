@@ -29,17 +29,20 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
     private readonly UserRegistrationManager _userRegistrationManager;
     private readonly IEmailSender _emailSender;
     private readonly UserManager _userManager;
+    private readonly RoleManager _roleManager;
     private readonly Microsoft.Extensions.Configuration.IConfiguration _configuration;
 
     public AccountAppService(
         UserRegistrationManager userRegistrationManager,
         IEmailSender emailSender,
         UserManager userManager,
+        RoleManager roleManager,
         Microsoft.Extensions.Configuration.IConfiguration configuration)
     {
         _userRegistrationManager = userRegistrationManager;
         _emailSender = emailSender;
         _userManager = userManager;
+        _roleManager = roleManager;
         _configuration = configuration;
     }
 
@@ -628,12 +631,12 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             await _userManager.UpdateAsync(user);
 
             // 2. Ensure Role exists for this tenant before assigning
-            var role = await RoleManager.RoleExistsAsync(roleName);
+            var role = await _roleManager.RoleExistsAsync(roleName);
             if (!role)
             {
                 Logger.Info($"Role {roleName} not found for tenant {tenantId}. Creating it now.");
                 var newRole = new Elicom.Authorization.Roles.Role(tenantId, roleName, roleName) { IsStatic = true };
-                await RoleManager.CreateAsync(newRole);
+                await _roleManager.CreateAsync(newRole);
             }
 
             // Set/Update roles within the tenant context
