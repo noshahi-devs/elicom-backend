@@ -30,120 +30,61 @@ public class TenantRoleAndUserBuilder
 
     private void CreateRolesAndUsers()
     {
-        // Admin role
+        var passwordHasher = new PasswordHasher<User>(new OptionsWrapper<PasswordHasherOptions>(new PasswordHasherOptions()));
 
-        var adminRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Admin);
-        if (adminRole == null)
-        {
-            adminRole = _context.Roles.Add(new Role(_tenantId, StaticRoleNames.Tenants.Admin, StaticRoleNames.Tenants.Admin) { IsStatic = true }).Entity;
-            _context.SaveChanges();
-        }
+        // 1. Ensure Roles exist for this tenant
+        var adminRole = EnsureRole(StaticRoleNames.Tenants.Admin);
+        var supplierRole = EnsureRole(StaticRoleNames.Tenants.Supplier);
+        var resellerRole = EnsureRole(StaticRoleNames.Tenants.Reseller);
+        var buyerRole = EnsureRole(StaticRoleNames.Tenants.Buyer);
+        var sellerRole = EnsureRole(StaticRoleNames.Tenants.Seller);
 
-        // Grant all permissions to admin role
-
-        var grantedPermissions = _context.Permissions.IgnoreQueryFilters()
-            .OfType<RolePermissionSetting>()
-            .Where(p => p.TenantId == _tenantId && p.RoleId == adminRole.Id)
-            .Select(p => p.Name)
-            .ToList();
-
-        var permissions = PermissionFinder
-            .GetAllPermissions(new ElicomAuthorizationProvider())
-            .Where(p => p.MultiTenancySides.HasFlag(MultiTenancySides.Tenant) &&
-                        !grantedPermissions.Contains(p.Name))
-            .ToList();
-
-        if (permissions.Any())
-        {
-            _context.Permissions.AddRange(
-                permissions.Select(permission => new RolePermissionSetting
-                {
-                    TenantId = _tenantId,
-                    Name = permission.Name,
-                    IsGranted = true,
-                    RoleId = adminRole.Id
-                })
-            );
-            _context.SaveChanges();
-        }
-
-        // Supplier role
-        var supplierRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Supplier);
-        if (supplierRole == null)
-        {
-            supplierRole = _context.Roles.Add(new Role(_tenantId, StaticRoleNames.Tenants.Supplier, StaticRoleNames.Tenants.Supplier) { IsStatic = true }).Entity;
-            _context.SaveChanges();
-        }
-        else if (supplierRole.IsDefault)
-        {
-            supplierRole.IsDefault = false;
-            _context.SaveChanges();
-        }
-
-        // Reseller role
-        var resellerRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Reseller);
-        if (resellerRole == null)
-        {
-            resellerRole = _context.Roles.Add(new Role(_tenantId, StaticRoleNames.Tenants.Reseller, StaticRoleNames.Tenants.Reseller) { IsStatic = true }).Entity;
-            _context.SaveChanges();
-        }
-        else if (resellerRole.IsDefault)
-        {
-            resellerRole.IsDefault = false;
-            _context.SaveChanges();
-        }
-
-        // Buyer role
-        var buyerRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Buyer);
-        if (buyerRole == null)
-        {
-            _context.Roles.Add(new Role(_tenantId, StaticRoleNames.Tenants.Buyer, StaticRoleNames.Tenants.Buyer) { IsStatic = true });
-            _context.SaveChanges();
-        }
-
-        // Seller role
-        var sellerRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Seller);
-        if (sellerRole == null)
-        {
-            _context.Roles.Add(new Role(_tenantId, StaticRoleNames.Tenants.Seller, StaticRoleNames.Tenants.Seller) { IsStatic = true });
-            _context.SaveChanges();
-        }
-
-        // Admin user
-
+        // 2. Ensure Admin user exists for this tenant
         var adminUser = _context.Users.IgnoreQueryFilters().FirstOrDefault(u => u.TenantId == _tenantId && u.UserName == AbpUserBase.AdminUserName);
         if (adminUser == null)
         {
             adminUser = User.CreateTenantAdminUser(_tenantId, "admin@defaulttenant.com");
-            adminUser.Password = new PasswordHasher<User>(new OptionsWrapper<PasswordHasherOptions>(new PasswordHasherOptions())).HashPassword(adminUser, "123qwe");
+            adminUser.Password = passwordHasher.HashPassword(adminUser, "123qwe");
             adminUser.IsEmailConfirmed = true;
             adminUser.IsActive = true;
 
             _context.Users.Add(adminUser);
             _context.SaveChanges();
 
-            // Assign Admin role to admin user
+            // Assign Admin role
             _context.UserRoles.Add(new UserRole(_tenantId, adminUser.Id, adminRole.Id));
             _context.SaveChanges();
         }
 
-        // Create verified test users for each platform
-        CreateVerifiedTestUser();
+        // 3. Create platform-specific test users
+        CreateVerifiedPlatformUsers(passwordHasher);
 
-        // Grant permissions to specific roles
+        // 4. Grant permissions to roles
         GrantPermissions();
+    }
+
+    private Role EnsureRole(string roleName)
+    {
+        var role = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == roleName);
+        if (role == null)
+        {
+            role = _context.Roles.Add(new Role(_tenantId, roleName, roleName) { IsStatic = true }).Entity;
+            _context.SaveChanges();
+        }
+        return role;
     }
 
     private void GrantPermissions()
     {
-        var supplierRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Supplier);
+        // Get roles again to ensure we have tracking entities
+        var roles = _context.Roles.IgnoreQueryFilters().Where(r => r.TenantId == _tenantId).ToList();
+        
+        var supplierRole = roles.FirstOrDefault(r => r.Name == StaticRoleNames.Tenants.Supplier);
         if (supplierRole != null)
         {
             GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_PrimeShip);
             GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_Reseller_Marketplace);
-            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_GlobalPay); // For wallet/card access
-
-            // Store permissions for Supplier
+            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_GlobalPay);
             GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_Stores);
             GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_Stores_Create);
             GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_Stores_Edit);
@@ -154,15 +95,13 @@ public class TenantRoleAndUserBuilder
             GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_Supplier_Products);
         }
 
-        var resellerRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Reseller);
+        var resellerRole = roles.FirstOrDefault(r => r.Name == StaticRoleNames.Tenants.Reseller);
         if (resellerRole != null)
         {
-            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_PrimeShip); // Allow wholesale purchases
+            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_PrimeShip);
             GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_Reseller_Store);
             GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_SmartStore_Seller);
             GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_GlobalPay);
-
-            // Store management for Resellers
             GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_Stores);
             GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_Stores_Create);
             GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_Stores_Edit);
@@ -171,7 +110,7 @@ public class TenantRoleAndUserBuilder
             GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_StoreProducts_Edit);
         }
 
-        var sellerRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Seller);
+        var sellerRole = roles.FirstOrDefault(r => r.Name == StaticRoleNames.Tenants.Seller);
         if (sellerRole != null)
         {
             GrantPermissionIfNotExists(sellerRole, PermissionNames.Pages_PrimeShip);
@@ -180,7 +119,7 @@ public class TenantRoleAndUserBuilder
             GrantPermissionIfNotExists(sellerRole, PermissionNames.Pages_SmartStore_Seller);
         }
 
-        var buyerRole = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == StaticRoleNames.Tenants.Buyer);
+        var buyerRole = roles.FirstOrDefault(r => r.Name == StaticRoleNames.Tenants.Buyer);
         if (buyerRole != null)
         {
             GrantPermissionIfNotExists(buyerRole, PermissionNames.Pages_PrimeShip);
@@ -202,50 +141,26 @@ public class TenantRoleAndUserBuilder
         }
     }
 
-    private void CreateVerifiedTestUser()
+    private void CreateVerifiedPlatformUsers(PasswordHasher<User> passwordHasher)
     {
-        var passwordHasher = new PasswordHasher<User>(new OptionsWrapper<PasswordHasherOptions>(new PasswordHasherOptions()));
-        string testEmail = "";
-        string userName = "";
-        string roleToAssign = StaticRoleNames.Tenants.Reseller;
-
-        // Determine test user based on tenant
-        if (_tenantId == 1) // Prime Ship
+        if (_tenantId == 1) // Smart Store
         {
-            // Create Admin
-            CreateUser("admin@primeshipuk.com", "PS_admin@primeshipuk.com", StaticRoleNames.Tenants.Admin, passwordHasher);
-
-            // Create Seller
-            testEmail = "noshahis@primeshipuk.com";
-            userName = "PS_noshahis@primeshipuk.com";
-            roleToAssign = StaticRoleNames.Tenants.Reseller;
-            CreateUser(testEmail, userName, roleToAssign, passwordHasher);
-
-            // Create Customer
-            testEmail = "noshahic@primeshipuk.com";
-            userName = "PS_noshahic@primeshipuk.com";
-            roleToAssign = StaticRoleNames.Tenants.Buyer;
-            CreateUser(testEmail, userName, roleToAssign, passwordHasher);
+            CreateUser("noshahis@smartstoreus.com", "SS_noshahis@smartstoreus.com", StaticRoleNames.Tenants.Supplier, passwordHasher);
+            CreateUser("noshahir@smartstoreus.com", "SS_noshahir@smartstoreus.com", StaticRoleNames.Tenants.Reseller, passwordHasher);
+            CreateUser("noshahic@smartstoreus.com", "SS_noshahic@smartstoreus.com", StaticRoleNames.Tenants.Buyer, passwordHasher);
         }
         else if (_tenantId == 2) // Prime Ship
         {
-            testEmail = "noshahi@primeshipuk.com";
-            userName = "PS_noshahi@primeshipuk.com";
-            roleToAssign = StaticRoleNames.Tenants.Supplier;
-            CreateUser(testEmail, userName, roleToAssign, passwordHasher);
+            // Primary user noshahi@primeshipuk.com - Admin to manage categories
+            CreateUser("noshahi@primeshipuk.com", "PS_noshahi@primeshipuk.com", StaticRoleNames.Tenants.Admin, passwordHasher);
             
-            // Create Admin user for Prime Ship
+            // Secondary Supplier/Reseller users
+            CreateUser("noshahis@primeshipuk.com", "PS_noshahis@primeshipuk.com", StaticRoleNames.Tenants.Supplier, passwordHasher);
             CreateUser("admin@primeshipuk.com", "PS_admin@primeshipuk.com", StaticRoleNames.Tenants.Admin, passwordHasher);
         }
-
         else if (_tenantId == 3) // Easy Finora
         {
-            testEmail = "noshahi@easyfinora.com";
-            userName = "GP_noshahi@easyfinora.com";
-            roleToAssign = StaticRoleNames.Tenants.Admin; // Grant Admin Access
-            CreateUser(testEmail, userName, roleToAssign, passwordHasher);
-
-            // Also add finora.com variant just in case
+            CreateUser("noshahi@easyfinora.com", "GP_noshahi@easyfinora.com", StaticRoleNames.Tenants.Admin, passwordHasher);
             CreateUser("noshahi@finora.com", "GP_noshahi@finora.com", StaticRoleNames.Tenants.Admin, passwordHasher);
         }
     }
@@ -254,60 +169,43 @@ public class TenantRoleAndUserBuilder
     {
         var existingUser = _context.Users.IgnoreQueryFilters().FirstOrDefault(u => u.TenantId == _tenantId && u.UserName == userName);
         
-        // Create if not exists
         if (existingUser == null)
         {
-            var testUser = new User
+            var user = new User
             {
                 TenantId = _tenantId,
                 UserName = userName,
-                Name = "Test",
-                Surname = "User",
+                Name = "Noshahi",
+                Surname = "Platform User",
                 EmailAddress = email,
                 IsEmailConfirmed = true,
                 IsActive = true,
-                PhoneNumber = "+923001234567",
-                Country = "Pakistan"
+                PhoneNumber = "0000000000",
+                Country = "United Kingdom"
             };
 
-            testUser.SetNormalizedNames();
-            testUser.Password = passwordHasher.HashPassword(testUser, "Noshahi.000"); // Known password
-            _context.Users.Add(testUser);
+            user.SetNormalizedNames();
+            user.Password = passwordHasher.HashPassword(user, "Noshahi.000");
+            _context.Users.Add(user);
             _context.SaveChanges();
-            existingUser = testUser;
+            existingUser = user;
         }
-        else 
+        else
         {
-            // Update existing user password specifically for troubleshooting
-            if (userName.Contains("noshahi"))
-            {
-                existingUser.Password = passwordHasher.HashPassword(existingUser, "Noshahi.000");
-                existingUser.IsEmailConfirmed = true;
-                existingUser.IsActive = true;
-                _context.Update(existingUser);
-                _context.SaveChanges();
-
-                // FORCE ROLE ASSIGNMENT for troubleshooting
-                var defaultRoleForUser = roleName;
-                var roleToFix = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == defaultRoleForUser);
-                if (roleToFix != null)
-                {
-                    var userRoleExists = _context.UserRoles.IgnoreQueryFilters().Any(ur => ur.UserId == existingUser.Id && ur.RoleId == roleToFix.Id);
-                    if (!userRoleExists)
-                    {
-                        _context.UserRoles.Add(new UserRole(_tenantId, existingUser.Id, roleToFix.Id));
-                        _context.SaveChanges();
-                    }
-                }
-            }
+            // Ensure active and password is correct for these specific users
+            existingUser.IsActive = true;
+            existingUser.IsEmailConfirmed = true;
+            existingUser.Password = passwordHasher.HashPassword(existingUser, "Noshahi.000");
+            _context.Update(existingUser);
+            _context.SaveChanges();
         }
 
-        // Assign/Update role
+        // Assign role
         var role = _context.Roles.IgnoreQueryFilters().FirstOrDefault(r => r.TenantId == _tenantId && r.Name == roleName);
-        if (role != null && existingUser != null)
+        if (role != null)
         {
-            var userRole = _context.UserRoles.IgnoreQueryFilters().FirstOrDefault(ur => ur.UserId == existingUser.Id && ur.RoleId == role.Id);
-            if (userRole == null)
+            var hasRole = _context.UserRoles.IgnoreQueryFilters().Any(ur => ur.UserId == existingUser.Id && ur.RoleId == role.Id);
+            if (!hasRole)
             {
                 _context.UserRoles.Add(new UserRole(_tenantId, existingUser.Id, role.Id));
                 _context.SaveChanges();

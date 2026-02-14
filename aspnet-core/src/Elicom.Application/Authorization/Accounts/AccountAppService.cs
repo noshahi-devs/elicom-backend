@@ -193,7 +193,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
         // Platform-specific email templates for complete brand separation
         string emailBody;
 
-        if (platformName == "Prime Ship")
+        if (platformName.Contains("Prime Ship"))
         {
             // PRIME SHIP UK - Compact Professional Theme (Orange to match website)
             emailBody = $@"
@@ -587,90 +587,130 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
 
     private async Task RegisterPlatformUser(string email, int tenantId, string roleName, string userType, string platformName, string prefix, string brandColor, string password = "Noshahi.000", string country = null, string phoneNumber = null, string fullName = null)
     {
-        // Split FullName into Name and Surname for ABP User entity
-        string name = fullName ?? userType;
-        string surname = "User";
-
-        if (!string.IsNullOrEmpty(fullName))
+        try 
         {
-            var parts = fullName.Trim().Split(' ', 2);
-            if (parts.Length > 1)
-            {
-                name = parts[0];
-                surname = parts[1];
-            }
-            else
-            {
-                name = parts[0];
-            }
-        }
-
-        using (CurrentUnitOfWork.SetTenantId(tenantId))
-        {
-            string userName = $"{prefix}_{email}";
-
-            // 1. Check if user already exists in this platform/tenant context
-            var user = await _userManager.FindByNameAsync(userName);
+            Logger.Info($"[Register] 🚀 Starting registration process: Email={email}, TenantId={tenantId}, Role={roleName}, Platform={platformName}");
             
-            if (user == null)
-            {
-                // Create new user (RegisterAsync also handles Wallet creation and sets IsActive=true)
-                user = await _userRegistrationManager.RegisterAsync(
-                    name,
-                    surname,
-                    email,
-                    userName,
-                    password,
-                    false, // Email not confirmed
-                    phoneNumber,
-                    country
-                );
-            }
-            else
-            {
-                Logger.Info($"Platform user {userName} already exists. Resending verification email if necessary.");
-            }
+            // Split FullName into Name and Surname for ABP User entity
+            string name = fullName ?? userType;
+            string surname = "User";
 
-            // 2. Ensure Role exists for this tenant before assigning
-            // We search without disabling filters to ensure we only get a role belonging to this tenant
-            var role = await _roleManager.FindByNameAsync(roleName);
-            if (role == null)
+            if (!string.IsNullOrEmpty(fullName))
             {
-                Logger.Info($"Role {roleName} not found for tenant {tenantId}. Creating it now.");
-                role = new Elicom.Authorization.Roles.Role(tenantId, roleName, roleName) { IsStatic = true };
-                await _roleManager.CreateAsync(role);
-                await CurrentUnitOfWork.SaveChangesAsync(); // Save immediately to get Role ID
-                
-                // Grant basic Page.PrimeShip permission to this role if it's for Prime Ship platform
-                if (platformName.Contains("Prime Ship"))
+                var parts = fullName.Trim().Split(' ', 2);
+                if (parts.Length > 1)
                 {
-                    var permission = _permissionManager.GetPermission(PermissionNames.Pages_PrimeShip);
-                    if (permission != null)
-                    {
-                        await _roleManager.SetGrantedPermissionsAsync(role, new[] { permission });
-                        await CurrentUnitOfWork.SaveChangesAsync();
-                    }
+                    name = parts[0];
+                    surname = parts[1];
+                }
+                else
+                {
+                    name = parts[0];
                 }
             }
 
-            // Set/Update user roles
-            var currentRoles = await _userManager.GetRolesAsync(user);
-            if (!currentRoles.Contains(roleName))
+            using (CurrentUnitOfWork.SetTenantId(tenantId))
             {
-                await _userManager.AddToRoleAsync(user, roleName);
-                await CurrentUnitOfWork.SaveChangesAsync();
-                Logger.Info($"Assigned role {roleName} to user {userName}");
-            }
+                string userName = $"{prefix}_{email}";
+                Logger.Info($"[Register] Resolved UserName: {userName}. Checking for existing user...");
 
-            // 3. Send Verification Email (Wrapped in try-catch to prevent registration failure on email error)
-            try
-            {
-                await SendVerificationEmail(user, platformName, brandColor);
+                // 1. Check if user already exists in this platform/tenant context
+                var user = await _userManager.FindByNameAsync(userName);
+                
+                if (user == null)
+                {
+                    Logger.Info($"[Register] User not found. Calling UserRegistrationManager.RegisterAsync...");
+                    // Create new user (RegisterAsync also handles Wallet creation and sets IsActive=true)
+                    user = await _userRegistrationManager.RegisterAsync(
+                        name,
+                        surname,
+                        email,
+                        userName,
+                        password,
+                        false, // Email not confirmed
+                        phoneNumber,
+                        country
+                    );
+                    Logger.Info($"[Register] ✅ User created successfully. ID: {user.Id}");
+                }
+                else
+                {
+                    Logger.Info($"[Register] ℹ️ User already exists (ID: {user.Id}). Ensuring account is active.");
+                    user.IsActive = true;
+                    await _userManager.UpdateAsync(user);
+                }
+
+                // 2. Role Management
+                Logger.Info($"[Register] Verifying role '{roleName}' for tenant {tenantId}...");
+                var role = await _roleManager.FindByNameAsync(roleName);
+                if (role == null)
+                {
+                    Logger.Info($"[Register] ⚠️ Role '{roleName}' not found. Creating static role...");
+                    role = new Elicom.Authorization.Roles.Role(tenantId, roleName, roleName) { IsStatic = true };
+                    var roleResult = await _roleManager.CreateAsync(role);
+                    if (!roleResult.Succeeded)
+                    {
+                        throw new UserFriendlyException($"Could not create role '{roleName}': {string.Join(", ", roleResult.Errors.Select(e => e.Description))}");
+                    }
+                    await CurrentUnitOfWork.SaveChangesAsync();
+                    Logger.Info($"[Register] ✅ Role created. ID: {role.Id}");
+                }
+
+                // 3. Permission Management (Fix for Wholesale Orders)
+                if (platformName.Contains("Prime Ship") || platformName.Contains("Primeship"))
+                {
+                    try 
+                    {
+                        Logger.Info($"[Register] Ensuring '{PermissionNames.Pages_PrimeShip}' permission for role '{role.Name}'...");
+                        var permission = _permissionManager.GetPermission(PermissionNames.Pages_PrimeShip);
+                        var grantedPermissions = await _roleManager.GetGrantedPermissionsAsync(role);
+                        
+                        if (!grantedPermissions.Any(p => p.Name == PermissionNames.Pages_PrimeShip))
+                        {
+                            await _roleManager.SetGrantedPermissionsAsync(role, new[] { permission });
+                            await CurrentUnitOfWork.SaveChangesAsync();
+                            Logger.Info($"[Register] ✅ Access granted: {PermissionNames.Pages_PrimeShip}");
+                        }
+                    }
+                    catch (Exception permEx)
+                    {
+                        Logger.Warn($"[Register] ⚠️ Could not grant permission {PermissionNames.Pages_PrimeShip} to role {role.Name}: {permEx.Message}");
+                        // Continue registration even if permission granting fails (can be fixed manually)
+                    }
+                }
+
+                // 4. Role Assignment
+                var currentRoles = await _userManager.GetRolesAsync(user);
+                if (!currentRoles.Contains(roleName))
+                {
+                    Logger.Info($"[Register] Assigning role '{roleName}' to user '{userName}'...");
+                    var assignResult = await _userManager.AddToRoleAsync(user, roleName);
+                    if (!assignResult.Succeeded)
+                    {
+                        throw new UserFriendlyException($"Could not assign role: {string.Join(", ", assignResult.Errors.Select(e => e.Description))}");
+                    }
+                    await CurrentUnitOfWork.SaveChangesAsync();
+                    Logger.Info($"[Register] ✅ Role assigned successfully.");
+                }
+
+                // 5. Verification Email
+                try
+                {
+                    Logger.Info($"[Register] Sending verification email to {email}...");
+                    await SendVerificationEmail(user, platformName, brandColor);
+                    Logger.Info($"[Register] 📧 Email sent.");
+                }
+                catch (Exception emailEx)
+                {
+                    Logger.Error($"[Register] ❌ Email failed, but registration is complete: {emailEx.Message}");
+                }
             }
-            catch (Exception emailEx)
-            {
-                Logger.Error($"Registration succeeded but verification email failed for {email}: {emailEx.Message}");
-            }
+        }
+        catch (UserFriendlyException) { throw; }
+        catch (Exception ex)
+        {
+            Logger.Error($"[Register] 🛑 CRITICAL REGISTRATION ERROR for {email}: {ex.Message}", ex);
+            throw new UserFriendlyException($"Registration failed for '{email}'. Please contact support with this error: {ex.Message}");
         }
     }
 
