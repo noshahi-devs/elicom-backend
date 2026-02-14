@@ -631,12 +631,23 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             await _userManager.UpdateAsync(user);
 
             // 2. Ensure Role exists for this tenant before assigning
-            var role = await _roleManager.RoleExistsAsync(roleName);
-            if (!role)
+            var role = await _roleManager.FindByNameAsync(roleName);
+            if (role == null)
             {
                 Logger.Info($"Role {roleName} not found for tenant {tenantId}. Creating it now.");
-                var newRole = new Elicom.Authorization.Roles.Role(tenantId, roleName, roleName) { IsStatic = true };
-                await _roleManager.CreateAsync(newRole);
+                role = new Elicom.Authorization.Roles.Role(tenantId, roleName, roleName) { IsStatic = true };
+                await _roleManager.CreateAsync(role);
+                
+                // Grant basic Page.PrimeShip permission to this role if it's for Prime Ship platform
+                if (platformName.Contains("Prime Ship"))
+                {
+                    await _roleManager.SetGrantedPermissionsAsync(role, new[] { 
+                        PermissionFinder.GetAllPermissions(new ElicomAuthorizationProvider())
+                            .FirstOrDefault(p => p.Name == PermissionNames.Pages_PrimeShip) 
+                    }.Where(p => p != null));
+                }
+                
+                await CurrentUnitOfWork.SaveChangesAsync(); // Mandatory save after role creation
             }
 
             // Set/Update roles within the tenant context
@@ -644,6 +655,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             if (!currentRoles.Contains(roleName))
             {
                 await _userManager.AddToRoleAsync(user, roleName);
+                await CurrentUnitOfWork.SaveChangesAsync(); // Mandatory save after role assignment
                 Logger.Info($"Assigned role {roleName} to user {userName}");
             }
 

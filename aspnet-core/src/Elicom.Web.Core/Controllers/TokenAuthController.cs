@@ -197,7 +197,7 @@ namespace Elicom.Controllers
             return new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
         }
 
-        private static List<Claim> CreateJwtClaims(ClaimsIdentity identity, User user)
+        private List<Claim> CreateJwtClaims(ClaimsIdentity identity, User user)
         {
             var claims = identity.Claims.ToList();
             var nameIdClaim = claims.First(c => c.Type == ClaimTypes.NameIdentifier);
@@ -216,6 +216,16 @@ namespace Elicom.Controllers
             if (!string.IsNullOrEmpty(user.Surname))
             {
                 claims.Add(new Claim(ClaimTypes.Surname, user.Surname));
+            }
+
+            // Explicit fail-safe: Add roles if missing from identity
+            var roles = _userManager.GetRolesAsync(user).Result; // Sync wait here as it's a static context call or refactor but this is safe in this flow
+            foreach (var roleName in roles)
+            {
+                if (!claims.Any(c => c.Type == ClaimTypes.Role && c.Value == roleName))
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, roleName));
+                }
             }
 
             // Specifically add the jti (random nonce), iat (issued timestamp), and sub (subject/user) claims.
