@@ -89,6 +89,9 @@ export class AdminLayoutComponent implements OnInit, AfterViewInit {
             sidebar.classList.remove('collapsed');
             mainContent.classList.remove('sidebar-collapsed');
         }
+
+        // Mobile Sidebar Support
+        sidebar.classList.toggle('show');
     }
 
     toggleUserDropdown(userDropdown: HTMLElement) {

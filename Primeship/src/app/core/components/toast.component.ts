@@ -70,6 +70,8 @@ import { ToastService, Toast } from '../services/toast.service';
       font-size: 14px;
       line-height: 1.5;
       color: #333;
+      word-break: break-word;
+      overflow-wrap: anywhere;
     }
 
     .toast-close {

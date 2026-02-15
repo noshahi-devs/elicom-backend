@@ -297,7 +297,13 @@
   transform: translateZ(0);
   will-change: transform;
   height: 72px;
-  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 72px;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding-left 0.3s ease;
+}
+
+/* Header when sidebar is collapsed (full width) */
+.header-3d.sidebar-collapsed-header {
+  left: 0;
 }
 
 /* Header when sidebar is collapsed */
@@ -306,16 +312,37 @@
 }
 
 .header-content {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: nowrap !important;
+  /* Force single line */
+  gap: 1rem;
+  width: 100%;
+  height: 100%;
+}
+
+.header-left {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 1rem;
+  flex: 1;
+  min-width: 0;
+  /* Allow shrinking */
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-shrink: 0;
+  /* Prevent right side from shrinking */
 }
 
 .search-container {
   position: relative;
   flex: 1;
-  max-width: 400px;
+  max-width: 530px;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -858,34 +885,139 @@
 @media (max-width: 768px) {
   .app-container {
     flex-direction: column;
+    overflow-x: hidden; // Critical for mobile
   }
 
   .sidebar-3d {
-    width: 100%;
+    width: 280px;
+    /* Fixed width for drawer effect */
     order: 2;
     transform: translateX(-100%);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2); // Add shadow
   }
 
   .sidebar-3d.show {
     transform: translateX(0);
   }
 
-  .main-content {
-    order: 1;
-    margin-left: 0;
+  /* Avoid pushing header when sidebar is open on mobile */
+  .sidebar-3d.show~.main-content .header-3d {
+    left: 0 !important;
+  }
+
+  /* Overlay effect for content when sidebar is open */
+  .sidebar-3d.show~.main-content::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+    /* Behind header, over content */
   }
 
   .header-3d {
     left: 0;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible !important; // Restore visibility for dropdowns
+    z-index: 1001; // Ensure header is above sidebar content if needed
   }
 
   .header-content {
-    flex-direction: column;
-    gap: 1rem;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100%;
+    gap: 0.25rem !important; // Minimal gap
   }
 
-  .quick-stats {
-    order: -1;
+  /* Compact Search Bar for Mobile */
+  .search-container {
+    display: block !important;
+    max-width: none;
+    flex: 1;
+    min-width: 0; // Crucial for flex shrinking
+
+    .search-icon {
+      left: 0.6rem;
+      font-size: 0.8rem;
+    }
+
+    .search-input {
+      padding: 0.5rem 0.5rem 0.5rem 2rem;
+      font-size: 0.75rem; // Smaller font
+      height: 34px; // Compact height
+    }
+  }
+
+  .header-left {
+    flex: 0 0 auto !important;
+    /* Auto width */
+  }
+
+  .header-right {
+    flex: 0 0 auto !important;
+    gap: 0.4rem !important; // Tight gap
+    padding-right: 0.25rem;
+  }
+
+  /* Compact Profile for Mobile */
+  .user-name {
+    display: block !important; // RESTORE
+    font-size: 0.7rem !important; // Micro font
+    max-width: 60px; // Prevent pushing
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .user-menu-btn {
+    padding: 0.3rem 0.5rem !important;
+    gap: 0.3rem !important;
+  }
+
+  .user-avatar-small {
+    width: 26px;
+    height: 26px;
+    font-size: 0.8rem;
+  }
+
+  .notification-btn {
+    width: 32px;
+    height: 32px;
+
+    .notification-icon {
+      font-size: 0.9rem;
+    }
+  }
+
+  /* Interaction Fixes: Ensure buttons are clickable */
+  .sidebar-toggle-btn,
+  .user-menu-btn,
+  .notification-btn {
+    position: relative;
+    z-index: 10;
+    cursor: pointer;
+    pointer-events: auto !important;
+  }
+
+  /* LOGIC: Hide clutter ONLY when sidebar is open */
+  .sidebar-3d.show~.main-content {
+
+    .search-container,
+    .notification-btn {
+      display: none !important;
+    }
+
+    .header-right {
+      padding-right: 1.5rem;
+    }
   }
 
   .stats-grid {
@@ -980,6 +1112,7 @@
   flex-direction: column;
   min-width: 0;
   transition: margin-left 0.3s ease;
+  overflow-x: hidden; // Prevent internal horizontal scrolls
 }
 
 .page-content {

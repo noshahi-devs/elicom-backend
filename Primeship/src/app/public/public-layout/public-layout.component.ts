@@ -1310,9 +1310,16 @@ import { PublicService } from '../../core/services/public.service';
       }
       
       .footer-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, 1fr) !important;
         gap: 2rem;
         padding: 2rem 0;
+      }
+      
+      .footer-brand-col {
+        grid-column: 1 / -1;
+        order: -1;
+        text-align: center;
+        margin-bottom: 1rem;
       }
       
       .footer-bottom-content {
@@ -1343,8 +1350,15 @@ import { PublicService } from '../../core/services/public.service';
       }
       
       .footer-grid {
-        grid-template-columns: 1fr;
-        gap: 2rem;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 1.5rem;
+      }
+      
+      .footer-brand-col {
+        grid-column: 1 / -1;
+        order: -1;
+        text-align: center;
+        margin-bottom: 1rem;
       }
       
       .payment-badge {

@@ -49,6 +49,10 @@
         line-height: 1;
         margin-bottom: 20px;
 
+        @media (max-width: 768px) {
+          font-size: 2.5rem;
+        }
+
         span {
           display: block;
           color: var(--primary);
@@ -90,6 +94,10 @@
       z-index: 3;
       pointer-events: none;
 
+      @media (max-width: 991px) {
+        display: none !important;
+      }
+
       .glow-circle {
         position: absolute;
         width: 400px;
@@ -128,11 +136,19 @@
     h2 {
       font-size: 2.5rem;
       margin-bottom: 8px;
+
+      @media (max-width: 768px) {
+        font-size: 1.8rem;
+      }
     }
 
     .subtitle {
       color: var(--text-muted);
       font-weight: 500;
+
+      @media (max-width: 768px) {
+        font-size: 0.9rem;
+      }
     }
   }
 
@@ -167,6 +183,11 @@
     background: white;
     border-radius: 12px;
     box-shadow: var(--shadow-sm);
+
+    @media (max-width: 768px) {
+      padding: 8px 12px;
+      font-size: 0.8rem;
+    }
   }
 }
 
@@ -175,6 +196,16 @@
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 30px;
+
+  @media (max-width: 991px) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
 
   .luxury-cat-card {
     text-align: center;
@@ -235,6 +266,15 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 30px;
+
+  @media (max-width: 991px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  @media (max-width: 480px) {
+    gap: 15px;
+  }
 
   .pro-card-premium {
     background: white;
@@ -440,10 +480,18 @@
 
 @media (max-width: 768px) {
   .hero-inner {
-    padding: 0 30px !important;
+    padding: 60px 20px !important;
+    /* Professional top/bottom padding for mobile */
+    min-height: auto !important;
 
     h1 {
-      font-size: 3rem !important;
+      font-size: 2.8rem !important;
+      line-height: 1.2 !important;
+    }
+
+    p {
+      font-size: 0.9rem !important;
+      margin-top: 15px !important;
     }
   }
 
@@ -472,6 +520,13 @@
   box-shadow: var(--shadow-lg);
   margin-bottom: 80px;
 
+  @media (max-width: 768px) {
+    justify-content: center;
+    text-align: center;
+    padding: 0 40px;
+    height: 450px;
+  }
+
   &::before {
     content: '';
     position: absolute;
@@ -484,6 +539,12 @@
     position: relative;
     z-index: 2;
     max-width: 600px;
+
+    @media (max-width: 768px) {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
     .p-badge {
       display: inline-block;
@@ -502,6 +563,10 @@
       margin-bottom: 20px;
       line-height: 1.1;
 
+      @media (max-width: 768px) {
+        font-size: 2.2rem;
+      }
+
       span {
         color: var(--primary);
       }
@@ -512,6 +577,10 @@
       opacity: 0.9;
       margin-bottom: 35px;
       line-height: 1.5;
+
+      @media (max-width: 768px) {
+        font-size: 1rem;
+      }
     }
   }
 }

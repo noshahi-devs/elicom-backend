@@ -77,15 +77,18 @@
               </label>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-lg w-100"
-              [disabled]="registerForm.invalid || isProcessing">
-              <span *ngIf="!isProcessing">Create Account</span>
-              <span *ngIf="isProcessing">Creating Account...</span>
-            </button>
+            <div class="button-wrapper">
+              <button type="submit" class="btn btn-primary btn-lg w-100"
+                [disabled]="registerForm.invalid || isProcessing">
+                <span *ngIf="!isProcessing">Create Account</span>
+                <span *ngIf="isProcessing">Creating Account...</span>
+              </button>
+            </div>
           </form>
 
           <div class="auth-footer">
-            <p>Already have an account? <a routerLink="/auth/login">Login here</a></p>
+            <p>Already have an account?</p>
+            <a routerLink="/auth/login" class="login-link">Login here</a>
           </div>
         </div>
       </div>

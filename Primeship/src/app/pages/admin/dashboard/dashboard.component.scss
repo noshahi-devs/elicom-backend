@@ -225,6 +225,10 @@
 }
 
 /* Health Metrics */
+.health-card {
+  margin-top: 1.5rem;
+}
+
 .health-metrics {
   display: flex;
   flex-direction: column;
@@ -379,11 +383,17 @@
 
 @media (max-width: 768px) {
   .dashboard-container {
-    padding: 1.5rem;
+    padding: 1rem;
+    overflow-x: hidden;
   }
 
   .page-title {
-    font-size: 2.25rem;
+    font-size: 1.75rem !important;
+    letter-spacing: -0.5px;
+  }
+
+  .page-subtitle {
+    font-size: 0.9rem !important;
   }
 
   .stats-grid {

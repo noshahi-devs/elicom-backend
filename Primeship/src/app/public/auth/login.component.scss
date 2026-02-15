@@ -331,5 +331,19 @@
       gap: 1rem;
       align-items: flex-start;
     }
+
+    /* Robust Mobile Centering */
+    .button-wrapper {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      width: 100%;
+
+      .btn-primary {
+        width: auto !important;
+        min-width: 200px;
+        margin: 0;
+      }
+    }
   }
 }

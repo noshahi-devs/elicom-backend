@@ -27,13 +27,19 @@
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center; // Changed from flex-start to center
   margin-bottom: 2rem;
   gap: 1rem;
-  padding: 1.5rem;
+  padding: 1rem 1.5rem; // Reduced vertical padding
   background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+
+  @media (max-width: 600px) {
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
+    flex-wrap: nowrap; // Ensure they stay in one line
+  }
 }
 
 .header-title {
@@ -41,13 +47,18 @@
 }
 
 .header-title h2 {
-  margin: 0 0 0.5rem 0;
-  font-size: 2rem;
+  margin: 0;
+  font-size: 1.5rem; // Reduced from 2rem
   font-weight: 700;
   color: #111827;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  white-space: nowrap; // Prevent heading wrap
+
+  @media (max-width: 600px) {
+    font-size: 1.1rem; // Further reduced for mobile
+  }
 
   i {
     color: #F85606;
@@ -57,7 +68,11 @@
 .header-title p {
   margin: 0;
   color: #6b7280;
-  font-size: 0.95rem;
+  font-size: 0.85rem; // Reduced from 0.95rem
+
+  @media (max-width: 600px) {
+    display: none; // Hide description on small mobile to save space
+  }
 }
 
 .header-actions {
@@ -92,6 +107,14 @@
     border-color: #F85606;
     color: #ffffff;
     box-shadow: 0 4px 14px rgba(248, 86, 6, 0.25);
+    padding: 0.6rem 1rem; // Slightly more compact
+    font-size: 0.8rem; // Reduced
+
+    @media (max-width: 600px) {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
 
     &:hover {
       transform: translateY(-2px);
@@ -140,6 +163,11 @@
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.75rem;
   margin-bottom: 2rem;
+
+  @media (max-width: 600px) {
+    grid-template-columns: repeat(2, 1fr); // Force 2 columns on mobile
+    gap: 0.5rem;
+  }
 }
 
 .stat-card {
@@ -151,6 +179,10 @@
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+
+  @media (max-width: 600px) {
+    padding: 1rem 0.75rem; // Reduced padding
+  }
 
   &::before {
     content: '';
@@ -179,19 +211,26 @@
   }
 
   .stat-icon {
-    width: 44px;
-    height: 44px;
+    width: 52px; // Increased from 44px
+    height: 52px; // Increased from 44px
     background: linear-gradient(135deg, #F85606 0%, #FF8B52 100%);
-    border-radius: 12px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.3rem;
+    font-size: 1.5rem; // Increased from 1.3rem
     color: white;
     margin-bottom: 1rem;
     transition: all 0.3s ease;
     position: relative;
     z-index: 1;
+
+    @media (max-width: 600px) {
+      width: 44px;
+      height: 44px;
+      font-size: 1.2rem;
+      margin-bottom: 0.75rem;
+    }
   }
 
   .stat-info {
@@ -204,12 +243,20 @@
       color: #111827;
       margin-bottom: 0.25rem;
       line-height: 1.1;
+
+      @media (max-width: 600px) {
+        font-size: 1.25rem;
+      }
     }
 
     .stat-label {
       font-size: 0.85rem;
       color: #6b7280;
       font-weight: 500;
+
+      @media (max-width: 600px) {
+        font-size: 0.75rem;
+      }
     }
   }
 
@@ -225,6 +272,17 @@
     font-size: 0.75rem;
     font-weight: 600;
     z-index: 1;
+
+    @media (max-width: 600px) {
+      top: 0.5rem;
+      right: 0.5rem;
+      padding: 0.2rem 0.4rem;
+      font-size: 0.65rem;
+    }
+
+    @media (max-width: 360px) {
+      display: none; // Hide trend on very small screens to prevent overlap
+    }
 
     &.positive {
       background: rgba(16, 185, 129, 0.1);
@@ -335,6 +393,10 @@
   font-size: 0.9rem;
   min-width: 900px;
 
+  @media (max-width: 768px) {
+    min-width: 500px; // Reduced from 900px
+  }
+
   thead {
     background: linear-gradient(135deg, #F85606 0%, #E64A00 100%);
 
@@ -347,6 +409,16 @@
       font-size: 0.9rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
+
+      @media (max-width: 768px) {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.75rem;
+
+        &:nth-child(3) {
+          // Hide Date column header
+          display: none;
+        }
+      }
 
       &.earnings {
         font-weight: 600;
@@ -373,6 +445,11 @@
         padding: 1.25rem 1.5rem;
         vertical-align: middle;
         color: #111827;
+
+        @media (max-width: 768px) {
+          padding: 0.75rem 0.5rem;
+          font-size: 0.8rem;
+        }
 
         &.actions {
           white-space: nowrap;
@@ -417,12 +494,20 @@
         &.date-cell {
           color: #6c757d;
           font-size: 0.85rem;
+
+          @media (max-width: 768px) {
+            display: none; // Hide Date column cell
+          }
         }
 
         &.total-cell {
           font-weight: 700;
           color: #1a202c;
           font-size: 1rem;
+
+          @media (max-width: 768px) {
+            font-size: 0.85rem;
+          }
         }
 
         &.earnings-cell {
@@ -1047,6 +1132,10 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
   margin-bottom: 1rem;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr; // Stack on mobile
+  }
 }
 
 .form-group {
@@ -1074,23 +1163,23 @@
   }
 }
 
-.items-list {
-  margin-bottom: 1rem;
-}
+.sku-search-box {
+  margin-bottom: 2rem;
 
-.item-row {
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-  align-items: center;
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #374151;
+    font-size: 0.9rem;
+  }
 
-  .item-inputs {
-    display: grid;
-    grid-template-columns: minmax(160px, 2fr) minmax(70px, 1fr) minmax(90px, 1fr) minmax(110px, 1fr);
+  .search-input-group {
+    display: flex;
     gap: 0.75rem;
-    flex: 1;
 
     input {
+      flex: 1;
       padding: 0.625rem 0.75rem;
       border: 1px solid #e2e8f0;
       border-radius: 0.5rem;
@@ -1104,11 +1193,122 @@
       }
     }
 
+    .btn {
+      padding: 0.625rem 1rem;
+      min-width: 48px;
+    }
+  }
+
+  .found-product-preview {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+
+    @media (max-width: 600px) {
+      flex-direction: column;
+      align-items: stretch;
+      text-align: center;
+    }
+
+    .product-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+
+      strong {
+        color: #111827;
+        font-size: 0.95rem;
+      }
+
+      span {
+        color: #6b7280;
+        font-size: 0.85rem;
+      }
+    }
+  }
+}
+
+.items-list {
+  margin-bottom: 1rem;
+}
+
+.item-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  align-items: flex-start; // Better for multi-line inputs
+  padding: 1rem;
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  position: relative;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .item-inputs {
+    display: grid;
+    grid-template-columns: minmax(160px, 2fr) minmax(70px, 1fr) minmax(90px, 1fr) minmax(110px, 1fr);
+    gap: 0.75rem;
+    flex: 1;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr 1fr; // 2 columns on mobile
+    }
+
+    @media (max-width: 480px) {
+      grid-template-columns: 1fr; // Single column on small mobile
+    }
+
+    input {
+      padding: 0.625rem 0.75rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.5rem;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+      width: 100%;
+
+      &:focus {
+        outline: none;
+        border-color: #F85606;
+        box-shadow: 0 0 0 2px rgba(248, 86, 6, 0.1);
+      }
+
+      &:first-of-type {
+        @media (max-width: 768px) {
+          grid-column: 1 / -1; // Item name takes full width
+        }
+      }
+    }
+
     .item-total {
       display: flex;
       align-items: center;
-      font-weight: 600;
-      color: #1A202C;
+      font-weight: 700; // Increased
+      color: #F85606; // Match brand color
+      font-size: 0.95rem;
+
+      &::before {
+        content: "Total: ";
+        font-weight: 500;
+        color: #6b7280;
+        margin-right: 0.5rem;
+        font-size: 0.85rem;
+      }
+    }
+  }
+
+  .btn.danger {
+    @media (max-width: 768px) {
+      align-self: flex-end;
     }
   }
 }

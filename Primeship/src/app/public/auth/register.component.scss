@@ -296,22 +296,28 @@
     text-align: center;
     padding-top: 2rem;
     border-top: 2px solid #f7fafc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
 
     p {
       color: #718096;
       margin: 0;
       font-size: 1rem;
+    }
 
-      a {
-        color: var(--primary);
-        text-decoration: none;
-        font-weight: 700;
-        transition: all 0.3s;
+    .login-link {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 700;
+      transition: all 0.3s;
+      font-size: 1.1rem;
+      /* Slightly larger for emphasis */
 
-        &:hover {
-          color: var(--primary-dark);
-          text-decoration: underline;
-        }
+      &:hover {
+        color: var(--primary-dark);
+        text-decoration: underline;
       }
     }
   }
@@ -327,6 +333,20 @@
 
     .auth-header h2 {
       font-size: 2rem;
+    }
+
+    /* Robust Mobile Centering */
+    .button-wrapper {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+
+      .btn-primary {
+        width: auto !important;
+        min-width: 200px;
+        margin: 0;
+        /* User requested offset */
+      }
     }
   }
 }

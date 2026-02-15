@@ -7,7 +7,6 @@
     <!-- Azure Storage Management Section -->
     <div class="azure-test-section"
       style="margin-top: 20px; padding: 15px; background: rgba(255, 255, 255, 0.1); border-radius: 8px; border: 1px dashed rgba(255, 255, 255, 0.2);">
-      <h3 style="color: #fff; margin-bottom: 10px;"><i class="pi pi-cloud-upload"></i> Azure Storage Management</h3>
       <div style="display: flex; align-items: center; gap: 15px;">
         <input type="file" #testFileInput hidden (change)="onTestFileSelect($event)" [disabled]="isUploading">
         <button (click)="testFileInput.click()" [disabled]="isUploading"
@@ -51,7 +50,7 @@
 
   <!-- Stats Cards Grid -->
   <div class="stats-grid">
-    <div *ngFor="let card of statsCards" class="stat-card-3d" [class.orange-card]="card.title === 'Total Orders'">
+    <div *ngFor="let card of statsCards" class="stat-card-3d orange-card">
       <div class="stat-card-content">
         <div class="stat-icon-wrapper">
           <span class="stat-icon">{{ card.icon }}</span>

@@ -635,6 +635,44 @@ $shadow-medium: rgba(0, 0, 0, 0.15);
       }
     }
 
+    .pagination {
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+      padding: 1.5rem 0.5rem;
+      text-align: center;
+
+      .pagination-info {
+        font-size: 0.9rem;
+        color: $text-light;
+      }
+
+      .pagination-controls {
+        flex-direction: column;
+        width: 100%;
+        gap: 1rem;
+
+        .btn {
+          width: 100%; // Make buttons full width for better touch
+          justify-content: center;
+        }
+
+        .page-numbers {
+          width: 100%;
+          justify-content: center;
+          flex-wrap: wrap; // Allow page numbers to wrap if many
+          gap: 0.5rem;
+
+          .page-btn {
+            flex: 1;
+            min-width: 40px;
+            max-width: 50px;
+            padding: 0.75rem 0;
+          }
+        }
+      }
+    }
+
     .modal-overlay {
       .modal-content {
         padding: 1.5rem;
