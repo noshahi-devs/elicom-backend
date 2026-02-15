@@ -3,24 +3,11 @@
   <app-hero-carousel></app-hero-carousel>
 
   <!-- Category carousel -->
-  <app-category-carousel [categories]="categoriesDebug"></app-category-carousel>
+  <app-category-carousel [categories]="categories"></app-category-carousel>
 
   <!-- Deal card -->
-  <app-deal-card></app-deal-card>
+  <app-deal-card [products]="products"></app-deal-card>
 
   <!-- Product grid -->
   <app-product-grid-new [products]="products"></app-product-grid-new>
-
-  <div *ngIf="products.length === 0" style="text-align: center; padding: 20px; color: #888;">
-    No products found or loading...
-  </div>
-
-  <!-- Debug Section -->
-  <div
-    style="margin-top: 100px; padding: 20px; border: 1px dashed #ccc; font-size: 10px; max-height: 400px; overflow: auto;">
-    <h4>Debug Data (Categories)</h4>
-    <pre>{{ categoriesDebug | json }}</pre>
-    <h4>Debug Data (Products)</h4>
-    <pre>{{ products | json }}</pre>
-  </div>
 </div>

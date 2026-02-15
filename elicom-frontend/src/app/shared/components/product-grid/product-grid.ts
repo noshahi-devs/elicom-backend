@@ -147,22 +147,24 @@ export class ProductGridComponent implements OnInit, OnChanges {
     // 1. Get raw value from one of the possible fields
     let val = product.image1 || product.productImage || product.imageUrl || product.image2;
 
-    // 2. Name-based fallback (copied from product-info logic)
+    // 2. Initial cleanup
     if (!val || val === 'string' || val.trim() === '') {
-      const name = (this.getTitle(product) || '').toLowerCase();
-      if (name.includes('hair removal') || name.includes('hair removel') || name.includes('hair remover') || name.includes('epilator')) {
-        return 'https://picsum.photos/seed/beauty1/300/400';
-      }
-      if (name.includes('laptop bag')) return 'https://picsum.photos/seed/bag1/300/400';
-      if (name.includes('women summer floral dress')) return 'https://picsum.photos/seed/dress1/300/400';
-      // Default fallback
       return `https://picsum.photos/seed/${product.id || product.productId || 'p'}/300/400`;
     }
 
-    // 3. Handle comma-separated strings
-    if (val && typeof val === 'string' && val.includes(',')) {
-      val = val.split(',')[0]; // Take first
+    // NEW: Handle malformed JSON array strings or extra quotes like "[\"url\"" or "\"url\""
+    if (typeof val === 'string') {
+      // Remove known artifacts
+      val = val.replace(/^\["/, '').replace(/"\]$/, '').replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '');
+
+      // If it was a clean JSON array string like '["url1", "url2"]', we might need to split
+      if (val.includes('","')) {
+        val = val.split('","')[0];
+      } else if (val.includes(',')) {
+        val = val.split(',')[0];
+      }
     }
+
     val = val ? val.trim() : '';
     if (!val) return 'assets/images/card_1.jpg'; // Ultimate fallback
 
@@ -175,17 +177,15 @@ export class ProductGridComponent implements OnInit, OnChanges {
     // 5. Absolute vs Relative
     if (val.startsWith('http')) return val;
 
-    // 6. Prepend Base URL
+    // 6. Prepend Base URL logic fixed
     const baseUrl = environment.apiUrl;
 
-    if (!val.startsWith('/')) {
-      if (val.indexOf('/') === -1) {
-        return `${baseUrl}/images/products/${val}`;
-      }
-      return `${baseUrl}/${val}`;
+    // Remove leading slash if present
+    if (val.startsWith('/')) {
+      val = val.substring(1);
     }
 
-    return `${baseUrl}${val}`;
+    return `${baseUrl}/${val}`;
   }
 
   getSecondImage(product: any): string | null {
@@ -199,15 +199,25 @@ export class ProductGridComponent implements OnInit, OnChanges {
     } else {
       // Check if primary field has multiple comma-separated
       const primary = product.image1 || product.productImage || product.imageUrl;
-      if (primary && primary.includes(',')) {
-        const parts = primary.split(',').map((s: string) => s.trim()).filter((s: string) => s);
-        if (parts.length > 1) val = parts[1];
+
+      // NEW: Handle JSON string logic for second image
+      let cleanPrimary = primary;
+      if (typeof cleanPrimary === 'string') {
+        cleanPrimary = cleanPrimary.replace(/^\["/, '').replace(/"\]$/, '').replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '');
+        if (cleanPrimary.includes('","')) {
+          const parts = cleanPrimary.split('","');
+          if (parts.length > 1) val = parts[1];
+        } else if (cleanPrimary.includes(',')) {
+          const parts = cleanPrimary.split(',');
+          if (parts.length > 1) val = parts[1];
+        }
       }
     }
 
     if (!val || typeof val !== 'string') return null;
 
     // cleanup
+    val = val.replace(/^\["/, '').replace(/"\]$/, '').replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '');
     if (val.includes(',')) val = val.split(',')[0].trim();
 
     // Broken CDN or Missing File Fix
@@ -219,13 +229,13 @@ export class ProductGridComponent implements OnInit, OnChanges {
     if (val.startsWith('http')) return val;
 
     const baseUrl = environment.apiUrl;
-    if (!val.startsWith('/')) {
-      if (val.indexOf('/') === -1) {
-        return `${baseUrl}/images/products/${val}`;
-      }
-      return `${baseUrl}/${val}`;
+
+    // Remove leading slash if present
+    if (val.startsWith('/')) {
+      val = val.substring(1);
     }
-    return `${baseUrl}${val}`;
+
+    return `${baseUrl}/${val}`;
   }
 
   getTitle(product: any): string {

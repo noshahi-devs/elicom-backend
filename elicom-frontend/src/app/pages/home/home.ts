@@ -26,7 +26,7 @@ import Swal from 'sweetalert2';
 export class HomeComponent implements OnInit {
 
   products: GlobalMarketplaceProduct[] = [];
-  categoriesDebug: Category[] = [];
+  categories: Category[] = [];
 
   constructor(
     private productService: ProductService,
@@ -59,8 +59,8 @@ export class HomeComponent implements OnInit {
     });
 
     console.log('HomeComponent: Loading products...');
-    // Optimized: Fetch only 8 products initially for the homepage
-    this.productService.getProductsForCards(0, 8).subscribe({
+    // Optimized: Fetch 20 products initially for the homepage (Grid + Deals)
+    this.productService.getProductsForCards(0, 20).subscribe({
       next: (res: any) => {
         Swal.close();
         // Handle response robustly (checking result/items)
@@ -85,7 +85,7 @@ export class HomeComponent implements OnInit {
     this.categoryService.getAllCategories(8).subscribe({
       next: (res: any[]) => {
         console.log('HomeComponent: Categories arrived reliably. Count:', res.length);
-        this.categoriesDebug = res;
+        this.categories = res;
         this.cdr.detectChanges();
       },
       error: (err) => {

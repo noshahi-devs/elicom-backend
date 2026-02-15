@@ -24,7 +24,7 @@ export class AddToCart implements OnInit {
   private productService = inject(ProductService);
   private cdr = inject(ChangeDetectorRef);
 
-  brand = 'SMART CART';
+  brand = 'World Cart';
   address = 'Ship to Twnhs, 2841 E Waltann Ln Unit 1';
   products: any[] = [];
 

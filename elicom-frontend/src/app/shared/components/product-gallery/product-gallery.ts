@@ -22,25 +22,29 @@ export class ProductGallery implements OnInit {
     if (this.productData) {
       const name = (this.productData.title || '').toLowerCase();
 
-      // 🚨 CRITICAL: Check if we should override based on product name (Same as Home Grid)
-      if (name.includes('hair removal') || name.includes('hair removel') || name.includes('hair remover') || name.includes('epilator')) {
-        this.images = [
-          'https://picsum.photos/seed/beauty1/600/800',
-          'https://picsum.photos/seed/beauty2/600/800'
-        ];
-      } else if (name.includes('laptop bag')) {
-        this.images = [
-          'https://picsum.photos/seed/bag1/600/800',
-          'https://picsum.photos/seed/tech-bag/600/800'
-        ];
-      } else if (name.includes('women summer floral dress')) {
-        this.images = [
-          'https://picsum.photos/seed/dress1/600/800',
-          'https://picsum.photos/seed/dress2/600/800'
-        ];
-      } else if (this.productData.images && this.productData.images.length > 0) {
-        // Use real images from API if they exist and aren't broken strings
-        const filteredImages = this.productData.images.filter(img => img && img !== 'string');
+      // Use real images from API if they exist
+      if (this.productData.images && this.productData.images.length > 0) {
+        // Robustly parse the images array/string
+        let rawImages: string[] = [];
+
+        // Sometimes 'images' might be a JSON string of an array
+        if (typeof this.productData.images === 'string') {
+          let str = this.productData.images as string;
+          if (str.startsWith('[')) {
+            try {
+              rawImages = JSON.parse(str);
+            } catch (e) {
+              // Manual parsing for malformed strings like "[\"url1\", \"url2\"]"
+              rawImages = str.replace(/^\[/, '').replace(/\]$/, '').split(',').map(s => s.trim().replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, ''));
+            }
+          } else {
+            rawImages = str.split(',').map(s => s.trim());
+          }
+        } else if (Array.isArray(this.productData.images)) {
+          rawImages = this.productData.images;
+        }
+
+        const filteredImages = rawImages.filter(img => img && img !== 'string' && img.trim() !== '');
         if (filteredImages.length > 0) {
           this.images = filteredImages.map(img => this.getImage(img));
         } else {
@@ -49,8 +53,8 @@ export class ProductGallery implements OnInit {
       } else {
         // Ultimate fallback
         this.images = [
-          `https://picsum.photos/seed/${this.productData.productId}/600/800`,
-          `https://picsum.photos/seed/${this.productData.productId}_alt/600/800`
+          `https://picsum.photos/seed/${this.productData.productId || 'p'}/600/800`,
+          `https://picsum.photos/seed/${this.productData.productId || 'p'}_alt/600/800`
         ];
       }
     }
@@ -58,19 +62,28 @@ export class ProductGallery implements OnInit {
 
   getImage(img: string): string {
     if (!img || img === 'string' || img.trim() === '') {
-      return `https://picsum.photos/seed/product_${this.productData?.productId}/600/800`;
+      return `https://picsum.photos/seed/product_${this.productData?.productId || 'default'}/600/800`;
+    }
+
+    // Clean malformed strings from API
+    let val = img.trim();
+    if (val.startsWith('"') || val.startsWith('\\"')) {
+      val = val.replace(/^\\"/, '').replace(/\\"$/, '').replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '');
+    }
+    if (val.startsWith('[')) {
+      val = val.replace(/^\[/, '').replace(/\]$/, '').replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '');
     }
 
     // Broken CDN Fix (MUST BE BEFORE http CHECK)
-    if (img.includes('cdn.elicom.com')) {
-      const seed = img.split('/').pop() || 'p1';
+    if (val.includes('cdn.elicom.com')) {
+      const seed = val.split('/').pop() || 'p1';
       return `https://picsum.photos/seed/${seed}/600/800`;
     }
 
-    if (img.startsWith('http')) return img;
+    if (val.startsWith('http')) return val;
 
     // Handle local images (e.g. 'hair.png')
-    return `${environment.apiUrl}/images/products/${img}`;
+    return `${environment.apiUrl}/images/products/${val}`;
   }
 
   selectImage(index: number) {

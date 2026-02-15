@@ -10,7 +10,7 @@ import { NgIf } from '@angular/common';
 })
 export class OrderProcessHeader {
 
-  @Input() brandName: string = 'SMART CART';
+  @Input() brandName: string = 'World Cart';
 
   @Input() country: string = 'Pakistan';
   @Input() province: string = 'Punjab';

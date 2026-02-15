@@ -86,25 +86,56 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                 if (string.IsNullOrEmpty(clientRootAddress)) clientRootAddress = "http://localhost:4200";
 
                 string redirectPath = $"{clientRootAddress}/account/login";
-            if (platform == "Smart Store") redirectPath = $"{clientRootAddress}/smartstore/auth";
+            if (platform == "Smart Store" || platform == "World Cart" || platform == "World Cart US") redirectPath = $"{clientRootAddress}/smartstore/auth";
             if (platform == "Prime Ship" || platform == "Prime Ship UK") redirectPath = $"{clientRootAddress}/auth/login";
             if (platform == "Easy Finora") redirectPath = $"{clientRootAddress}/auth";
+
+                string primaryColor = "#000000";
+                string accentColor = "#6b7280";
+                string icon = "✅";
+
+                if (platform.Contains("Prime Ship")) { primaryColor = "#F85606"; icon = "🚢"; }
+                else if (platform.Contains("Easy Finora")) { primaryColor = "#28a745"; icon = "💰"; }
 
                 return new ContentResult
                 {
                     ContentType = "text/html",
                     Content = $@"
-                        <html>
-                            <body style='text-align: center; font-family: sans-serif; padding-top: 100px;'>
-                                <h1 style='color: green;'>{platform} Account Verified!</h1>
-                                <p>You are being redirected to the login page...</p>
-                                <script>
-                                    setTimeout(function() {{
-                                        window.location.href = '{redirectPath}';
-                                    }}, 3000);
-                                </script>
-                            </body>
-                        </html>"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>{platform} - Verified</title>
+    <style>
+        body {{ margin:0; padding:0; height:100vh; display:flex; align-items:center; justify-content:center; background:#f9fafb; font-family: sans-serif; }}
+        .card {{ background:white; padding:50px; border-radius:16px; box-shadow:0 10px 25px rgba(0,0,0,0.05); text-align:center; max-width:400px; width:90%; border:1px solid #eee; }}
+        .icon {{ font-size:60px; margin-bottom:20px; }}
+        h1 {{ color:{primaryColor}; margin:0 0 10px; font-size:24px; text-transform:uppercase; letter-spacing:1px; }}
+        p {{ color:#4b5563; font-size:15px; line-height:1.5; margin-bottom:30px; }}
+        .loader {{ width:20px; height:20px; border:3px solid #eee; border-top:3px solid {primaryColor}; border-radius:50%; animation: spin 0.8s linear infinite; display:inline-block; vertical-align:middle; margin-right:10px; }}
+        @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
+        .footer {{ font-size:12px; color:#9ca3af; margin-top:20px; font-weight:bold; }}
+    </style>
+</head>
+<body>
+    <div class='card'>
+        <div class='icon'>{icon}</div>
+        <h1>{platform}</h1>
+        <p>Your account has been successfully verified! You can now access all features of our platform.</p>
+        <div style='background:#f3f4f6; padding:12px; border-radius:8px; display:inline-block;'>
+            <div class='loader'></div>
+            <span style='font-size:14px; color:#1f2937; font-weight:600;'>Redirecting to login...</span>
+        </div>
+        <div class='footer'>{platform.ToUpper()} US</div>
+    </div>
+    <script>
+        setTimeout(function() {{
+            window.location.href = '{redirectPath}';
+        }}, 3000);
+    </script>
+</body>
+</html>"
                 };
             }
         }
@@ -148,7 +179,8 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             string platformName = "Elicom";
             string brandColor = "#007bff";
 
-            if (tenantId == 1 || tenantId == 2) { platformName = "Prime Ship UK"; brandColor = "#f85606"; }
+            if (tenantId == 1) { platformName = "World Cart"; brandColor = "#000000"; }
+            else if (tenantId == 2) { platformName = "Prime Ship UK"; brandColor = "#f85606"; }
             else if (tenantId == 3) { platformName = "Easy Finora"; brandColor = "#1de016"; }
             else if (tenantId == 4) { platformName = "Easy Finora"; brandColor = "#28a745"; }
 
@@ -387,85 +419,87 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
 </body>
 </html>";
         }
-        else // Smart Store or other platforms
+        else // World Cart or other platforms
         {
-            // SMART STORE - E-commerce Orange Theme
+            // WORLD CART - Professional Black & White Theme
+            var roles = await _userManager.GetRolesAsync(user);
+            bool isSeller = roles.Any(r => r.ToLower().Contains("seller") || r.ToLower().Contains("supplier"));
+            string dashboardName = isSeller ? "Seller Dashboard" : "Customer Account";
+            string welcomeMessage = isSeller 
+                ? "Ready to grow your business? Start selling your products on our global platform."
+                : "Welcome to our shopping community! Your journey towards a premium shopping experience starts here.";
+
             emailBody = $@"
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
 </head>
-<body style='margin:0; padding:0; background-color:#fff5f0; font-family: Arial, Helvetica, sans-serif;'>
+<body style='margin:0; padding:0; background-color:#ffffff; font-family: ""Inter"", -apple-system, sans-serif;'>
 
-    <table width='100%' cellpadding='0' cellspacing='0' style='background-color:#fff5f0; padding:40px 20px;'>
+    <table width='100%' cellpadding='0' cellspacing='0' style='background-color:#ffffff; padding:40px 20px;'>
         <tr>
             <td align='center'>
 
-                <table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff; border-radius:10px; overflow:hidden; box-shadow:0 3px 15px rgba(255,69,0,0.15);'>
+                <table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff; border: 1px solid #e5e7eb; border-radius:12px; overflow:hidden;'>
                     
                     <!-- Header -->
                     <tr>
-                        <td style='background:linear-gradient(135deg, #ff9900 0%, #ff6600 100%); padding:30px; text-align:center;'>
-                            <h1 style='margin:0; color:#ffffff; font-size:28px; font-weight:700; letter-spacing:1.5px;'>
-                                🛒 {platformName}
+                        <td style='background:#000000; padding:35px; text-align:center;'>
+                            <h1 style='margin:0; color:#ffffff; font-size:24px; font-weight:800; letter-spacing:-0.5px; text-transform:uppercase;'>
+                                WORLD CART
                             </h1>
-                            <p style='margin:8px 0 0; color:#ffe6cc; font-size:13px;'>Your Online Shopping Destination</p>
+                            <p style='margin:8px 0 0; color:#9ca3af; font-size:12px; font-weight:500;'>PREMIUM SHOPPING DESTINATION</p>
                         </td>
                     </tr>
 
                     <!-- Body -->
                     <tr>
-                        <td style='padding:40px 35px; color:#333333; font-size:15px; line-height:1.7;'>
+                        <td style='padding:40px 35px; color:#111827; font-size:15px; line-height:1.6;'>
 
-                            <h2 style='margin:0 0 18px; font-weight:600; color:#ff6600;'>Verify Your Email</h2>
+                            <h2 style='margin:0 0 20px; font-weight:700; color:#000000; font-size:20px;'>Verify Your Email Address</h2>
 
-                            <p>Hello <strong>{user.Name}</strong>,</p>
+                            <table width='100%' cellpadding='0' cellspacing='0' style='margin-bottom:25px;'>
+                                <tr>
+                                    <td>
+                                        <p style='margin:0;'>Hello <strong>{(string.IsNullOrEmpty(user.Name) ? user.UserName : user.Name)}</strong>,</p>
+                                    </td>
+                                    <td align='right'>
+                                        <span style='background:#f3f4f6; color:#1f2937; padding:4px 12px; border-radius:12px; font-size:11px; font-weight:700; text-transform:uppercase;'>{dashboardName}</span>
+                                    </td>
+                                </tr>
+                            </table>
 
-                            <p>
-                                Welcome to <strong>{platformName}</strong>! We're excited to have you join our shopping community.
+                            <p style='margin:0 0 16px;'>
+                                {welcomeMessage}
                             </p>
 
-                            <p>
-                                Please verify your email address to unlock your account and start shopping:
+                            <p style='margin:0 0 24px;'>
+                                Please verify your email address to unlock your account and start exploring our marketplace:
                             </p>
 
                             <table width='100%' cellpadding='0' cellspacing='0' style='margin:30px 0;'>
                                 <tr>
                                     <td align='center'>
                                         <a href='{verificationLink}' 
-                                           style='background:linear-gradient(135deg, #ff9900 0%, #ff6600 100%);
+                                           style='background:#000000;
                                                   color:#ffffff; 
-                                                  padding:15px 40px; 
+                                                  padding:16px 45px; 
                                                   text-decoration:none; 
-                                                  border-radius:25px; 
-                                                  font-weight:bold; 
+                                                  border-radius:8px; 
+                                                  font-weight:700; 
                                                   font-size:15px;
-                                                  display:inline-block;
-                                                  box-shadow:0 4px 12px rgba(255,102,0,0.3);'>
-                                            Verify My Email
+                                                  display:inline-block;'>
+                                            Verify Email Address
                                         </a>
                                     </td>
                                 </tr>
                             </table>
 
-                            <p style='font-size:13px; color:#666; margin:25px 0;'>
-                                Can't click the button? Copy this link into your browser:
-                            </p>
-
-                            <p style='word-break:break-all; font-size:12px; color:#999; background:#fff9f5; padding:12px; border-radius:5px;'>
-                                {verificationLink}
-                            </p>
-
-                            <hr style='border:none; border-top:1px solid #ffe6cc; margin:30px 0;' />
-
-                            <p style='font-size:13px; color:#777;'>
-                                Didn't sign up? You can safely ignore this email.
-                            </p>
-
-                            <p style='margin-top:25px;'>
-                                Happy Shopping!<br/>
-                                <strong style='color:#ff6600;'>{platformName} Team</strong>
+                            <p style='font-size:12px; color:#6b7280; background:#f9fafb; padding:15px; border-radius:8px; margin:24px 0 0; border:1px solid #f3f4f6;'>
+                                🔒 This link expires in 24 hours. If the button doesn't work, copy this link: <br/>
+                                <span style='word-break:break-all; color:#3b82f6;'>{verificationLink}</span>
                             </p>
 
                         </td>
@@ -473,8 +507,11 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
 
                     <!-- Footer -->
                     <tr>
-                        <td style='background:#fff5f0; padding:20px 30px; text-align:center; font-size:12px; color:#999;'>
-                            © {DateTime.UtcNow.Year} {platformName}. All rights reserved.
+                        <td style='border-top:1px solid #f3f4f6; padding:30px; text-align:center;'>
+                            <p style='margin:0; font-size:13px; font-weight:700; color:#000000;'>WORLD CART US</p>
+                            <p style='margin:8px 0 0; font-size:12px; color:#9ca3af;'>
+                                &copy; {DateTime.UtcNow.Year} World Cart Inc. All rights reserved.
+                            </p>
                         </td>
                     </tr>
 
@@ -533,13 +570,13 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
     [HttpPost]
     public async Task RegisterSmartStoreSeller(RegisterSmartStoreInput input)
     {
-        await RegisterPlatformUser(input.EmailAddress, 1, StaticRoleNames.Tenants.Supplier, "Seller", "Smart Store", "SS", "#ff9900", input.Password, input.Country, input.PhoneNumber, input.FullName);
+        await RegisterPlatformUser(input.EmailAddress, 1, StaticRoleNames.Tenants.Supplier, "Seller", "World Cart", "WC", "#000000", input.Password, input.Country, input.PhoneNumber, input.FullName);
     }
 
     [HttpPost]
     public async Task RegisterSmartStoreCustomer(RegisterSmartStoreInput input)
     {
-        await RegisterPlatformUser(input.EmailAddress, 1, StaticRoleNames.Tenants.Buyer, "Customer", "Smart Store", "SS", "#ff9900", input.Password, input.Country, input.PhoneNumber, input.FullName);
+        await RegisterPlatformUser(input.EmailAddress, 1, StaticRoleNames.Tenants.Buyer, "Customer", "World Cart", "WC", "#000000", input.Password, input.Country, input.PhoneNumber, input.FullName);
     }
 
     [HttpPost]

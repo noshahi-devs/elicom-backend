@@ -2,7 +2,7 @@
 
   <!-- TOP BAR -->
   <div class="header-top">
-    <div class="logo">SMART CART</div>
+    <div class="logo">World Cart</div>
 
     <!-- SEARCH (Responsive Toggle) -->
     <div class="search-bar" *ngIf="isSearchVisible()">
@@ -55,32 +55,16 @@
     <nav class="navbar" #navbar>
       <ul class="navbar-nav flex-row">
         <li class="nav-item"><a class="nav-link" href="#">Categories <i class="fa-solid fa-angle-down"></i></a></li>
-        <li class="nav-item"><a class="nav-link active" href="#">New In</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Sale</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Women Clothing</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Kids</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Curve</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Men Clothing</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Shoes</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Underwear & Sleepwear</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Home & Kitchen</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Jewelry & Accessories</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Beauty & Health</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Baby & Maternity</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Bags & Luggage</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Sports & Outdoors</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Textiles</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Cell Phones & Accessories</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Electronics</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Toys & Games</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Tools & Home Improvement</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Office & School Supplies</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Pet Supplies</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Appliances</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Automotive</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Books & Magazine</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Food & Beverages</a></li>
+        <li class="nav-item"><a class="nav-link active" [routerLink]="['/search-result']"
+            [queryParams]="{sort: 'newest'}">New In</a></li>
+        <li class="nav-item"><a class="nav-link" [routerLink]="['/search-result']"
+            [queryParams]="{sort: 'price-low'}">Sale</a></li>
+
+        <li class="nav-item" *ngFor="let cat of categories()">
+          <a class="nav-link" [routerLink]="['/search-result']" [queryParams]="{category: cat.name}">
+            {{ cat.name }}
+          </a>
+        </li>
       </ul>
     </nav>
 

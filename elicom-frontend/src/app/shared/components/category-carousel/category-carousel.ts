@@ -101,16 +101,26 @@ export class CategoryCarouselComponent implements OnInit, OnChanges {
   }
 
   getCategoryImage(cat: any): string {
-    if (cat.imageUrl && cat.imageUrl !== 'string' && cat.imageUrl.includes('.')) {
-      if (cat.imageUrl.startsWith('http')) return cat.imageUrl;
-      const img = cat.imageUrl.toLowerCase();
-      if (img === 'test.jpg' || img === 'category.png' || img === 'hair.png') {
-        return `https://picsum.photos/seed/${cat.name}/110/110`;
-      }
-      return `${environment.apiUrl}/images/products/${cat.imageUrl}`;
+    let val = cat.imageUrl || '';
+
+    if (!val || val === 'string' || val.trim() === '') {
+      const seed = cat.id || cat.categoryId || cat.name || 'default';
+      return `https://picsum.photos/seed/${seed}/110/110`;
     }
-    const seed = cat.id || cat.categoryId || cat.name || 'default';
-    return `https://picsum.photos/seed/${seed}/110/110`;
+
+    // Clean malformed strings from API
+    val = val.trim();
+    if (val.startsWith('"') || val.startsWith('\\"')) {
+      val = val.replace(/^\\"/, '').replace(/\\"$/, '').replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '');
+    }
+    if (val.startsWith('[')) {
+      val = val.replace(/^\[/, '').replace(/\]$/, '').replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '');
+    }
+
+    if (val.startsWith('http')) return val;
+
+    // Handle local images (e.g. 'hair.png')
+    return `${environment.apiUrl}/images/products/${val}`;
   }
 
   handleImageError(event: any, cat: any) {

@@ -81,22 +81,26 @@ export class ProductInfo implements OnInit {
 
   getImage(img: string): string {
     if (!img || img === 'string' || img.trim() === '') {
-      const name = (this.productData?.title || '').toLowerCase();
-      if (name.includes('hair removal') || name.includes('hair removel') || name.includes('hair remover') || name.includes('epilator')) {
-        return 'https://picsum.photos/seed/beauty1/300/400';
-      }
-      if (name.includes('laptop bag')) return 'https://picsum.photos/seed/bag1/300/400';
-      if (name.includes('women summer floral dress')) return 'https://picsum.photos/seed/dress1/300/400';
       return `https://picsum.photos/seed/${this.productData?.productId || 'p'}/300/400`;
     }
+
+    // Clean malformed strings from API (Same logic as Grid/Gallery)
+    let val = img.trim();
+    if (val.startsWith('"') || val.startsWith('\\"')) {
+      val = val.replace(/^\\"/, '').replace(/\\"$/, '').replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '');
+    }
+    if (val.startsWith('[')) {
+      val = val.replace(/^\[/, '').replace(/\]$/, '').replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '');
+    }
+
     // Broken CDN Fix (MUST BE BEFORE http CHECK)
-    if (img.includes('cdn.elicom.com')) {
-      const seed = img.split('/').pop() || 'p1';
+    if (val.includes('cdn.elicom.com')) {
+      const seed = val.split('/').pop() || 'p1';
       return `https://picsum.photos/seed/${seed}/100/100`;
     }
 
-    if (img.startsWith('http')) return img;
-    return `${environment.apiUrl}/images/products/${img}`;
+    if (val.startsWith('http')) return val;
+    return `${environment.apiUrl}/images/products/${val}`;
   }
 
   ngOnInit(): void {

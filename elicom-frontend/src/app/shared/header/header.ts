@@ -1,9 +1,10 @@
-import { Component, signal, ElementRef, ViewChild, inject, effect, HostListener, AfterViewChecked } from '@angular/core';
+import { Component, signal, ElementRef, ViewChild, inject, effect, HostListener, AfterViewChecked, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, Router } from '@angular/router';
+import { RouterLink, Router, RouterModule } from '@angular/router';
 import { CartService, CartItem } from '../../services/cart.service';
 import { SearchService } from '../../services/search.service';
 import { AuthService } from '../../services/auth.service';
+import { CategoryService } from '../../services/category';
 import { FormsModule } from '@angular/forms';
 import { AuthModalComponent } from '../components/auth-modal/auth-modal.component';
 import Swal from 'sweetalert2';
@@ -11,11 +12,11 @@ import Swal from 'sweetalert2';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, AuthModalComponent],
+  imports: [CommonModule, RouterLink, RouterModule, FormsModule, AuthModalComponent],
   templateUrl: './header.html',
   styleUrls: ['./header.scss']
 })
-export class Header implements AfterViewChecked {
+export class Header implements OnInit, AfterViewChecked {
   userDropdown = signal(false);
   cartDropdown = signal(false);
   globeDropdown = signal(false);
@@ -23,10 +24,12 @@ export class Header implements AfterViewChecked {
   searchTerm = '';
   isSearchVisible = signal(true);
 
+  categories = signal<any[]>([]);
 
   cartService = inject(CartService);
   searchService = inject(SearchService);
   authService = inject(AuthService); // Inject AuthService
+  categoryService = inject(CategoryService);
   router = inject(Router);
 
   // currentUser signal derived from AuthService
@@ -49,6 +52,21 @@ export class Header implements AfterViewChecked {
     // We subscribe manually since effect() is for signals, or we could use toSignal if we strictly wanted signals
     this.authService.showAuthModal$.subscribe(show => {
       if (show) this.authModalOpen.set(true);
+    });
+  }
+
+  ngOnInit() {
+    this.loadCategories();
+  }
+
+  loadCategories() {
+    this.categoryService.getAllCategories(20).subscribe({
+      next: (res) => {
+        this.categories.set(res);
+      },
+      error: (err) => {
+        console.error('Failed to load nav categories', err);
+      }
     });
   }
 

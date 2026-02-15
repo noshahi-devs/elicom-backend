@@ -18,130 +18,143 @@
     body {
       font-family: 'Poppins', sans-serif;
       background-color: #FFFFFF;
-      margin:0;
-      font-family:'Roboto',sans-serif;
-      color:var(--text);
-      -webkit-font-smoothing:antialiased;
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
     }
 
-     :root{
-      --muted:#9a9a9a;
-      --text:#222;
-      --link:#1e73be;
+    :root {
+      --muted: #9a9a9a;
+      --text: #222;
+      --link: #1e73be;
     }
 
-    *{box-sizing:border-box}
-
-    .page{
-      max-width:95%;
-      margin:36px auto;
-      padding:0 10px;
+    * {
+      box-sizing: border-box
     }
 
-    .breadcrumb{
-      font-size:13px;
-      color:var(--muted);
-      margin-bottom:18px;
+    .page {
+      max-width: 95%;
+      margin: 36px auto;
+      padding: 0 10px;
     }
 
-    .content{text-align:center}
-
-    h1{
-      font-family:'Merriweather',serif;
-      font-weight:700;
-      font-size:34px;
-      margin:12px 0 28px;
-      color:#1f2b2b;
+    .breadcrumb {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 18px;
     }
 
-    .lead{
-      font-size:18px;
-      line-height:1.65;
-      font-weight:700;
-      margin-bottom:20px;
+    .content {
+      text-align: center
     }
 
-    .lead a{color:var(--link);text-decoration:underline}
-
-    .notice{
-      font-size:18px;
-      line-height:1.65;
-      font-weight:700;
-      margin:20px 0 10px;
+    h1 {
+      font-family: 'Merriweather', serif;
+      font-weight: 700;
+      font-size: 34px;
+      margin: 12px 0 28px;
+      color: #1f2b2b;
     }
 
-    .small-note{
-      font-size:14px;
-      color:var(--muted);
-      line-height:1.7;
-      margin-bottom:12px;
+    .lead {
+      font-size: 18px;
+      line-height: 1.65;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .lead a {
+      color: var(--link);
+      text-decoration: underline
+    }
+
+    .notice {
+      font-size: 18px;
+      line-height: 1.65;
+      font-weight: 700;
+      margin: 20px 0 10px;
+    }
+
+    .small-note {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 12px;
     }
 
     /* ===========================
        Main Section Headings
     ============================ */
-    .main-heading{
-      font-size:18px;
-      font-weight:700;
-      margin:30px 0 12px 0;
-      color:#111;
+    .main-heading {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 30px 0 12px 0;
+      color: #111;
     }
 
     /* ===========================
        Section Paragraph Style
     ============================ */
-    .section-text{
-      font-size:14px;
-      color:#9b9b9b;
-      line-height:1.8;
-      margin-bottom:14px;
+    .section-text {
+      font-size: 14px;
+      color: #9b9b9b;
+      line-height: 1.8;
+      margin-bottom: 14px;
     }
 
     /* ===========================
        List for section 2 & 3
     ============================ */
-    .styled-list{
-      list-style:none;
-      padding:0;
-      counter-reset:item 0;
-      margin-bottom:20px;
+    .styled-list {
+      list-style: none;
+      padding: 0;
+      counter-reset: item 0;
+      margin-bottom: 20px;
     }
 
-    .styled-list li{
-      counter-increment:item;
-      position:relative;
-      padding-left:28px;
-      font-size:14px;
-      color:#9b9b9b;
-      line-height:1.8;
-      margin-bottom:8px;
+    .styled-list li {
+      counter-increment: item;
+      position: relative;
+      padding-left: 28px;
+      font-size: 14px;
+      color: #9b9b9b;
+      line-height: 1.8;
+      margin-bottom: 8px;
     }
 
-    .styled-list li::before{
-      content:counter(item) ") ";
-      position:absolute;
-      left:0;
-      top:0;
-      color:#7a7a7a;
-      font-weight:600;
+    .styled-list li::before {
+      content: counter(item) ") ";
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: #7a7a7a;
+      font-weight: 600;
     }
 
     /* Bullet list for section 2 */
-    ul.bullets{
-      padding-left:18px;
-      margin-bottom:20px;
+    ul.bullets {
+      padding-left: 18px;
+      margin-bottom: 20px;
     }
 
-    ul.bullets li{
-      font-size:14px;
-      color:#9b9b9b;
-      line-height:1.8;
-      margin-bottom:8px;
+    ul.bullets li {
+      font-size: 14px;
+      color: #9b9b9b;
+      line-height: 1.8;
+      margin-bottom: 8px;
     }
 
-    @media(max-width:640px){
-      h1{font-size:28px}
-      .lead,.notice{font-size:16px}
+    @media(max-width:640px) {
+      h1 {
+        font-size: 28px
+      }
+
+      .lead,
+      .notice {
+        font-size: 16px
+      }
     }
 
     /*=============== Header Open========== */
@@ -1202,178 +1215,201 @@
 
   <div class="page">
 
-  <!-- Breadcrumb -->
-  <div class="breadcrumb">Home / <span style="color:var(--text);font-weight:500">Coupon Policy</span></div>
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">Home / <span style="color:var(--text);font-weight:500">Coupon Policy</span></div>
 
-  <!-- Page Title -->
-  <div class="content">
-    <h1>Coupon Policy</h1>
-  </div>
+    <!-- Page Title -->
+    <div class="content">
+      <h1>Coupon Policy</h1>
+    </div>
 
-  <!-- Intro Text -->
-  <p class="lead">
-    The following Coupon Terms and Conditions ("Coupon Policy" or "Coupon Terms"), effective as of February 24, 2025,
-    describe the terms and conditions that apply to SHEIN US Coupons ("Coupons"). These Coupon Terms constitute an
-    agreement between you and the Issuer. The "Issuer" is SHEIN US Services, LLC. By accepting or using a SHEIN Coupon,
-    you agree to be bound by these Coupon Terms. If you do not agree with these Coupon Terms, do not accept or use the
-    Coupon. The acceptance and use of Coupons are also subject to our <a href="#">Terms of Use</a>.
-  </p>
+    <!-- Intro Text -->
+    <p class="lead">
+      The following Coupon Terms and Conditions ("Coupon Policy" or "Coupon Terms"), effective as of February 24, 2025,
+      describe the terms and conditions that apply to SHEIN US Coupons ("Coupons"). These Coupon Terms constitute an
+      agreement between you and the Issuer. The "Issuer" is SHEIN US Services, LLC. By accepting or using a SHEIN
+      Coupon,
+      you agree to be bound by these Coupon Terms. If you do not agree with these Coupon Terms, do not accept or use the
+      Coupon. The acceptance and use of Coupons are also subject to our <a href="#">Terms of Use</a>.
+    </p>
 
-  <p class="notice">
-    NOTICE OF ARBITRATION PROVISIONS: Your acceptance and use of Coupons is subject to binding individual arbitration.
-  </p>
+    <p class="notice">
+      NOTICE OF ARBITRATION PROVISIONS: Your acceptance and use of Coupons is subject to binding individual arbitration.
+    </p>
 
-  <p class="small-note">
-    This Coupon Policy governs the issuance, use, and redemption of Coupons.
-  </p>
+    <p class="small-note">
+      This Coupon Policy governs the issuance, use, and redemption of Coupons.
+    </p>
 
-  <p class="small-note">Subject to applicable laws, this Coupon Policy may be amended from time to time.</p>
+    <p class="small-note">Subject to applicable laws, this Coupon Policy may be amended from time to time.</p>
 
-  <!-- ===========================
+    <!-- ===========================
        SECTION 1
   ============================ -->
-  <h2 class="main-heading">1. Expiration Date and Restrictions on Use</h2>
+    <h2 class="main-heading">1. Expiration Date and Restrictions on Use</h2>
 
-  <p class="section-text">
-    Coupons may be redeemed only toward the purchase of products on us.shein.com (“Site”) and the SHEIN US mobile
-    application (“App”). Coupons issued on the Site or the App may only be used on the Site or the App.
-  </p>
+    <p class="section-text">
+      Coupons may be redeemed only toward the purchase of products on us.shein.com (“Site”) and the SHEIN US mobile
+      application (“App”). Coupons issued on the Site or the App may only be used on the Site or the App.
+    </p>
 
-  <p class="section-text">
-    Only those Coupons that are identified by SHEIN as being eligible for Third-Party Sellers' products may be used for
-    purchasing Third-Party Sellers' products…
-  </p>
+    <p class="section-text">
+      Only those Coupons that are identified by SHEIN as being eligible for Third-Party Sellers' products may be used
+      for
+      purchasing Third-Party Sellers' products…
+    </p>
 
-  <p class="section-text">
-    Each Coupon will have an expiration date. Once expired, it cannot be redeemed. Expired Coupons are marked
-    “unavailable” and deleted after 3 months.
-  </p>
+    <p class="section-text">
+      Each Coupon will have an expiration date. Once expired, it cannot be redeemed. Expired Coupons are marked
+      “unavailable” and deleted after 3 months.
+    </p>
 
-  <!-- ===========================
+    <!-- ===========================
        SECTION 2
   ============================ -->
-  <h2 class="main-heading">2. How to Get A SHEIN Coupon?</h2>
+    <h2 class="main-heading">2. How to Get A SHEIN Coupon?</h2>
 
-  <p class="section-text">We may make Coupons available to you at our sole discretion:</p>
+    <p class="section-text">We may make Coupons available to you at our sole discretion:</p>
 
-  <ul class="bullets">
-    <li>New user registration</li>
-    <li>Homepage or order page coupon distribution</li>
-    <li>Downloading the App</li>
-    <li>Influencer coupon recommendations</li>
-    <li>Promotional pop-ups</li>
-    <li>Order payment promotions</li>
-  </ul>
+    <ul class="bullets">
+      <li>New user registration</li>
+      <li>Homepage or order page coupon distribution</li>
+      <li>Downloading the App</li>
+      <li>Influencer coupon recommendations</li>
+      <li>Promotional pop-ups</li>
+      <li>Order payment promotions</li>
+    </ul>
 
-  <!-- ===========================
+    <!-- ===========================
        SECTION 3 (Screenshot Matching)
   ============================ -->
-  <h2 class="main-heading">3. What Types of Coupons Does SHEIN Provide?</h2>
+    <h2 class="main-heading">3. What Types of Coupons Does SHEIN Provide?</h2>
 
-  <p class="section-text">We offer the following types of Coupons:</p>
+    <p class="section-text">We offer the following types of Coupons:</p>
 
-  <ul class="styled-list">
-    <li>Fixed-amount Coupon;</li>
-    <li>Discount Coupon applicable to the total purchase price of an order;</li>
-    <li>Discount Coupon applicable only to non-sale products in an order;</li>
-    <li>Free shipping Coupon applicable to the lowest-cost option;</li>
-    <li>Free shipping Coupon applicable to the highest-cost option;</li>
-    <li>Other types of Coupons we may issue from time to time.</li>
-  </ul>
+    <ul class="styled-list">
+      <li>Fixed-amount Coupon;</li>
+      <li>Discount Coupon applicable to the total purchase price of an order;</li>
+      <li>Discount Coupon applicable only to non-sale products in an order;</li>
+      <li>Free shipping Coupon applicable to the lowest-cost option;</li>
+      <li>Free shipping Coupon applicable to the highest-cost option;</li>
+      <li>Other types of Coupons we may issue from time to time.</li>
+    </ul>
 
-  <p class="section-text">
-    These Coupons may be offered solely at our discretion.
-  </p>
+    <p class="section-text">
+      These Coupons may be offered solely at our discretion.
+    </p>
 
-  <!-- ===========================
+    <!-- ===========================
        SECTION 4 (Screenshot Matching)
   ============================ -->
-  <h2 class="main-heading">4. View Your Coupon</h2>
+    <h2 class="main-heading">4. View Your Coupon</h2>
 
-  <p class="section-text">
-    You may check available and unavailable Coupons (excluding expired over 3 months or not linked to your account)
-    by logging into your User Account → Personal Center → My Assets → My Coupons.
-  </p>
+    <p class="section-text">
+      You may check available and unavailable Coupons (excluding expired over 3 months or not linked to your account)
+      by logging into your User Account → Personal Center → My Assets → My Coupons.
+    </p>
 
-  <p class="section-text">
-    Available Coupons can be used on the Site and App subject to terms and conditions.
-  </p>
+    <p class="section-text">
+      Available Coupons can be used on the Site and App subject to terms and conditions.
+    </p>
     <!-- ===========================
        SECTION 5
   ============================ -->
-  <h2 class="main-heading">5. Redemption and Limitations</h2>
+    <h2 class="main-heading">5. Redemption and Limitations</h2>
 
-  <ul class="styled-list">
-    <li>You can redeem a valid Coupon when placing an order to purchase products on the Site or the App (subject to any applicable terms and conditions stated on the Coupon and restrictions on use specified above).</li>
-    <li>A Coupon may only be used once.</li>
-    <li>Coupons may not be exchanged for cash.</li>
-    <li>Only one Coupon can be redeemed in connection with any given order; and Coupons cannot otherwise be "stacked" or combined with other Coupons in connection with the same order.</li>
-    <li>Coupons will be returned to your SHEIN User Account upon successful cancellation, return and/or refund of a purchase for which such Coupon was redeemed, unless:  
-      (i) such Coupon has already expired; or  
-      (ii) such Coupon is not otherwise linked to your SHEIN User Account; or  
-      (iii) it was a partial cancellation, return and/or refund of your order (in which case, the Coupon will be deemed to have been used, and will not be returned to you).  
-      In the event of a partial return of a purchase for which a Coupon was redeemed, the amount of the refund may be adjusted as specified in Section 6 below.
-    </li>
-  </ul>
+    <ul class="styled-list">
+      <li>You can redeem a valid Coupon when placing an order to purchase products on the Site or the App (subject to
+        any applicable terms and conditions stated on the Coupon and restrictions on use specified above).</li>
+      <li>A Coupon may only be used once.</li>
+      <li>Coupons may not be exchanged for cash.</li>
+      <li>Only one Coupon can be redeemed in connection with any given order; and Coupons cannot otherwise be "stacked"
+        or combined with other Coupons in connection with the same order.</li>
+      <li>Coupons will be returned to your SHEIN User Account upon successful cancellation, return and/or refund of a
+        purchase for which such Coupon was redeemed, unless:
+        (i) such Coupon has already expired; or
+        (ii) such Coupon is not otherwise linked to your SHEIN User Account; or
+        (iii) it was a partial cancellation, return and/or refund of your order (in which case, the Coupon will be
+        deemed to have been used, and will not be returned to you).
+        In the event of a partial return of a purchase for which a Coupon was redeemed, the amount of the refund may be
+        adjusted as specified in Section 6 below.
+      </li>
+    </ul>
 
-  <p class="section-text">
-    Coupons may be subject to additional terms, conditions and restrictions as may be presented to you prior to issuance.
-  </p>
+    <p class="section-text">
+      Coupons may be subject to additional terms, conditions and restrictions as may be presented to you prior to
+      issuance.
+    </p>
 
 
-  <!-- ===========================
+    <!-- ===========================
        SECTION 6
   ============================ -->
-  <h2 class="main-heading">6. Refund Amount Adjustments For Partial Returns When A Coupon Was Redeemed</h2>
+    <h2 class="main-heading">6. Refund Amount Adjustments For Partial Returns When A Coupon Was Redeemed</h2>
 
-  <p class="section-text">
-    When you apply for a partial return of an order for which you had redeemed a ‘threshold Coupon’, the following refund adjustment rules apply:
-  </p>
+    <p class="section-text">
+      When you apply for a partial return of an order for which you had redeemed a ‘threshold Coupon’, the following
+      refund adjustment rules apply:
+    </p>
 
-  <p class="section-text"><strong>For Coupons with a single threshold amount (for example $5 off a $15 purchase):</strong></p>
+    <p class="section-text"><strong>For Coupons with a single threshold amount (for example $5 off a $15
+        purchase):</strong></p>
 
-  <ul class="styled-list">
-    <li><strong>A.</strong> If after the partial return, the total value of the remaining item(s) in the order (exclusive of tax) still meets the threshold amount of the Coupon used for the purchase, there will be no refund amount adjustment, and you will receive a full refund of amount paid for the items that you are returning.</li>
+    <ul class="styled-list">
+      <li><strong>A.</strong> If after the partial return, the total value of the remaining item(s) in the order
+        (exclusive of tax) still meets the threshold amount of the Coupon used for the purchase, there will be no refund
+        amount adjustment, and you will receive a full refund of amount paid for the items that you are returning.</li>
 
-    <li><strong>B.</strong> If after the partial return, the total value of the remaining item(s) in the order (exclusive of tax) no longer meets the threshold amount of the Coupon used for the purchase, there will be a refund amount adjustment, and the refund you receive may be reduced by the full amount of the Coupon (in the above example, the refund will be reduced by $5).</li>
-  </ul>
+      <li><strong>B.</strong> If after the partial return, the total value of the remaining item(s) in the order
+        (exclusive of tax) no longer meets the threshold amount of the Coupon used for the purchase, there will be a
+        refund amount adjustment, and the refund you receive may be reduced by the full amount of the Coupon (in the
+        above example, the refund will be reduced by $5).</li>
+    </ul>
 
-  <p class="section-text"><strong>For Coupons with multiple threshold amounts (for example, $5 off a $20 purchase / $10 off a $30 purchase):</strong></p>
+    <p class="section-text"><strong>For Coupons with multiple threshold amounts (for example, $5 off a $20 purchase /
+        $10 off a $30 purchase):</strong></p>
 
-  <ul class="styled-list">
-    <li><strong>C.</strong> If after the partial return, the remaining total still meets the original threshold amount, there is no refund adjustment.</li>
+    <ul class="styled-list">
+      <li><strong>C.</strong> If after the partial return, the remaining total still meets the original threshold
+        amount, there is no refund adjustment.</li>
 
-    <li><strong>D.</strong> If after the partial return, the remaining amount meets a lower threshold, the refund may be reduced by the difference between the two threshold discounts.</li>
+      <li><strong>D.</strong> If after the partial return, the remaining amount meets a lower threshold, the refund may
+        be reduced by the difference between the two threshold discounts.</li>
 
-    <li><strong>E.</strong> If after the partial return, the remaining amount meets none of the thresholds, your refund may be reduced by the full amount of the Coupon.</li>
-  </ul>
+      <li><strong>E.</strong> If after the partial return, the remaining amount meets none of the thresholds, your
+        refund may be reduced by the full amount of the Coupon.</li>
+    </ul>
 
-  <p class="section-text"><strong>For ‘percent off’ Coupons with a threshold amount (for example, 15% off a purchase of $100 or more):</strong></p>
+    <p class="section-text"><strong>For ‘percent off’ Coupons with a threshold amount (for example, 15% off a purchase
+        of $100 or more):</strong></p>
 
-  <ul class="styled-list">
-    <li><strong>F.</strong> If after the partial return the remaining items still meet the threshold, you will receive a full refund for the returned items.</li>
+    <ul class="styled-list">
+      <li><strong>F.</strong> If after the partial return the remaining items still meet the threshold, you will receive
+        a full refund for the returned items.</li>
 
-    <li><strong>G.</strong> If the remaining items do not meet the threshold, the refund you receive may be reduced by the full discount amount from the Coupon.</li>
-  </ul>
+      <li><strong>G.</strong> If the remaining items do not meet the threshold, the refund you receive may be reduced by
+        the full discount amount from the Coupon.</li>
+    </ul>
 
-  <p class="section-text">
-    In the event of a refund amount adjustment, the Coupon that was originally redeemed will be returned to your Wallet if it has not yet expired.
-  </p>
+    <p class="section-text">
+      In the event of a refund amount adjustment, the Coupon that was originally redeemed will be returned to your
+      Wallet if it has not yet expired.
+    </p>
 
 
-  <!-- ===========================
+    <!-- ===========================
        SECTION 7
   ============================ -->
-  <h2 class="main-heading">7. Questions and Contact</h2>
+    <h2 class="main-heading">7. Questions and Contact</h2>
 
-  <p class="section-text">
-  If you have any questions about our Coupons, please contact our 
-  <a href="#" style="color: var(--link); text-decoration: underline;">Customer Service Platform</a>.
-</p>
+    <p class="section-text">
+      If you have any questions about our Coupons, please contact our
+      <a href="#" style="color: var(--link); text-decoration: underline;">Customer Service Platform</a>.
+    </p>
 
 
 
-</div>
+  </div>
 
 
 
@@ -1887,7 +1923,7 @@
         </div>
         <div class="footer-bottom">
           <div class="terms-conditions-policy">
-            <p>©2025-2030 Noshahi Developer Inc All Rights Reserved</p>
+            <p>©2025-2030 Noshahi Developers Inc., All Rights Reserved</p>
 
             <ul class="footer-links">
               <li><a href="#">Privacy Center |</a></li>
@@ -1980,18 +2016,18 @@
         cartWrapper.classList.remove("active");
       }
     });
-     // Auto-resize title for smaller screens
-  (function(){
-    function adjust(){
-      var w = window.innerWidth;
-      var h1 = document.querySelector('h1');
-      if(w < 420) h1.style.fontSize = '24px';
-      else if(w < 640) h1.style.fontSize = '28px';
-      else h1.style.fontSize = '';
-    }
-    window.addEventListener('resize', adjust);
-    adjust();
-  })();
+    // Auto-resize title for smaller screens
+    (function () {
+      function adjust() {
+        var w = window.innerWidth;
+        var h1 = document.querySelector('h1');
+        if (w < 420) h1.style.fontSize = '24px';
+        else if (w < 640) h1.style.fontSize = '28px';
+        else h1.style.fontSize = '';
+      }
+      window.addEventListener('resize', adjust);
+      adjust();
+    })();
   </script>
 </body>
 

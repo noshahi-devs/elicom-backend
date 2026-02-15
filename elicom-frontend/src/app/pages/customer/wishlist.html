@@ -908,9 +908,9 @@
                 margin-top: 50px;
             }
         }
-        
+
         /* Footer Responsive close */
-        
+
         /* --- Base Layout (Desktop) --- */
         .profile-container {
             display: flex;
@@ -918,7 +918,7 @@
             margin-left: 12rem;
             background-color: #fff;
         }
-        
+
         .breadcrumb {
             padding: 5px 40px;
             background-color: #fff;
@@ -1052,7 +1052,7 @@
             width: 100%;
             background-color: #fff;
         }
-        
+
         /* ===== Your New Wishlist Page Styles ===== */
         .wishlist-container {
             max-width: 950px;
@@ -1060,7 +1060,7 @@
             background: #fff;
             padding: 60px 40px 60px 40px;
             min-height: 70vh;
-            box-shadow: 0 0 8px rgba(0,0,0,.05);
+            box-shadow: 0 0 8px rgba(0, 0, 0, .05);
         }
 
         .wishlist-title {
@@ -1206,21 +1206,21 @@
         }
 
         /* boards hidden */
-        .wishlist-boards-panel { 
-            display: none; 
-            text-align: center; 
+        .wishlist-boards-panel {
+            display: none;
+            text-align: center;
         }
-        
-        .wishlist-boards-panel.active { 
-            display: block; 
+
+        .wishlist-boards-panel.active {
+            display: block;
         }
-        
+
         .wishlist-boards-empty-message {
             color: #666;
             font-size: 15px;
             margin-bottom: 18px;
         }
-        
+
         .wishlist-create-board-btn {
             padding: 9px 34px;
             background: #222;
@@ -1230,22 +1230,28 @@
             border: none;
             cursor: pointer;
         }
-        
+
         /* Responsive for wishlist */
         @media(max-width:780px) {
             .wishlist-container {
                 padding: 25px 8px 25px 8px;
             }
+
             .wishlist-content-row {
                 flex-direction: column;
                 gap: 28px;
             }
+
             .wishlist-right {
                 justify-content: flex-start;
             }
-            .wishlist-product-card { width: 100%; max-width: 260px; }
+
+            .wishlist-product-card {
+                width: 100%;
+                max-width: 260px;
+            }
         }
-        
+
         /* Responsive adjustments for profile layout */
         @media (max-width: 768px) {
             .profile-container {
@@ -1253,21 +1259,21 @@
                 margin-left: 0;
                 max-width: 100%;
             }
-            
+
             .sidebar {
                 width: 100%;
                 border-right: none;
                 border-bottom: 1px solid #eee;
             }
-            
+
             .main-content {
                 padding: 20px;
             }
-            
+
             .wishlist-title {
                 font-size: 1.5em;
             }
-            
+
             .wishlist-container {
                 margin: 20px auto 0 auto;
                 padding: 20px;
@@ -1452,16 +1458,18 @@
 
         <div class="profile-container">
             <div class="sidebar">
-                <a href="#"><h2>Personal Center</h2></a>
+                <a href="#">
+                    <h2>Personal Center</h2>
+                </a>
 
                 <div class="menu-section" id="account-section">
                     <h3>My Account <span class="toggle-icon"><i class="fas fa-minus"></i></span></h3>
-                    <ul>                        
+                    <ul>
                         <li>
                             <a href="#">
                                 <i class="fas fa-user"></i>
-                                 My Profile
-                                 <span class="points">
+                                My Profile
+                                <span class="points">
                                     +POINTS
                                 </span>
                             </a>
@@ -1471,7 +1479,7 @@
                                 <i class="fas fa-credit-card"></i>
                                 My Payment Options
                             </a>
-                        </li>                        
+                        </li>
                     </ul>
                 </div>
 
@@ -1499,7 +1507,7 @@
                     <ul>
                         <li class="active-link">
                             <a href="#">
-                                <i class="fas fa-heart"></i> 
+                                <i class="fas fa-heart"></i>
                                 Wish List
                                 <span class="points">+POINTS</span>
                             </a>
@@ -1507,7 +1515,7 @@
                         <li><a href="#"><i class="fas fa-history"></i> Recently Viewed</a></li>
                     </ul>
                 </div>
-                
+
                 <div class="menu-section" id="service-section">
                     <h3>Customer Service <span class="toggle-icon"><i class="fas fa-minus"></i></span></h3>
                     <ul>
@@ -1576,7 +1584,8 @@
                     </div>
                     <!-- BOARDS PANEL -->
                     <div class="wishlist-boards-panel" id="wishlist-boards-panel">
-                        <div class="wishlist-boards-empty-message">You have no boards yet. Create boards to group your favorite items.</div>
+                        <div class="wishlist-boards-empty-message">You have no boards yet. Create boards to group your
+                            favorite items.</div>
                         <button class="wishlist-create-board-btn">CREATE BOARD</button>
                     </div>
                 </div>
@@ -1770,8 +1779,7 @@
                                     <option value="+95">Myanmar +95</option>
                                     <option value="+264">Namibia +264</option>
                                     <option value="+674">Nauru +674</option>
-                                    <option value="+977">Nepal +977</option
-                                    <option value="+31">Netherlands +31</option>
+                                    <option value="+977">Nepal +977</option <option value="+31">Netherlands +31</option>
                                     <option value="+64">New Zealand +64</option>
                                     <option value="+505">Nicaragua +505</option>
                                     <option value="+227">Niger +227</option>
@@ -1860,7 +1868,7 @@
                 </div>
                 <div class="footer-bottom">
                     <div class="terms-conditions-policy">
-                        <p>©2025-2030 Noshahi Developer Inc All Rights Reserved</p>
+                        <p>©2025-2030 Noshahi Developers Inc., All Rights Reserved</p>
 
                         <ul class="footer-links">
                             <li><a href="#">Privacy Center |</a></li>
