@@ -95,7 +95,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
             if (platform == "Easy Finora") redirectPath = $"{clientRootAddress}/auth";
 
                 string primaryColor = "#000000";
-                string accentColor = "#6b7280";
+                string accentColor = "#707888ff";
                 string icon = "✅";
 
                 if (platform.Contains("Prime Ship")) { primaryColor = "#F85606"; icon = "🚢"; }
