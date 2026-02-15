@@ -144,12 +144,22 @@ export class AuthService {
         const user = this._currentUser.value;
         if (!user) return false;
         const roleNames = user.roleNames || [];
-        return roleNames.some(r => r.toLowerCase() === 'reseller' || r.toLowerCase() === 'seller');
+        // Support all variations of seller roles
+        return roleNames.some(r => {
+            const role = r.toLowerCase();
+            return role === 'reseller' || role === 'seller' || role === 'supplier';
+        });
     }
 
     isCustomer(): boolean {
         const user = this._currentUser.value;
-        return !!user?.roleNames?.some(r => r.toLowerCase() === 'buyer' || r.toLowerCase() === 'customer');
+        if (!user) return false;
+        const roleNames = user.roleNames || [];
+        // Support all variations of customer roles
+        return roleNames.some(r => {
+            const role = r.toLowerCase();
+            return role === 'buyer' || role === 'customer';
+        });
     }
 
     isSupplier(): boolean {
@@ -159,12 +169,15 @@ export class AuthService {
 
     navigateToDashboard() {
         console.log('Navigating to dashboard...');
-        if (!this.isAuthenticated) {
+        const user = this._currentUser.value;
+        if (!this.isAuthenticated || !user) {
             console.log('Not authenticated, going to login');
             const isPrimeShip = window.location.pathname.includes('primeship');
             this.router.navigate([isPrimeShip ? '/primeship/auth' : '/smartstore/auth']);
             return;
         }
+
+        console.log('User roles:', user.roleNames);
 
         // Check for returnUrl in the current URL
         const urlTree = this.router.parseUrl(this.router.url);
@@ -177,30 +190,30 @@ export class AuthService {
         }
 
         if (this.isAdmin()) {
-            console.log('Role: Admin');
+            console.log('Redirecting to Admin Dashboard');
             this.router.navigate(['/admin/dashboard']);
         } else if (this.isSeller()) {
-            console.log('Role: Seller, checking store...');
+            console.log('Redirecting to Seller Dashboard (checking store first)');
             this.storeService.getMyStore().subscribe({
                 next: (res: any) => {
                     if (res && res.result) {
-                        console.log('Store exists, dashboard bound');
+                        console.log('Store exists, navigating to dashboard');
                         this.router.navigate(['/seller/dashboard']);
                     } else {
-                        console.log('No store, creation bound');
+                        console.log('No store found, navigating to store-creation');
                         this.router.navigate(['/seller/store-creation']);
                     }
                 },
-                error: () => {
-                    console.log('Store check failed, creation bound');
+                error: (err: any) => {
+                    console.error('Store check failed:', err);
                     this.router.navigate(['/seller/store-creation']);
                 }
             });
         } else if (this.isCustomer()) {
-            console.log('Role: Customer/Buyer');
+            console.log('Redirecting to Customer Dashboard');
             this.router.navigate(['/customer/dashboard']);
         } else {
-            console.log('Role: Default/Other');
+            console.log('No specific dashboard for these roles, falling back to user index');
             this.router.navigate(['/user/index']);
         }
     }
