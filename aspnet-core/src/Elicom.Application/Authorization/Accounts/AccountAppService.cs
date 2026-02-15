@@ -86,7 +86,11 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                 if (string.IsNullOrEmpty(clientRootAddress)) clientRootAddress = "http://localhost:4200";
 
                 string redirectPath = $"{clientRootAddress}/account/login";
-            if (platform == "Smart Store" || platform == "World Cart" || platform == "World Cart US") redirectPath = $"{clientRootAddress}/smartstore/auth";
+                if (platform == "Smart Store" || platform == "World Cart" || platform == "World Cart US") 
+                {
+                    // Use production domain unless it's a local development environment
+                    redirectPath = clientRootAddress.Contains("localhost") ? $"{clientRootAddress}/smartstore/auth" : "https://smartstoreus.com/smartstore/auth";
+                }
             if (platform == "Prime Ship" || platform == "Prime Ship UK") redirectPath = $"{clientRootAddress}/auth/login";
             if (platform == "Easy Finora") redirectPath = $"{clientRootAddress}/auth";
 
