@@ -574,7 +574,7 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
     [HttpPost]
     public async Task RegisterSmartStoreSeller(RegisterSmartStoreInput input)
     {
-        await RegisterPlatformUser(input.EmailAddress, 1, StaticRoleNames.Tenants.Supplier, "Seller", "World Cart", "WC", "#000000", input.Password, input.Country, input.PhoneNumber, input.FullName);
+        await RegisterPlatformUser(input.EmailAddress, 1, StaticRoleNames.Tenants.Seller, "Seller", "World Cart", "WC", "#000000", input.Password, input.Country, input.PhoneNumber, input.FullName);
     }
 
     [HttpPost]
