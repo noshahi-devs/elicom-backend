@@ -75,4 +75,8 @@ export class StoreService {
     rejectStore(id: string): Observable<any> {
         return this.http.post(`${this.apiUrl}/Reject`, { id });
     }
+
+    verifyKyc(id: string): Observable<any> {
+        return this.http.post(`${this.apiUrl}/VerifyKyc`, { id });
+    }
 }

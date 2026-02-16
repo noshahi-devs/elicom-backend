@@ -104,9 +104,24 @@ export class StoreApprovalsComponent implements OnInit {
     }
 
     verifyKYC(store: StoreDto) {
-        // KYC verification logic would go here, for now just a mockup 
-        // as we haven't implemented a specific KYC approval endpoint yet
-        Swal.fire('Info', 'KYC verification logic is tied to store approval for now.', 'info');
+        Swal.fire({
+            title: 'Verify KYC Documents?',
+            text: `Are you sure you want to verify the identity documents for "${store.kyc?.fullName || store.name}"?`,
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Verify',
+            confirmButtonColor: '#0dcaf0'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.storeService.verifyKyc(store.id).subscribe({
+                    next: () => {
+                        Swal.fire('Verified!', 'Seller KYC documents have been marked as verified.', 'success');
+                        this.loadApplications();
+                    },
+                    error: () => Swal.fire('Error', 'KYC verification failed.', 'error')
+                });
+            }
+        });
     }
 
     viewStore(store: StoreDto) {

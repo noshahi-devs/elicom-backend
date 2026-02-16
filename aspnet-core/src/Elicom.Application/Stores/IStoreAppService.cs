@@ -18,6 +18,7 @@ namespace Elicom.Stores
         Task Delete(Guid id);
         Task Approve(EntityDto<Guid> input);
         Task Reject(EntityDto<Guid> input);
+        Task VerifyKyc(EntityDto<Guid> input);
         Task<StoreDto> GetMyStore();
     }
 }

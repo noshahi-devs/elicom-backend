@@ -173,6 +173,17 @@ namespace Elicom.Stores
             await _storeRepo.UpdateAsync(store);
         }
 
+        [AbpAuthorize(PermissionNames.Pages_Stores)]
+        public async Task VerifyKyc(EntityDto<Guid> input)
+        {
+            var store = await _storeRepo.GetAllIncluding(s => s.Kyc).FirstOrDefaultAsync(s => s.Id == input.Id);
+            if (store != null && store.Kyc != null)
+            {
+                store.Kyc.Status = true;
+                await _storeRepo.UpdateAsync(store);
+            }
+        }
+
         [AbpAuthorize]
         public async Task<StoreDto> GetMyStore()
         {
