@@ -23,20 +23,17 @@ namespace Elicom.Controllers
     {
         private readonly LogInManager _logInManager;
         private readonly ITenantCache _tenantCache;
-        private readonly AbpLoginResultTypeHelper _abpLoginResultTypeHelper;
         private readonly TokenAuthConfiguration _configuration;
         private readonly UserManager _userManager;
 
         public TokenAuthController(
             LogInManager logInManager,
             ITenantCache tenantCache,
-            AbpLoginResultTypeHelper abpLoginResultTypeHelper,
             TokenAuthConfiguration configuration,
             UserManager userManager)
         {
             _logInManager = logInManager;
             _tenantCache = tenantCache;
-            _abpLoginResultTypeHelper = abpLoginResultTypeHelper;
             _configuration = configuration;
             _userManager = userManager;
         }

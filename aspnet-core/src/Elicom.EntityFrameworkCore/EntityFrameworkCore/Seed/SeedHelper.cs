@@ -15,7 +15,29 @@ public static class SeedHelper
 {
     public static void SeedHostDb(IIocResolver iocResolver)
     {
-        WithDbContext<ElicomDbContext>(iocResolver, SeedHostDb);
+        int retryCount = 0;
+        const int maxRetries = 3;
+        while (retryCount < maxRetries)
+        {
+            try
+            {
+                WithDbContext<ElicomDbContext>(iocResolver, SeedHostDb);
+                break; // Success!
+            }
+            catch (Exception ex)
+            {
+                retryCount++;
+                Console.WriteLine($"[SEED-FATAL] Attempt {retryCount} failed: {ex.Message}");
+                if (retryCount >= maxRetries)
+                {
+                    Console.WriteLine("[SEED-FATAL] Max retries reached. Primary startup will continue but DB might be inconsistent.");
+                }
+                else
+                {
+                    System.Threading.Thread.Sleep(2000 * retryCount); // Exponential backoff
+                }
+            }
+        }
     }
 
     public static void SeedHostDb(ElicomDbContext context)
@@ -49,18 +71,27 @@ public static class SeedHelper
         catch (Exception ex)
         {
             Console.WriteLine($"[SEED-DEBUG] MIGRATION ERROR: {ex}");
+            // We don't re-throw here to allow data seeding (if possible) or at least help debug
         }
 
-        context.SuppressAutoSetTenantId = true;
+        try 
+        {
+            context.SuppressAutoSetTenantId = true;
 
-        // Host seed
-        new InitialHostDbBuilder(context).Create();
+            // Host seed
+            new InitialHostDbBuilder(context).Create();
 
-        // Default tenant seed (in host database).
-        new DefaultTenantBuilder(context).Create();
-        new TenantRoleAndUserBuilder(context, 1).Create(); // Smart Store
-        new TenantRoleAndUserBuilder(context, 2).Create(); // Prime Ship
-        new TenantRoleAndUserBuilder(context, 3).Create(); // Easy Finora
+            // Default tenant seed (in host database).
+            new DefaultTenantBuilder(context).Create();
+            new TenantRoleAndUserBuilder(context, 1).Create(); // Smart Store
+            new TenantRoleAndUserBuilder(context, 2).Create(); // Prime Ship
+            new TenantRoleAndUserBuilder(context, 3).Create(); // Easy Finora
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[SEED-DEBUG] DATA SEEDING ERROR: {ex}");
+            throw; // Re-throw to trigger the retry loop in the caller
+        }
     }
 
     private static void WithDbContext<TDbContext>(IIocResolver iocResolver, Action<TDbContext> contextAction)
