@@ -30,7 +30,6 @@ public class PrimeShipRealUserLogin_Tests : ElicomTestBase
         // Setup TokenAuthController
         var logInManager = Resolve<LogInManager>();
         var tenantCache = Resolve<ITenantCache>();
-        var abpLoginResultTypeHelper = Resolve<AbpLoginResultTypeHelper>();
         var configuration = Resolve<TokenAuthConfiguration>();
 
         // Configure JWT
@@ -46,7 +45,6 @@ public class PrimeShipRealUserLogin_Tests : ElicomTestBase
         _tokenAuthController = new TokenAuthController(
             logInManager,
             tenantCache,
-            abpLoginResultTypeHelper,
             configuration,
             _userManager
         );

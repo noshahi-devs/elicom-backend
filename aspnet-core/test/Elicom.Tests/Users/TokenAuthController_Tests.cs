@@ -24,7 +24,6 @@ public class TokenAuthController_Tests : ElicomTestBase
         // Resolve dependencies
         var logInManager = Resolve<LogInManager>();
         var tenantCache = Resolve<ITenantCache>();
-        var abpLoginResultTypeHelper = Resolve<AbpLoginResultTypeHelper>();
         var configuration = Resolve<TokenAuthConfiguration>();
         var userManager = Resolve<UserManager>();
 
@@ -38,7 +37,6 @@ public class TokenAuthController_Tests : ElicomTestBase
         _controller = new TokenAuthController(
             logInManager,
             tenantCache,
-            abpLoginResultTypeHelper,
             configuration,
             userManager
         );
