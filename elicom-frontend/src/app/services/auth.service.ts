@@ -179,7 +179,14 @@ export class AuthService {
 
         console.log('User roles:', user.roleNames);
 
-        // Check for returnUrl in the current URL
+        // 1. ADMIN PRIORITY: If they are Admin, always go to Admin Dashboard first
+        if (this.isAdmin()) {
+            console.log('Redirecting to Admin Dashboard');
+            this.router.navigate(['/admin/dashboard']);
+            return;
+        }
+
+        // 2. Return URL for others (Customers/Sellers)
         const urlTree = this.router.parseUrl(this.router.url);
         const returnUrl = urlTree.queryParams['returnUrl'];
 
@@ -189,10 +196,8 @@ export class AuthService {
             return;
         }
 
-        if (this.isAdmin()) {
-            console.log('Redirecting to Admin Dashboard');
-            this.router.navigate(['/admin/dashboard']);
-        } else if (this.isSeller()) {
+        // 3. Default Role-based routing
+        if (this.isSeller()) {
             console.log('Redirecting to Seller Dashboard (checking store first)');
             this.storeService.getMyStore().subscribe({
                 next: (res: any) => {
