@@ -26,13 +26,21 @@ export class StoreCreationComponent {
 
     countries = [
         { code: 'USA', name: 'United States' },
-        { code: 'CAN', name: 'Canada' },
+        { code: 'PAK', name: 'Pakistan' },
+        { code: 'IND', name: 'India' },
         { code: 'GBR', name: 'United Kingdom' },
+        { code: 'CAN', name: 'Canada' },
         { code: 'AUS', name: 'Australia' },
         { code: 'UAE', name: 'United Arab Emirates' },
-        { code: 'PAK', name: 'Pakistan' },
+        { code: 'SAU', name: 'Saudi Arabia' },
+        { code: 'TUR', name: 'Turkey' },
+        { code: 'CHN', name: 'China' },
         { code: 'DEU', name: 'Germany' },
-        { code: 'FRA', name: 'France' }
+        { code: 'FRA', name: 'France' },
+        { code: 'ITA', name: 'Italy' },
+        { code: 'ESP', name: 'Spain' },
+        { code: 'BRA', name: 'Brazil' },
+        { code: 'MEX', name: 'Mexico' }
     ];
 
     constructor() {
