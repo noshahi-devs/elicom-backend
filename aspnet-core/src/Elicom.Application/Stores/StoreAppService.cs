@@ -51,7 +51,7 @@ namespace Elicom.Stores
             return ObjectMapper.Map<StoreDto>(store);
         }
 
-        [AbpAuthorize(PermissionNames.Pages_Stores_Create)]
+        [AbpAuthorize]
         public async Task<StoreDto> Create(CreateStoreDto input)
         {
             var store = ObjectMapper.Map<Store>(input);
@@ -173,7 +173,7 @@ namespace Elicom.Stores
             await _storeRepo.UpdateAsync(store);
         }
 
-        [AbpAuthorize(PermissionNames.Pages_SmartStore_Seller)]
+        [AbpAuthorize]
         public async Task<StoreDto> GetMyStore()
         {
             var userId = AbpSession.UserId;

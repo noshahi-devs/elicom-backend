@@ -697,27 +697,48 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                     Logger.Info($"[Register] ✅ Role created. ID: {role.Id}");
                 }
 
-                // 3. Permission Management (Fix for Wholesale Orders)
-                if (platformName.Contains("Prime Ship") || platformName.Contains("Primeship"))
+                // 3. Permission Management (Platform Specific)
+                try 
                 {
-                    try 
+                    var platformPermissions = new List<string>();
+                    
+                    if (platformName.Contains("World Cart") || platformName.Contains("Smart Store"))
                     {
-                        Logger.Info($"[Register] Ensuring '{PermissionNames.Pages_PrimeShip}' permission for role '{role.Name}'...");
-                        var permission = _permissionManager.GetPermission(PermissionNames.Pages_PrimeShip);
+                        platformPermissions.Add(PermissionNames.Pages_SmartStore_Seller);
+                        platformPermissions.Add(PermissionNames.Pages_Stores);
+                        platformPermissions.Add(PermissionNames.Pages_Stores_Create);
+                    }
+                    else if (platformName.Contains("Prime Ship") || platformName.Contains("Primeship"))
+                    {
+                        platformPermissions.Add(PermissionNames.Pages_PrimeShip);
+                        platformPermissions.Add(PermissionNames.Pages_Stores);
+                        platformPermissions.Add(PermissionNames.Pages_Stores_Create);
+                    }
+                    else if (platformName.Contains("Easy Finora") || platformName.Contains("Global Pay"))
+                    {
+                        platformPermissions.Add(PermissionNames.Pages_GlobalPay);
+                    }
+
+                    if (platformPermissions.Any())
+                    {
+                        Logger.Info($"[Register] Ensuring permissions for role '{role.Name}': {string.Join(", ", platformPermissions)}");
                         var grantedPermissions = await _roleManager.GetGrantedPermissionsAsync(role);
-                        
-                        if (!grantedPermissions.Any(p => p.Name == PermissionNames.Pages_PrimeShip))
+                        var permissionsToGrant = platformPermissions
+                            .Where(name => !grantedPermissions.Any(gp => gp.Name == name))
+                            .Select(name => _permissionManager.GetPermission(name))
+                            .ToList();
+
+                        if (permissionsToGrant.Any())
                         {
-                            await _roleManager.SetGrantedPermissionsAsync(role, new[] { permission });
+                            await _roleManager.SetGrantedPermissionsAsync(role, grantedPermissions.Concat(permissionsToGrant));
                             await CurrentUnitOfWork.SaveChangesAsync();
-                            Logger.Info($"[Register] ✅ Access granted: {PermissionNames.Pages_PrimeShip}");
+                            Logger.Info($"[Register] ✅ Access granted for: {string.Join(", ", permissionsToGrant.Select(p => p.Name))}");
                         }
                     }
-                    catch (Exception permEx)
-                    {
-                        Logger.Warn($"[Register] ⚠️ Could not grant permission {PermissionNames.Pages_PrimeShip} to role {role.Name}: {permEx.Message}");
-                        // Continue registration even if permission granting fails (can be fixed manually)
-                    }
+                }
+                catch (Exception permEx)
+                {
+                    Logger.Warn($"[Register] ⚠️ Could not grant permissions for role {role.Name}: {permEx.Message}");
                 }
 
                 // 4. Role Assignment

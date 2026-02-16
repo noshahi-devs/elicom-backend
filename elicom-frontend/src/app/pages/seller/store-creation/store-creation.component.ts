@@ -40,7 +40,17 @@ export class StoreCreationComponent {
         { code: 'ITA', name: 'Italy' },
         { code: 'ESP', name: 'Spain' },
         { code: 'BRA', name: 'Brazil' },
-        { code: 'MEX', name: 'Mexico' }
+        { code: 'MEX', name: 'Mexico' },
+        { code: 'JPN', name: 'Japan' },
+        { code: 'BGD', name: 'Bangladesh' },
+        { code: 'SGP', name: 'Singapore' },
+        { code: 'MYS', name: 'Malaysia' },
+        { code: 'QAT', name: 'Qatar' },
+        { code: 'KWT', name: 'Kuwait' },
+        { code: 'OMN', name: 'Oman' },
+        { code: 'IDN', name: 'Indonesia' },
+        { code: 'ZAF', name: 'South Africa' },
+        { code: 'NGA', name: 'Nigeria' }
     ];
 
     constructor() {
