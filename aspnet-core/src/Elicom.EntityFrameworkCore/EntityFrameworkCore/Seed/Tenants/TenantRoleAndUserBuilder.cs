@@ -117,6 +117,10 @@ public class TenantRoleAndUserBuilder
             GrantPermissionIfNotExists(sellerRole, PermissionNames.Pages_Stores);
             GrantPermissionIfNotExists(sellerRole, PermissionNames.Pages_Stores_Create);
             GrantPermissionIfNotExists(sellerRole, PermissionNames.Pages_SmartStore_Seller);
+            GrantPermissionIfNotExists(sellerRole, PermissionNames.Pages_StoreProducts);
+            GrantPermissionIfNotExists(sellerRole, PermissionNames.Pages_StoreProducts_Create);
+            GrantPermissionIfNotExists(sellerRole, PermissionNames.Pages_StoreProducts_Edit);
+            GrantPermissionIfNotExists(sellerRole, PermissionNames.Pages_StoreProducts_Delete);
         }
 
         var buyerRole = roles.FirstOrDefault(r => r.Name == StaticRoleNames.Tenants.Buyer);

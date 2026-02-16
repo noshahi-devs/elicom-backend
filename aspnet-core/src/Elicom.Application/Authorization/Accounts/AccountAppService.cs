@@ -707,12 +707,20 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                         platformPermissions.Add(PermissionNames.Pages_SmartStore_Seller);
                         platformPermissions.Add(PermissionNames.Pages_Stores);
                         platformPermissions.Add(PermissionNames.Pages_Stores_Create);
+                        platformPermissions.Add(PermissionNames.Pages_StoreProducts);
+                        platformPermissions.Add(PermissionNames.Pages_StoreProducts_Create);
+                        platformPermissions.Add(PermissionNames.Pages_StoreProducts_Edit);
+                        platformPermissions.Add(PermissionNames.Pages_StoreProducts_Delete);
                     }
                     else if (platformName.Contains("Prime Ship") || platformName.Contains("Primeship"))
                     {
                         platformPermissions.Add(PermissionNames.Pages_PrimeShip);
                         platformPermissions.Add(PermissionNames.Pages_Stores);
                         platformPermissions.Add(PermissionNames.Pages_Stores_Create);
+                        platformPermissions.Add(PermissionNames.Pages_StoreProducts);
+                        platformPermissions.Add(PermissionNames.Pages_StoreProducts_Create);
+                        platformPermissions.Add(PermissionNames.Pages_StoreProducts_Edit);
+                        platformPermissions.Add(PermissionNames.Pages_StoreProducts_Delete);
                     }
                     else if (platformName.Contains("Easy Finora") || platformName.Contains("Global Pay"))
                     {
