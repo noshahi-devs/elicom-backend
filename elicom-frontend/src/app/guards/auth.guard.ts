@@ -42,7 +42,9 @@ export class AuthGuard implements CanActivate {
                 // For all other /seller routes, check if store exists
                 return this.storeService.getMyStore().pipe(
                     map(res => {
-                        if (res && res.result) {
+                        // Handle both wrapped { result: ... } and unwrapped responses
+                        const store = res?.result || res;
+                        if (store && store.id) {
                             return true; // Store exists, allow access
                         } else {
                             console.log('No store found, redirecting to store creation');
@@ -50,10 +52,15 @@ export class AuthGuard implements CanActivate {
                             return false;
                         }
                     }),
-                    catchError(() => {
-                        console.log('Error checking store, redirecting to store creation');
-                        this.router.navigate(['/seller/store-creation']);
-                        return of(false);
+                    catchError((err) => {
+                        console.log('Error checking store:', err);
+                        // Only redirect if it's truly a 'Not Found' or unauthorized, 
+                        // otherwise let them through to avoid blocking on transient API errors
+                        if (err.status === 404) {
+                            this.router.navigate(['/seller/store-creation']);
+                            return of(false);
+                        }
+                        return of(true);
                     })
                 );
             }

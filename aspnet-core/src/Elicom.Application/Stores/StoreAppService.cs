@@ -40,8 +40,11 @@ namespace Elicom.Stores
         [AbpAuthorize(PermissionNames.Pages_Stores)]
         public async Task<ListResultDto<StoreDto>> GetAll()
         {
-            var stores = await _storeRepo.GetAll().Include(s => s.Kyc).ToListAsync();
-            return new ListResultDto<StoreDto>(ObjectMapper.Map<List<StoreDto>>(stores));
+            using (CurrentUnitOfWork.DisableFilter(Abp.Domain.Uow.AbpDataFilters.MayHaveTenant, Abp.Domain.Uow.AbpDataFilters.MustHaveTenant))
+            {
+                var stores = await _storeRepo.GetAll().Include(s => s.Kyc).ToListAsync();
+                return new ListResultDto<StoreDto>(ObjectMapper.Map<List<StoreDto>>(stores));
+            }
         }
 
         [AbpAuthorize(PermissionNames.Pages_Stores)]
@@ -188,33 +191,29 @@ namespace Elicom.Stores
         public async Task<StoreDto> GetMyStore()
         {
             var userId = AbpSession.UserId;
-            Logger.Info($"GetMyStore: Input UserId from Session: {userId}");
+            Logger.Info($"[GetMyStore] Request by User ID: {userId}, Tenant ID: {AbpSession.TenantId}");
 
             if (!userId.HasValue) 
             {
-                Logger.Warn("GetMyStore: AbpSession.UserId is null!");
+                Logger.Warn("[GetMyStore] AbpSession.UserId is null!");
                 return null;
             }
 
-            // Debugging: Check count with and without filters
-            var countAll = await _storeRepo.GetAll().IgnoreQueryFilters().CountAsync(s => s.OwnerId == userId.Value);
-            Logger.Info($"GetMyStore: Total stores for user {userId} (IgnoreQueryFilters): {countAll}");
-
-            var store = await _storeRepo.FirstOrDefaultAsync(s => s.OwnerId == userId.Value);
-            if (store == null) 
+            using (CurrentUnitOfWork.DisableFilter(Abp.Domain.Uow.AbpDataFilters.MayHaveTenant, Abp.Domain.Uow.AbpDataFilters.MustHaveTenant))
             {
-                Logger.Warn($"GetMyStore: Store not found via standard query for user {userId}. (Is it soft deleted or tenant filtered?)");
-                // Fallback debug attempt
-                store = await _storeRepo.GetAll().IgnoreQueryFilters().FirstOrDefaultAsync(s => s.OwnerId == userId.Value);
-                if (store != null)
-                {
-                     Logger.Warn("GetMyStore: FOUND via IgnoreQueryFilters! There is a filter blocking it.");
-                }
-                return null;
-            }
+                var store = await _storeRepo.GetAll()
+                    .Include(s => s.Kyc)
+                    .FirstOrDefaultAsync(s => s.OwnerId == userId.Value);
 
-            Logger.Info($"GetMyStore: Successfully found store '{store.Name}' ({store.Id})");
-            return ObjectMapper.Map<StoreDto>(store);
+                if (store == null) 
+                {
+                    Logger.Warn($"[GetMyStore] No store found for User {userId}.");
+                    return null;
+                }
+
+                Logger.Info($"[GetMyStore] Found store '{store.Name}' (ID: {store.Id})");
+                return ObjectMapper.Map<StoreDto>(store);
+            }
         }
     }
 }
