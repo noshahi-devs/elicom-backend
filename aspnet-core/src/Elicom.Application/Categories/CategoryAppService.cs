@@ -38,13 +38,13 @@ namespace Elicom.Categories
         }
 
         [AbpAuthorize(PermissionNames.Pages_Categories)]
-        public async Task<CategoryDto> Get(Guid id)
+        public virtual async Task<CategoryDto> Get(Guid id)
         {
             var entity = await _categoryRepository.GetAsync(id);
             return _mapper.Map<CategoryDto>(entity);
         }
 
-        public async Task<ListResultDto<CategoryDto>> GetAll(int maxResultCount = 100)
+        public virtual async Task<ListResultDto<CategoryDto>> GetAll(int maxResultCount = 100)
         {
             using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
             {
@@ -138,7 +138,7 @@ namespace Elicom.Categories
             return !string.IsNullOrWhiteSpace(sanitized) ? sanitized : "Category";
         }
 
-        public async Task<ListResultDto<CategoryLookupDto>> GetLookup()
+        public virtual async Task<ListResultDto<CategoryLookupDto>> GetLookup()
         {
             using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
             {

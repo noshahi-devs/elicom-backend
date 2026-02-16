@@ -82,65 +82,86 @@ public class TenantRoleAndUserBuilder
         var supplierRole = roles.FirstOrDefault(r => r.Name == StaticRoleNames.Tenants.Supplier);
         if (supplierRole != null)
         {
-            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_PrimeShip);
-            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_Reseller_Marketplace);
-            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_GlobalPay);
-            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_Stores);
-            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_Stores_Create);
-            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_Stores_Edit);
-            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_SmartStore_Seller);
-            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_StoreProducts);
-            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_StoreProducts_Create);
-            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_StoreProducts_Edit);
-            GrantPermissionIfNotExists(supplierRole, PermissionNames.Pages_Supplier_Products);
+            GrantPermissionsIfNotExists(supplierRole, new[] {
+                PermissionNames.Pages_PrimeShip,
+                PermissionNames.Pages_Reseller_Marketplace,
+                PermissionNames.Pages_GlobalPay,
+                PermissionNames.Pages_Stores,
+                PermissionNames.Pages_Stores_Create,
+                PermissionNames.Pages_Stores_Edit,
+                PermissionNames.Pages_SmartStore_Seller,
+                PermissionNames.Pages_StoreProducts,
+                PermissionNames.Pages_StoreProducts_Create,
+                PermissionNames.Pages_StoreProducts_Edit,
+                PermissionNames.Pages_Supplier_Products
+            });
         }
 
         var resellerRole = roles.FirstOrDefault(r => r.Name == StaticRoleNames.Tenants.Reseller);
         if (resellerRole != null)
         {
-            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_PrimeShip);
-            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_Reseller_Store);
-            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_SmartStore_Seller);
-            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_GlobalPay);
-            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_Stores);
-            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_Stores_Create);
-            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_Stores_Edit);
-            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_StoreProducts);
-            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_StoreProducts_Create);
-            GrantPermissionIfNotExists(resellerRole, PermissionNames.Pages_StoreProducts_Edit);
+            GrantPermissionsIfNotExists(resellerRole, new[] {
+                PermissionNames.Pages_PrimeShip,
+                PermissionNames.Pages_Reseller_Store,
+                PermissionNames.Pages_SmartStore_Seller,
+                PermissionNames.Pages_GlobalPay,
+                PermissionNames.Pages_Stores,
+                PermissionNames.Pages_Stores_Create,
+                PermissionNames.Pages_Stores_Edit,
+                PermissionNames.Pages_StoreProducts,
+                PermissionNames.Pages_StoreProducts_Create,
+                PermissionNames.Pages_StoreProducts_Edit
+            });
         }
 
         var sellerRole = roles.FirstOrDefault(r => r.Name == StaticRoleNames.Tenants.Seller);
         if (sellerRole != null)
         {
-            GrantPermissionIfNotExists(sellerRole, PermissionNames.Pages_PrimeShip);
-            GrantPermissionIfNotExists(sellerRole, PermissionNames.Pages_Stores);
-            GrantPermissionIfNotExists(sellerRole, PermissionNames.Pages_Stores_Create);
-            GrantPermissionIfNotExists(sellerRole, PermissionNames.Pages_SmartStore_Seller);
-            GrantPermissionIfNotExists(sellerRole, PermissionNames.Pages_StoreProducts);
-            GrantPermissionIfNotExists(sellerRole, PermissionNames.Pages_StoreProducts_Create);
-            GrantPermissionIfNotExists(sellerRole, PermissionNames.Pages_StoreProducts_Edit);
-            GrantPermissionIfNotExists(sellerRole, PermissionNames.Pages_StoreProducts_Delete);
+            GrantPermissionsIfNotExists(sellerRole, new[] {
+                PermissionNames.Pages_PrimeShip,
+                PermissionNames.Pages_Stores,
+                PermissionNames.Pages_Stores_Create,
+                PermissionNames.Pages_SmartStore_Seller,
+                PermissionNames.Pages_StoreProducts,
+                PermissionNames.Pages_StoreProducts_Create,
+                PermissionNames.Pages_StoreProducts_Edit,
+                PermissionNames.Pages_StoreProducts_Delete
+            });
         }
 
         var buyerRole = roles.FirstOrDefault(r => r.Name == StaticRoleNames.Tenants.Buyer);
         if (buyerRole != null)
         {
-            GrantPermissionIfNotExists(buyerRole, PermissionNames.Pages_PrimeShip);
+            GrantPermissionsIfNotExists(buyerRole, new[] { PermissionNames.Pages_PrimeShip });
         }
     }
 
-    private void GrantPermissionIfNotExists(Role role, string permissionName)
+    private void GrantPermissionsIfNotExists(Role role, string[] permissionNames)
     {
-        if (!_context.Permissions.OfType<RolePermissionSetting>().Any(p => p.TenantId == _tenantId && p.RoleId == role.Id && p.Name == permissionName))
+        var existing = _context.Permissions
+            .OfType<RolePermissionSetting>()
+            .Where(p => p.TenantId == _tenantId && p.RoleId == role.Id)
+            .Select(p => p.Name)
+            .ToList();
+
+        bool changed = false;
+        foreach (var name in permissionNames)
         {
-            _context.Permissions.Add(new RolePermissionSetting
+            if (!existing.Contains(name))
             {
-                TenantId = _tenantId,
-                Name = permissionName,
-                IsGranted = true,
-                RoleId = role.Id
-            });
+                _context.Permissions.Add(new RolePermissionSetting
+                {
+                    TenantId = _tenantId,
+                    Name = name,
+                    IsGranted = true,
+                    RoleId = role.Id
+                });
+                changed = true;
+            }
+        }
+
+        if (changed)
+        {
             _context.SaveChanges();
         }
     }

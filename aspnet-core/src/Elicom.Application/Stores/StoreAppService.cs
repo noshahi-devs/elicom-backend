@@ -38,9 +38,9 @@ namespace Elicom.Stores
         }
 
         [AbpAuthorize(PermissionNames.Pages_Stores)]
-        public async Task<ListResultDto<StoreDto>> GetAll()
+        public virtual async Task<ListResultDto<StoreDto>> GetAll()
         {
-            using (CurrentUnitOfWork.DisableFilter(Abp.Domain.Uow.AbpDataFilters.MayHaveTenant, Abp.Domain.Uow.AbpDataFilters.MustHaveTenant))
+            using (UnitOfWorkManager.Current.DisableFilter(Abp.Domain.Uow.AbpDataFilters.MayHaveTenant, Abp.Domain.Uow.AbpDataFilters.MustHaveTenant))
             {
                 var stores = await _storeRepo.GetAll().Include(s => s.Kyc).ToListAsync();
                 return new ListResultDto<StoreDto>(ObjectMapper.Map<List<StoreDto>>(stores));
@@ -188,7 +188,7 @@ namespace Elicom.Stores
         }
 
         [AbpAuthorize]
-        public async Task<StoreDto> GetMyStore()
+        public virtual async Task<StoreDto> GetMyStore()
         {
             var userId = AbpSession.UserId;
             Logger.Info($"[GetMyStore] Request by User ID: {userId}, Tenant ID: {AbpSession.TenantId}");
@@ -199,7 +199,7 @@ namespace Elicom.Stores
                 return null;
             }
 
-            using (CurrentUnitOfWork.DisableFilter(Abp.Domain.Uow.AbpDataFilters.MayHaveTenant, Abp.Domain.Uow.AbpDataFilters.MustHaveTenant))
+            using (UnitOfWorkManager.Current.DisableFilter(Abp.Domain.Uow.AbpDataFilters.MayHaveTenant, Abp.Domain.Uow.AbpDataFilters.MustHaveTenant))
             {
                 var store = await _storeRepo.GetAll()
                     .Include(s => s.Kyc)
