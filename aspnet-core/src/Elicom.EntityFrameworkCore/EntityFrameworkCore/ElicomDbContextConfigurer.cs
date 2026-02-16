@@ -8,13 +8,13 @@ public static class ElicomDbContextConfigurer
 {
     public static void Configure(DbContextOptionsBuilder<ElicomDbContext> builder, string connectionString)
     {
-        builder.UseSqlServer(connectionString, options => options.CommandTimeout(180).EnableRetryOnFailure())
+        builder.UseSqlServer(connectionString, options => options.CommandTimeout(180))
                .ConfigureWarnings(w => w.Throw(SqlServerEventId.SavepointsDisabledBecauseOfMARS));
     }
 
     public static void Configure(DbContextOptionsBuilder<ElicomDbContext> builder, DbConnection connection)
     {
-        builder.UseSqlServer(connection, options => options.CommandTimeout(180).EnableRetryOnFailure())
+        builder.UseSqlServer(connection, options => options.CommandTimeout(180))
                .ConfigureWarnings(w => w.Throw(SqlServerEventId.SavepointsDisabledBecauseOfMARS));
     }
 }
