@@ -103,12 +103,11 @@ namespace Elicom.Web.Host.Startup
                 }
                 catch (Exception ex)
                 {
-                    if (context.Response.HasStarted) throw; // Can't write if already started
+                    if (context.Response.HasStarted) throw;
 
                     context.Response.StatusCode = 500;
                     context.Response.ContentType = "application/json";
                     
-                    // Manually force CORS headers so the browser allows the error to be seen
                     var origin = context.Request.Headers["Origin"].ToString();
                     if (!string.IsNullOrEmpty(origin))
                     {
@@ -118,10 +117,12 @@ namespace Elicom.Web.Host.Startup
                         context.Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS";
                     }
 
-                    // Simple JSON error
-                    var safeMsg = ex.Message.Replace("\"", "'");
-                    var errorJson = $"{{\"success\":false,\"error\":{{\"message\":\"Critical Server Error (SafetyNet)\",\"details\":\"{safeMsg}\"}}}}";
+                    // Deep-clean the error message for JSON safety
+                    var msg = ex.Message ?? "Unknown Error";
+                    var details = (ex.InnerException?.Message ?? ex.ToString()).Replace("\"", "'").Replace("\r", " ").Replace("\n", " ");
+                    var safeMsg = msg.Replace("\"", "'").Replace("\r", " ").Replace("\n", " ");
                     
+                    var errorJson = $"{{\"success\":false,\"error\":{{\"message\":\"Critical Server Error (SafetyNet)\",\"details\":\"{safeMsg} | {details}\"}}}}";
                     await context.Response.WriteAsync(errorJson);
                 }
             });
@@ -135,10 +136,19 @@ namespace Elicom.Web.Host.Startup
                     var newCookies = cookies.Select(cookie =>
                     {
                         if (string.IsNullOrEmpty(cookie)) return cookie;
-                        if (cookie.Contains(".AspNetCore.Culture=") && (cookie.Contains("c=d") || cookie.Contains("uic=d")))
+                        
+                        // Check for definitely invalid culture identifiers in ANY localization-related cookie
+                        if (cookie.Contains(".AspNetCore.Culture=") || cookie.Contains("Abp.Localization.CultureName="))
                         {
-                            changed = true;
-                            return System.Text.RegularExpressions.Regex.Replace(cookie, @"\.AspNetCore\.Culture=[^;]+(;\s*)?", string.Empty);
+                            // If it contains things like "<" or ">" or async machine markers "d__", it's corrupt.
+                            if (cookie.Contains("<") || cookie.Contains(">") || cookie.Contains("d__") || cookie.Contains("Abp.Localization.CultureName=d"))
+                            {
+                                changed = true;
+                                // Remove BOTH potential culture cookies if corruption is detected
+                                var sanitized = System.Text.RegularExpressions.Regex.Replace(cookie, @"\.AspNetCore\.Culture=[^;]+(;\s*)?", string.Empty);
+                                sanitized = System.Text.RegularExpressions.Regex.Replace(sanitized, @"Abp\.Localization\.CultureName=[^;]+(;\s*)?", string.Empty);
+                                return sanitized;
+                            }
                         }
                         return cookie;
                     }).ToArray();
@@ -147,6 +157,7 @@ namespace Elicom.Web.Host.Startup
                     {
                         context.Request.Headers["Cookie"] = newCookies;
                         context.Response.Cookies.Delete(".AspNetCore.Culture");
+                        context.Response.Cookies.Delete("Abp.Localization.CultureName");
                     }
                 }
                 await next();
