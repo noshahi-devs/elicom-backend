@@ -73,11 +73,14 @@ export class Cards implements OnInit {
                     cardNumber: c.cardNumber,
                     type: c.cardType,
                     balance: c.balance,
-                    expiryDate: c.expiryDate,
+                    expiryDate: c.expiryDate, // 02/29 format
+                    expiryFullDate: c.expiryDate,
+                    subscriptionType: 'Free', // Mock as requested
                     status: c.status,
                     holderName: c.holderName || 'Card Holder',
                     showDetails: false,
                     cvv: '***',
+                    maskedCardNumber: c.cardNumber,
                     isRevealing: false
                 }));
                 this.isLoading = false;
@@ -94,14 +97,21 @@ export class Cards implements OnInit {
 
     revealDetails(card: any) {
         if (card.showDetails) {
+            // HIDE logic
             card.showDetails = false;
-            // Optionally revert to masked, but let's keep it simple for now
+            card.cardNumber = card.maskedCardNumber || card.cardNumber;
+            card.cvv = '***';
+            this.cdr.detectChanges();
             return;
         }
 
+        // SHOW logic
         card.isRevealing = true;
         this.cardService.getCardSensitiveDetails(card.id).subscribe({
             next: (res) => {
+                if (!card.maskedCardNumber) {
+                    card.maskedCardNumber = card.cardNumber;
+                }
                 card.cardNumber = res.result.cardNumber;
                 card.cvv = res.result.cvv;
                 card.showDetails = true;

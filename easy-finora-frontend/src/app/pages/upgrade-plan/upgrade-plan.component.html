@@ -1,0 +1,40 @@
+<div class="upgrade-container">
+    <div class="upgrade-header">
+        <h1>Subcription Plans</h1>
+        <p>Choose the perfect plan for your financial journey</p>
+    </div>
+
+    <div class="plans-grid">
+        <div *ngFor="let plan of plans" class="plan-card" [ngClass]="plan.colorClass">
+            <div class="card-inner">
+                <!-- Top Half (Content) -->
+                <div class="plan-content">
+                    <div class="price-section">
+                        <span class="currency">$</span>
+                        <span class="amount">{{plan.price}}</span>
+                    </div>
+
+                    <div class="benefits-list">
+                        <div *ngFor="let benefit of plan.benefits" class="benefit-item">
+                            <span class="check">✓</span>
+                            <span class="text">{{benefit}}</span>
+                        </div>
+                    </div>
+
+                    <div class="icon-orb">
+                        <span class="icon">{{plan.icon}}</span>
+                    </div>
+                </div>
+
+                <!-- Bottom Label (Tab) -->
+                <div class="plan-label-tab">
+                    <span>{{plan.name}}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-note">
+        <p>Secure global payments on all levels</p>
+    </div>
+</div>

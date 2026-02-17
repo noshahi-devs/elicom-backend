@@ -29,28 +29,26 @@ export class Sidebar {
         { label: 'All Debit Cards', icon: '💳', route: '/cards' }
       ]
     },
-    // Hidden for future: Account Statement (Transactions)
-    // {
-    //   title: 'Account Statement',
-    //   expanded: false,
-    //   items: [
-    //     { label: 'Transactions', icon: '📝', route: '/transactions' }
-    //   ]
-    // },
-    // Hidden for future: Send & Receive (Transfer Money)
-    // {
-    //   title: 'Send & Receive',
-    //   expanded: false,
-    //   items: [
-    //     { label: 'Transfer Money', icon: '💸', route: '/transfer' }
-    //   ]
-    // },
+    {
+      title: 'Account Statement',
+      expanded: false,
+      items: [
+        { label: 'Transactions', icon: '📝', route: '/transactions' }
+      ]
+    },
+    {
+      title: 'Send & Receive',
+      expanded: false,
+      items: [
+        { label: 'Transfer Money', icon: '💸', route: '/transfer' }
+      ]
+    },
     {
       title: 'Deposit Management',
       expanded: false,
       items: [
         { label: 'Deposit', icon: '⬇️', route: '/deposit' },
-        // { label: 'Deposit Method', icon: '🏦', route: '/deposit-methods' },
+        { label: 'Deposit Method', icon: '🏦', route: '/deposit-methods' },
         { label: 'All Deposit History', icon: '📋', route: '/deposit-history' }
       ]
     },
@@ -67,19 +65,19 @@ export class Sidebar {
       expanded: false,
       items: [
         { label: 'Withdraw', icon: '⬆️', route: '/withdraw' },
-        // { label: 'Withdraw Method', icon: '🏧', route: '/withdraw-methods' },
+        { label: 'Withdraw Method', icon: '🏧', route: '/withdraw-methods' },
         { label: 'All Withdraw', icon: '📜', route: '/withdraw-history' }
       ]
     },
-    // Hidden for future: Support Center
-    // {
-    //   title: 'Support Center',
-    //   expanded: false,
-    //   items: [
-    //     { label: 'User Tickets', icon: '🎫', route: '/tickets' },
-    //     { label: 'Contact Us', icon: '📧', route: '/contact' }
-    //   ]
-    // },
+    {
+      title: 'Support Center',
+      expanded: false,
+      items: [
+        { label: 'User Tickets', icon: '🎫', route: '/tickets' },
+        { label: 'Upgrade Plan', icon: '🚀', route: '/upgrade-plan' },
+        { label: 'Contact Us', icon: '📧', route: '/contact' }
+      ]
+    },
     {
       title: 'Admin Management',
       expanded: true,
@@ -87,8 +85,7 @@ export class Sidebar {
         { label: 'Admin Dashboard', icon: '🏛️', route: '/admin-dashboard' },
         { label: 'Approve Deposit', icon: '✅', route: '/approve-deposits' },
         { label: 'Approve Withdraw', icon: '🏧', route: '/approve-withdrawals' },
-        // Hidden for future: Global Transaction
-        // { label: 'Global Transaction', icon: '📈', route: '/approve-transactions' },
+        { label: 'Global Transaction', icon: '📈', route: '/approve-transactions' },
         { label: 'User Management', icon: '👥', route: '/user-management' },
         { label: 'Support Management', icon: '🛠️', route: '/approve-support' },
         { label: 'Approve Cards', icon: '💳', route: '/approve-cards' },

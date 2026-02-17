@@ -64,14 +64,29 @@
                         </div>
                     </div>
 
-                    <div class="card-info-panel">
-                        <div class="info-row">
-                            <span class="label">Current Balance</span>
-                            <span class="value">{{ card.balance | currency: 'USD' }}</span>
+                    <div class="card-details-3d">
+                        <div class="details-header">
+                            <h4>{{ card.type }} Debit Card Details</h4>
                         </div>
-                        <div class="info-row">
-                            <span class="label">Status</span>
-                            <span class="status-badge active">{{ card.status }}</span>
+                        <div class="details-body">
+                            <div class="detail-item">
+                                <span class="label">Card Type</span>
+                                <span class="value">{{ card.type }} Debit Card</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">Active Subscription</span>
+                                <span class="value subscription">{{ card.subscriptionType }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">Expiry Date</span>
+                                <span class="value date">{{ card.expiryFullDate }}</span>
+                            </div>
+                        </div>
+                        <div class="details-footer">
+                            <button class="action-btn" (click)="revealDetails(card)">
+                                {{ card.showDetails ? 'Hide Card Details' : 'Show Card Details' }}
+                            </button>
+                            <button class="action-btn upgrade">Upgrade Card</button>
                         </div>
                     </div>
                 </div>
@@ -173,6 +188,25 @@
         </div>
 
         <div class="modal-body">
+            <div class="benefits-form-header">
+                <h3>APPLY FOR VIRTUAL DEBIT CARD</h3>
+                <div class="benefit-point">
+                    <span class="num">1:</span>
+                    <p><strong>Enhanced Security</strong> – Virtual cards protect against fraud by masking your real
+                        bank
+                        details, reducing the risk of unauthorized transactions.</p>
+                </div>
+                <div class="benefit-point">
+                    <span class="num">2:</span>
+                    <p><strong>Global Online Acceptance</strong> – Works seamlessly for online transactions, supplier
+                        payments, and subscriptions worldwide, just like a physical debit card.</p>
+                </div>
+                <div class="benefit-point">
+                    <span class="num">3:</span>
+                    <p><strong>Cost-Effective & Eco-Friendly</strong> – Eliminates the need for plastic cards, reducing
+                        costs and supporting sustainable, paperless transactions.</p>
+                </div>
+            </div>
             <form (ngSubmit)="submitApplication()">
                 <div class="form-group">
                     <label for="name">Full Name <span class="required">*</span></label>

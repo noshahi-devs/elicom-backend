@@ -1,5 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { NgFor, DatePipe, CurrencyPipe, NgIf, SlicePipe, CommonModule } from '@angular/common';
+import { NgFor, DatePipe, CurrencyPipe, NgIf, CommonModule } from '@angular/common';
 import { DepositService } from '../../services/deposit.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { Loader } from '../../shared/loader/loader';
@@ -7,7 +7,7 @@ import { Loader } from '../../shared/loader/loader';
 @Component({
     selector: 'app-approve-deposit-history',
     standalone: true,
-    imports: [CommonModule, DatePipe, CurrencyPipe, SlicePipe, Loader],
+    imports: [CommonModule, DatePipe, CurrencyPipe, Loader],
     templateUrl: './approve-deposit-history.html',
     styleUrl: './approve-deposit-history.scss',
 })
@@ -15,6 +15,11 @@ export class ApproveDepositHistory implements OnInit {
 
     deposits: any[] = [];
     isLoading = false;
+
+    // Pagination properties
+    currentPage = 1;
+    maxResultCount = 10;
+    totalCount = 0;
 
     constructor(
         private depositService: DepositService,
@@ -30,17 +35,12 @@ export class ApproveDepositHistory implements OnInit {
         this.isLoading = true;
         this.cdr.detectChanges(); // Update UI to show loading state
 
-        console.log('ApproveDepositHistory: Fetching all requests...');
+        const skipCount = (this.currentPage - 1) * this.maxResultCount;
 
-        this.depositService.getAllDepositRequests().subscribe({
+        this.depositService.getAllDepositRequests(skipCount, this.maxResultCount).subscribe({
             next: (res: any) => {
-                console.log('ApproveDepositHistory: API Response:', res);
                 this.deposits = res?.result?.items ?? [];
-
-                if (this.deposits.length === 0) {
-                    console.log('ApproveDepositHistory: No items found in response.');
-                }
-
+                this.totalCount = res?.result?.totalCount ?? 0;
                 this.isLoading = false;
                 this.cdr.detectChanges(); // Force UI update
             },
@@ -50,6 +50,41 @@ export class ApproveDepositHistory implements OnInit {
                 this.cdr.detectChanges();
             }
         });
+    }
+
+    changePage(page: number) {
+        if (page >= 1 && page <= this.totalPages) {
+            this.currentPage = page;
+            this.fetchHistory();
+        }
+    }
+
+    get totalPages(): number {
+        return Math.ceil(this.totalCount / this.maxResultCount) || 1;
+    }
+
+    getPageNumbers(): number[] {
+        const pageNumbers: number[] = [];
+        const maxPagesToShow = 5;
+        let startPage = Math.max(1, this.currentPage - 2);
+        let endPage = Math.min(this.totalPages, startPage + maxPagesToShow - 1);
+
+        if (endPage - startPage + 1 < maxPagesToShow) {
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            pageNumbers.push(i);
+        }
+        return pageNumbers;
+    }
+
+    getStartIndex(): number {
+        return this.totalCount === 0 ? 0 : (this.currentPage - 1) * this.maxResultCount + 1;
+    }
+
+    getEndIndex(): number {
+        return Math.min(this.currentPage * this.maxResultCount, this.totalCount);
     }
 
     formatEmail(email: string): string {
