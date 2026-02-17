@@ -61,7 +61,8 @@ namespace Elicom.Homepage
                 var items = products.Select(p =>
                 {
                     // For now: pick first store listing
-                    var storeProduct = p.StoreProducts.First();
+                    var storeProduct = p.StoreProducts.FirstOrDefault();
+                    if (storeProduct == null) return null; // Skip products with no listings
 
                     var images = p.Images?
                         .Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -76,7 +77,7 @@ namespace Elicom.Homepage
                         StoreProductId = storeProduct.Id,
 
                         CategoryId = p.CategoryId,
-                        CategoryName = p.Category.Name,
+                        CategoryName = p.Category?.Name ?? "Uncategorized",
 
                         Title = p.Name,
 
@@ -87,10 +88,12 @@ namespace Elicom.Homepage
                         ResellerDiscountPercentage = storeProduct.ResellerDiscountPercentage,
                         Price = finalPrice,
 
-                        StoreName = storeProduct.Store.Name,
+                        StoreName = storeProduct.Store?.Name ?? "Unknown Store",
                         Slug = p.Slug
                     };
-                }).ToList();
+                })
+                .Where(x => x != null)
+                .ToList();
 
                 // 5️⃣ Return paged result
                 return new PagedResultDto<ProductCardDto>(totalCount, items);
@@ -151,16 +154,16 @@ namespace Elicom.Homepage
                     Category = new CategoryInfoDto
                     {
                         CategoryId = product.CategoryId,
-                        Name = product.Category.Name,
-                        Slug = product.Category.Slug
+                        Name = product.Category?.Name ?? "Uncategorized",
+                        Slug = product.Category?.Slug ?? "uncategorized"
                     },
 
                     Store = new StoreInfoDto
                     {
                         StoreId = storeProduct.StoreId,
-                        StoreName = storeProduct.Store.Name,
-                        StoreDescription = storeProduct.Store.Description,
-                        StoreSlug = storeProduct.Store.Slug,
+                        StoreName = storeProduct.Store?.Name ?? "Unknown Store",
+                        StoreDescription = storeProduct.Store?.Description,
+                        StoreSlug = storeProduct.Store?.Slug,
                         ResellerPrice = storeProduct.ResellerPrice,
                         ResellerDiscountPercentage = storeProduct.ResellerDiscountPercentage,
                         Price = storeProduct.ResellerPrice * (1 - storeProduct.ResellerDiscountPercentage / 100),

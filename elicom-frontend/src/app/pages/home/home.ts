@@ -27,6 +27,10 @@ export class HomeComponent implements OnInit {
 
   products: GlobalMarketplaceProduct[] = [];
   categories: Category[] = [];
+  productError: string = '';
+  categoryError: string = '';
+  isLoadingCategories: boolean = false;
+  isLoadingProducts: boolean = false;
 
   constructor(
     private productService: ProductService,
@@ -48,6 +52,9 @@ export class HomeComponent implements OnInit {
   }
 
   loadProducts() {
+    this.isLoadingProducts = true;
+    this.productError = '';
+
     Swal.fire({
       title: 'Loading Products...',
       didOpen: () => {
@@ -55,15 +62,14 @@ export class HomeComponent implements OnInit {
       },
       allowOutsideClick: false,
       showConfirmButton: false,
-      timer: 2000, // Safety timer
+      timer: 5000,
     });
 
     console.log('HomeComponent: Loading products...');
-    // Optimized: Fetch 20 products initially for the homepage (Grid + Deals)
     this.productService.getProductsForCards(0, 20).subscribe({
       next: (res: any) => {
         Swal.close();
-        // Handle response robustly (checking result/items)
+        this.isLoadingProducts = false;
         let items: any[] = [];
         if (Array.isArray(res)) items = res;
         else if (res && Array.isArray(res.items)) items = res.items;
@@ -71,26 +77,48 @@ export class HomeComponent implements OnInit {
 
         console.log('HomeComponent: Products received:', items.length);
         this.products = items;
-        this.cdr.detectChanges(); // Trigger immediately
+        this.cdr.detectChanges();
       },
       error: (err: any) => {
+        Swal.close();
+        this.isLoadingProducts = false;
         console.error('HomeComponent: Products error:', err);
+        this.productError = this.extractErrorMessage(err, 'Failed to load products');
+        this.cdr.detectChanges();
       }
     });
   }
 
   loadCategories() {
+    this.isLoadingCategories = true;
+    this.categoryError = '';
     console.log('HomeComponent: Triggering robust category load...');
-    // Optimized: Fetch only 8 categories initially for the homepage carousel
     this.categoryService.getAllCategories(8).subscribe({
       next: (res: any[]) => {
+        this.isLoadingCategories = false;
         console.log('HomeComponent: Categories arrived reliably. Count:', res.length);
         this.categories = res;
         this.cdr.detectChanges();
       },
       error: (err) => {
+        this.isLoadingCategories = false;
         console.error('HomeComponent: Critical category load failure', err);
+        this.categoryError = this.extractErrorMessage(err, 'Failed to load categories');
+        this.cdr.detectChanges();
       }
     });
+  }
+
+  private extractErrorMessage(err: any, defaultMsg: string): string {
+    if (err.error?.error?.message) {
+      return err.error.error.message;
+    }
+    if (err.error?.message) {
+      return err.error.message;
+    }
+    if (err.statusText) {
+      return `Server Error: ${err.statusText} (${err.status})`;
+    }
+    return defaultMsg;
   }
 }

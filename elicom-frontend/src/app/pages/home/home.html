@@ -3,11 +3,21 @@
   <app-hero-carousel></app-hero-carousel>
 
   <!-- Category carousel -->
-  <app-category-carousel [categories]="categories"></app-category-carousel>
+  <div *ngIf="categoryError" class="centered-error">
+    <p>{{ categoryError }}</p>
+    <button (click)="loadCategories()" class="btn-retry">Retry</button>
+  </div>
+  <app-category-carousel *ngIf="!categoryError" [categories]="categories"></app-category-carousel>
+
+  <!-- Errors / Items -->
+  <div *ngIf="productError" class="centered-error">
+    <p>{{ productError }}</p>
+    <button (click)="loadProducts()" class="btn-retry">Retry</button>
+  </div>
 
   <!-- Deal card -->
-  <app-deal-card [products]="products"></app-deal-card>
+  <app-deal-card *ngIf="!productError" [products]="products"></app-deal-card>
 
   <!-- Product grid -->
-  <app-product-grid-new [products]="products"></app-product-grid-new>
+  <app-product-grid-new *ngIf="!productError" [products]="products"></app-product-grid-new>
 </div>

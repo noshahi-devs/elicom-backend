@@ -197,6 +197,9 @@ namespace Elicom.Web.Host.Startup
                     .GetManifestResourceStream("Elicom.Web.Host.wwwroot.swagger.ui.index.html");
                 options.DisplayRequestDuration(); // Controls the display of the request duration (in milliseconds) for "Try it out" requests.
             }); // URL: /swagger
+
+            // 🚀 Runtime Readiness: Enable DB Retries now that startup (localization) is done
+            Elicom.EntityFrameworkCore.ElicomDbContextConfigurer.EnableRetries = true;
         }
 
         private void ConfigureSwagger(IServiceCollection services)
