@@ -211,7 +211,23 @@ export class AuthModalComponent {
                 },
                 error: (err) => {
                     console.error('Register failed', err);
-                    this.errorMessage = 'Registration failed. Please try again.';
+                    this.isLoading = false;
+
+                    // Extract detailed error from ABP response if available
+                    if (err.error?.error?.message) {
+                        this.errorMessage = err.error.error.message;
+                        if (err.error.error.details) {
+                            this.errorMessage += `: ${err.error.error.details}`;
+                        }
+                    } else if (err.error?.message) {
+                        this.errorMessage = err.error.message;
+                    } else if (err.statusText) {
+                        this.errorMessage = `Error: ${err.statusText}`;
+                    } else {
+                        this.errorMessage = 'Registration failed. Please try again.';
+                    }
+
+                    this.cdr.detectChanges();
                 }
             })
             .add(() => {

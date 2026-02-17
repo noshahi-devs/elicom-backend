@@ -43,13 +43,15 @@ namespace Elicom.Controllers
         {
             try
             {
+                Logger.Info($"[Login] 🔐 Authenticating user: {model.UserNameOrEmailAddress}");
                 var loginResult = await GetLoginResultAsync(
                     model.UserNameOrEmailAddress,
                     model.Password,
                     GetTenancyNameOrNull()
                 );
 
-                var accessToken = CreateAccessToken(CreateJwtClaims(loginResult.Identity, loginResult.User));
+                Logger.Info($"[Login] ✅ Login successful for {model.UserNameOrEmailAddress} (ID: {loginResult.User.Id}). Generating token...");
+                var accessToken = CreateAccessToken(await CreateJwtClaims(loginResult.Identity, loginResult.User));
 
                 return new AuthenticateResultModel
                 {
@@ -194,7 +196,7 @@ namespace Elicom.Controllers
             return new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
         }
 
-        private List<Claim> CreateJwtClaims(ClaimsIdentity identity, User user)
+        private async Task<List<Claim>> CreateJwtClaims(ClaimsIdentity identity, User user)
         {
             var claims = identity.Claims.ToList();
             var nameIdClaim = claims.First(c => c.Type == ClaimTypes.NameIdentifier);
@@ -216,7 +218,7 @@ namespace Elicom.Controllers
             }
 
             // Explicit fail-safe: Add roles if missing from identity
-            var roles = _userManager.GetRolesAsync(user).Result; // Sync wait here as it's a static context call or refactor but this is safe in this flow
+            var roles = await _userManager.GetRolesAsync(user); 
             foreach (var roleName in roles)
             {
                 if (!claims.Any(c => c.Type == ClaimTypes.Role && c.Value == roleName))

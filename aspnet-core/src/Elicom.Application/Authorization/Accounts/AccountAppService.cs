@@ -656,8 +656,19 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                 Logger.Info($"[Register] Resolved UserName: {userName}. Checking for existing user...");
 
                 // 1. Check if user already exists in this platform/tenant context
+                // First try by prefixed username
                 var user = await _userManager.FindByNameAsync(userName);
                 
+                if (user == null)
+                {
+                    // If not found by username, check by email within this tenant
+                    user = await _userManager.FindByEmailAsync(email);
+                    if (user != null)
+                    {
+                        Logger.Info($"[Register] ℹ️ Found existing user by email ({email}) but with different username ({user.UserName}). Using this account.");
+                    }
+                }
+
                 if (user == null)
                 {
                     Logger.Info($"[Register] User not found. Calling UserRegistrationManager.RegisterAsync...");
@@ -678,6 +689,10 @@ public class AccountAppService : ElicomAppServiceBase, IAccountAppService
                 {
                     Logger.Info($"[Register] ℹ️ User already exists (ID: {user.Id}). Ensuring account is active.");
                     user.IsActive = true;
+                    // If we found them by email but they were using a non-prefixed username,
+                    // we might want to update it to the prefixed one for consistency, 
+                    // but changing usernames can be risky (breaks previous logins). 
+                    // For now, let's keep the existing username but ensure roles are mapped.
                     await _userManager.UpdateAsync(user);
                 }
 
