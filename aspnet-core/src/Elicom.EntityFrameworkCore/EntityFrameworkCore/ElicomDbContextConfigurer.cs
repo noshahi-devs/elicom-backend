@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using System;
 using System.Data.Common;
 
 namespace Elicom.EntityFrameworkCore;
