@@ -55,8 +55,11 @@ export class CardService {
         return this.http.get(`${this.apiUrl}/GetMyApplications`, { headers: this.getHeaders() });
     }
 
-    getCardApplications(): Observable<any> {
-        return this.http.get(`${this.apiUrl}/GetCardApplications`, { headers: this.getHeaders() });
+    getCardApplications(skipCount: number = 0, maxResultCount: number = 50): Observable<any> {
+        return this.http.get(`${this.apiUrl}/GetCardApplications`, {
+            params: { skipCount, maxResultCount },
+            headers: this.getHeaders()
+        });
     }
 
     approveCardApplication(id: string): Observable<any> {

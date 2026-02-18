@@ -19,11 +19,100 @@
     }
 }
 
+.benefits-section-3d {
+    background: linear-gradient(135deg, rgba(29, 224, 22, 0.05), rgba(1, 163, 164, 0.05));
+    border: 1px solid rgba(29, 224, 22, 0.1);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 32px;
+    box-shadow: var(--shadow-3d-soft);
+
+    h2 {
+        font-size: 20px;
+        font-weight: 800;
+        margin: 0 0 20px 0;
+        color: var(--primary-dark);
+        letter-spacing: 1px;
+        text-align: center;
+    }
+
+    .benefit-item {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+
+        .number {
+            font-weight: 800;
+            color: var(--primary);
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-main);
+
+            strong {
+                color: var(--primary-dark);
+            }
+        }
+    }
+}
+
 .apply-form-3d {
     background: var(--bg-surface);
     border-radius: 20px;
     padding: 32px;
     box-shadow: var(--shadow-3d-soft);
+
+    .benefits-form-header {
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+        border-bottom: 2px dashed rgba(29, 224, 22, 0.1);
+
+        h3 {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            margin: 0 0 20px 0;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+
+        .benefit-point {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+
+            .num {
+                font-weight: 800;
+                color: var(--primary);
+                font-size: 14px;
+                flex-shrink: 0;
+                margin-top: 2px;
+            }
+
+            p {
+                margin: 0;
+                font-size: 13px;
+                line-height: 1.5;
+                color: var(--text-main);
+
+                strong {
+                    color: var(--primary-dark);
+                }
+            }
+        }
+    }
 
     .form-section {
         margin-bottom: 24px;

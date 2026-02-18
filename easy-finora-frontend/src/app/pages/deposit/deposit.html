@@ -249,7 +249,7 @@
         <div *ngIf="currentStep === 3" class="step-content">
             <div class="upload-section">
                 <h4>Upload Payment Proof</h4>
-                <p>Please upload a screenshot or receipt of your payment transaction</p>
+
 
                 <div class="file-upload-area">
                     <input type="file" id="proof" (change)="onFileSelected($event)" accept="image/*,.pdf"
@@ -260,6 +260,14 @@
                         <span *ngIf="proofFile" class="file-name">{{ proofFile.name }}</span>
                         <span class="upload-hint">Supported formats: JPG, PNG, PDF (Max 5MB)</span>
                     </label>
+                </div>
+
+                <p>Please enter your transaction details and upload a screenshot</p>
+
+                <div class="form-group-3d mb-3">
+                    <label for="paymentId">Payment id/Transection id <span class="required pb-4">*</span></label>
+                    <input type="text" id="paymentId" [(ngModel)]="paymentId" class="method-dropdown"
+                        placeholder="Enter transaction reference ID" required [disabled]="isLoading" />
                 </div>
 
                 <div class="summary-box">

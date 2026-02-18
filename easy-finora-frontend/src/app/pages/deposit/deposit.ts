@@ -98,6 +98,7 @@ export class Deposit implements OnInit {
     selectedAccount: BankAccount | null = null;
     paymentConfirmed = false;
     proofFile: File | null = null;
+    paymentId: string = '';
 
     // Cards & Other Methods
     showPaymentCards = false;
@@ -370,6 +371,11 @@ export class Deposit implements OnInit {
             return;
         }
 
+        if (!this.paymentId || this.paymentId.trim().length === 0) {
+            this.toastService.showError('Please Send Transection ID');
+            return;
+        }
+
         if (!this.selectedTargetCardId) {
             this.toastService.showError('Please select a target card for the deposit');
             return;
@@ -386,7 +392,8 @@ export class Deposit implements OnInit {
                 localCurrency: this.localCurrency,
                 country: this.selectedAccount?.country || 'Unknown',
                 method: 'P2P',
-                proofImage: base64
+                proofImage: base64,
+                referenceId: this.paymentId // Map paymentId to referenceId for backend
             };
 
             console.log('DEPOSIT PAYLOAD (P2P):', input);
@@ -482,6 +489,7 @@ export class Deposit implements OnInit {
         this.localAmount = 0;
         this.localCurrency = 'USD';
         this.proofFile = null;
+        this.paymentId = '';
         this.isLoading = false;
         this.depositMethod = null;
         this.showPaymentCards = false;

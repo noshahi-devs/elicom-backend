@@ -22,6 +22,7 @@ import { ApproveAllTransactions } from './pages/approve-all-transactions/approve
 import { UserManagement } from './pages/user-management/user-management';
 import { AdminDashboard } from './pages/admin-dashboard/admin-dashboard';
 import { ApproveCards } from './pages/approve-cards/approve-cards';
+import { UpgradePlan } from './pages/upgrade-plan/upgrade-plan.component';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -51,5 +52,6 @@ export const routes: Routes = [
   // Withdraw routes
   { path: 'withdraw', component: Withdraw, canActivate: [authGuard] },
   { path: 'withdraw-methods', component: WithdrawMethods, canActivate: [authGuard] },
-  { path: 'withdraw-history', component: WithdrawHistory, canActivate: [authGuard] }
+  { path: 'withdraw-history', component: WithdrawHistory, canActivate: [authGuard] },
+  { path: 'upgrade-plan', component: UpgradePlan, canActivate: [authGuard] }
 ];

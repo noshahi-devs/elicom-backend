@@ -1,0 +1,258 @@
+.upgrade-container {
+    padding: 60px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: center;
+    perspective: 1500px;
+
+    .upgrade-header {
+        margin-bottom: 70px;
+
+        h1 {
+            font-size: 42px;
+            font-weight: 800;
+            color: #1a1f35;
+            margin-bottom: 12px;
+            letter-spacing: -1px;
+        }
+
+        p {
+            color: #64748b;
+            font-size: 18px;
+        }
+    }
+}
+
+.plans-grid {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    padding-bottom: 50px;
+}
+
+.plan-card {
+    flex: 1;
+    min-width: 320px;
+    max-width: 350px;
+    position: relative;
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    transform-style: preserve-3d;
+    cursor: pointer;
+
+    &:hover {
+        transform: translateY(-15px) rotateY(5deg);
+
+        .icon-orb {
+            transform: scale(1.1) translateZ(30px);
+        }
+
+        .plan-label-tab {
+            transform: translateY(5px) translateZ(10px);
+        }
+    }
+
+    .card-inner {
+        position: relative;
+        background: #fff;
+        border-radius: 40px;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
+        overflow: visible; // To allow label tab to pop out
+        display: flex;
+        flex-direction: column;
+        border: 4px solid transparent;
+        height: 520px;
+    }
+
+    /* Color Schemes */
+    &.basic {
+        .card-inner {
+            border-color: #1de016;
+        }
+
+        .price-section .amount {
+            color: #1de016;
+        }
+
+        .icon-orb {
+            background: radial-gradient(circle at 30% 30%, #1de016, #0d7c09);
+        }
+
+        .plan-label-tab {
+            background: #1de016;
+        }
+    }
+
+    &.standard {
+        .card-inner {
+            border-color: #0088cc;
+        }
+
+        .price-section .amount {
+            color: #0088cc;
+        }
+
+        .icon-orb {
+            background: radial-gradient(circle at 30% 30%, #0088cc, #005580);
+        }
+
+        .plan-label-tab {
+            background: #0088cc;
+        }
+    }
+
+    &.premium {
+        .card-inner {
+            border-color: #1a3a5a;
+        }
+
+        .price-section .amount {
+            color: #1a3a5a;
+        }
+
+        .icon-orb {
+            background: radial-gradient(circle at 30% 30%, #1a3a5a, #0c1b2a);
+        }
+
+        .plan-label-tab {
+            background: #1a3a5a;
+        }
+    }
+
+    .plan-content {
+        padding: 60px 40px 100px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1;
+
+        .price-section {
+            margin-bottom: 40px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+
+            .currency {
+                font-size: 28px;
+                font-weight: 700;
+                margin-top: 10px;
+                color: #64748b;
+            }
+
+            .amount {
+                font-size: 72px;
+                font-weight: 900;
+                letter-spacing: -2px;
+            }
+        }
+
+        .benefits-list {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+
+            .benefit-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding-bottom: 12px;
+                border-bottom: 1px dashed #e2e8f0;
+
+                &:last-child {
+                    border-bottom: none;
+                }
+
+                .check {
+                    color: #94a3b8;
+                    font-weight: 900;
+                }
+
+                .text {
+                    color: #334155;
+                    font-size: 15px;
+                    font-weight: 500;
+                    font-family: 'Inter', sans-serif;
+                    text-align: left;
+                }
+            }
+        }
+    }
+
+    .icon-orb {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        transition: all 0.4s ease;
+
+        .icon {
+            font-size: 40px;
+            color: #fff;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+    }
+
+    .plan-label-tab {
+        position: absolute;
+        bottom: 20px;
+        left: 5px;
+        right: 5px;
+        height: 80px;
+        border-radius: 20px 20px 80px 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.4s ease;
+        overflow: hidden;
+
+        &::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.2), transparent);
+        }
+
+        span {
+            background: #fff;
+            color: #1a1f35;
+            padding: 10px 40px;
+            border-radius: 14px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            font-size: 28px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+    }
+}
+
+.footer-note {
+    margin-top: 40px;
+
+    p {
+        color: #94a3b8;
+        font-size: 14px;
+        font-style: italic;
+    }
+}
+
+@media (max-width: 1100px) {
+    .plans-grid {
+        gap: 20px;
+    }
+
+    .plan-card {
+        min-width: 280px;
+    }
+}
