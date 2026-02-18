@@ -10,6 +10,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
+using Abp.BackgroundJobs;
+using NSubstitute;
+using Castle.MicroKernel.Registration;
+using Elicom.Orders.BackgroundJobs;
+using Elicom.BackgroundJobs;
 
 namespace Elicom.Tests.Orders
 {
@@ -568,6 +573,85 @@ namespace Elicom.Tests.Orders
                 // Assert
                 updatedOrder.ShouldNotBeNull();
                 updatedOrder.Status.ShouldBe("Shipped");
+
+                await uow.CompleteAsync();
+            }
+        }
+
+        [Fact]
+        public async Task Should_Enqueue_Email_Job_When_Order_Created()
+        {
+            var uowManager = Resolve<Abp.Domain.Uow.IUnitOfWorkManager>();
+            
+            // Mock BackgroundJobManager
+            var backgroundJobManager = Substitute.For<IBackgroundJobManager>();
+            LocalIocManager.IocContainer.Register(
+                Component.For<IBackgroundJobManager>().Instance(backgroundJobManager).LifestyleSingleton().IsDefault()
+            );
+            
+            // Resolve OrderAppService again so it gets the mock
+            var orderAppService = Resolve<IOrderAppService>();
+
+            using (var uow = uowManager.Begin())
+            {
+                LoginAsDefaultTenantAdmin();
+                var user = await GetCurrentUserAsync();
+
+                // Setup minimal data
+                var category = UsingDbContext(context => {
+                    var c = new Category { Name = "JobTest", Slug = "jobtest", Status = true };
+                    context.Categories.Add(c);
+                    context.SaveChanges();
+                    return c;
+                });
+
+                var store = UsingDbContext(context => {
+                    var s = new Store { Name = "Job Store", OwnerId = user.Id, Status = true, Slug = "job" };
+                    context.Stores.Add(s);
+                    context.SaveChanges();
+                    return s;
+                });
+
+                var product = UsingDbContext(context => {
+                    var p = new Product { 
+                        Name = "JobProd", CategoryId = category.Id, SupplierId = user.Id, 
+                        SupplierPrice = 10, StockQuantity = 10, Status = true 
+                    };
+                    context.Products.Add(p);
+                    context.SaveChanges();
+                    return p;
+                });
+
+                var storeProduct = UsingDbContext(context => {
+                    var sp = new StoreProduct { 
+                        StoreId = store.Id, ProductId = product.Id, ResellerPrice = 20, Status = true, StockQuantity = 10 
+                    };
+                    context.StoreProducts.Add(sp);
+                    context.SaveChanges();
+                    return sp;
+                });
+
+                UsingDbContext(context => {
+                    context.CartItems.Add(new CartItem { 
+                        UserId = user.Id, StoreProductId = storeProduct.Id, Price = 20, Quantity = 1, Status = "Active", TenantId = 1
+                    });
+                    context.SaveChanges();
+                });
+
+                // Act
+                var orderDto = await orderAppService.Create(new CreateOrderDto {
+                    UserId = user.Id,
+                    PaymentMethod = "Visa",
+                    ShippingCost = 0,
+                    ShippingAddress = "Job Test Addr"
+                });
+
+                await uowManager.Current.SaveChangesAsync();
+
+                // Assert: Verify EnqueueAsync was called with correct arguments
+                await backgroundJobManager.Received().EnqueueAsync<OrderEmailJob, OrderEmailJobArgs>(
+                    Arg.Is<OrderEmailJobArgs>(args => args.OrderId == orderDto.Id)
+                );
 
                 await uow.CompleteAsync();
             }

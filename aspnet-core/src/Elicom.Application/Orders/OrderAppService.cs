@@ -15,6 +15,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Elicom.Cards;
+using Abp.BackgroundJobs;
+using Elicom.BackgroundJobs;
+using Elicom.Orders.BackgroundJobs;
 
 namespace Elicom.Orders
 {
@@ -30,6 +33,7 @@ namespace Elicom.Orders
         private readonly IEmailSender _emailSender;
         private readonly ICardAppService _cardAppService;
         private readonly ISmartStoreWalletManager _smartStoreWalletManager;
+        private readonly IBackgroundJobManager _backgroundJobManager;
 
         private const long PlatformAdminId = 1; // The system account that holds Escrow funds
 
@@ -43,7 +47,8 @@ namespace Elicom.Orders
             IWalletManager walletManager,
             IEmailSender emailSender,
             ICardAppService cardAppService,
-            ISmartStoreWalletManager smartStoreWalletManager)
+            ISmartStoreWalletManager smartStoreWalletManager,
+            IBackgroundJobManager backgroundJobManager)
         {
             _orderRepository = orderRepository;
             _cartItemRepository = cartItemRepository;
@@ -55,6 +60,7 @@ namespace Elicom.Orders
             _emailSender = emailSender;
             _cardAppService = cardAppService;
             _smartStoreWalletManager = smartStoreWalletManager;
+            _backgroundJobManager = backgroundJobManager;
         }
 
         // Create order from cart
@@ -241,18 +247,8 @@ namespace Elicom.Orders
                 await CurrentUnitOfWork.SaveChangesAsync();
             }
 
-            // STEP 4: Send emails AFTER transaction completes (non-blocking)
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await SendOrderPlacementEmails(order, cartItems);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error("Failed to send order placement emails", ex);
-                }
-            });
+            // STEP 4: Send emails AFTER transaction completes (now via Background Job)
+            await _backgroundJobManager.EnqueueAsync<OrderEmailJob, OrderEmailJobArgs>(new OrderEmailJobArgs { OrderId = order.Id });
 
             return ObjectMapper.Map<OrderDto>(order);
         }
@@ -493,55 +489,6 @@ namespace Elicom.Orders
             return ObjectMapper.Map<List<CarrierDto>>(carriers);
         }
 
-        private async Task SendOrderPlacementEmails(Order order, List<CartItem> cartItems)
-        {
-            try
-            {
-                var user = await UserManager.FindByIdAsync(order.UserId.ToString());
-                var customerEmail = user?.EmailAddress ?? "customer@example.com";
-                var adminEmail = "noshahidevelopersinc@gmail.com";
-                
-                // 1. Email to CUSTOMER
-                var customerBody = $@"
-                    <h2>Order Confirmed!</h2>
-                    <p>Dear Customer, your order <b>{order.OrderNumber}</b> has been placed successfully.</p>
-                    <p>Total Amount: {order.TotalAmount:C}</p>
-                    <p>We are processing your items and will notify you once shipped.</p>";
-                
-                await SendEmailAsync(customerEmail, $"Order Confirmed: {order.OrderNumber}", customerBody);
-
-                // 2. Email to ADMIN
-                var adminBody = $@"
-                    <h2>New Order Alert</h2>
-                    <p>Order <b>{order.OrderNumber}</b> has been placed on SmartStore.</p>
-                    <p>Amount: {order.TotalAmount:C}</p>
-                    <p>Check the admin dashboard for details.</p>";
-                
-                await SendEmailAsync(adminEmail, $"[ALERT] New Order: {order.OrderNumber}", adminBody);
-
-                // 3. Email to each SELLER
-                var storeGroups = cartItems.GroupBy(ci => ci.StoreProduct.StoreId);
-                foreach (var group in storeGroups)
-                {
-                    var store = group.First().StoreProduct.Store;
-                    var owner = await UserManager.FindByIdAsync(store.OwnerId.ToString());
-                    if (owner != null)
-                    {
-                        var sellerBody = $@"
-                            <h2>You have a New Order!</h2>
-                            <p>Store: <b>{store.Name}</b></p>
-                            <p>Order: <b>{order.OrderNumber}</b></p>
-                            <p>Please log in to your Seller Portal to fulfill this order.</p>";
-                        
-                        await SendEmailAsync(owner.EmailAddress, $"New Sale: {order.OrderNumber}", sellerBody);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("Failed to send order placement emails", ex);
-            }
-        }
 
         private async Task SendEmailAsync(string to, string subject, string body)
         {
