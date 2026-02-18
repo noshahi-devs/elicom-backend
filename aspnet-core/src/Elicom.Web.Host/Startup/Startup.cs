@@ -212,8 +212,8 @@ namespace Elicom.Web.Host.Startup
                 options.DisplayRequestDuration(); // Controls the display of the request duration (in milliseconds) for "Try it out" requests.
             }); // URL: /swagger
 
-            // 🚀 Runtime Readiness: Retries remain disabled by default to prevent ABP UOW transaction conflicts.
-            // Elicom.EntityFrameworkCore.ElicomDbContextConfigurer.EnableRetries = true; 
+            // 🚀 Runtime Readiness: Enable retries after startup to handle transient Azure SQL failures
+            Elicom.EntityFrameworkCore.ElicomDbContextConfigurer.EnableRetries = true; 
         }
 
         private void ConfigureSwagger(IServiceCollection services)

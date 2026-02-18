@@ -60,6 +60,7 @@ namespace Elicom.Orders
         // Create order from cart
         public async Task<OrderDto> Create(CreateOrderDto input)
         {
+            // STEP 1: Fetch cart items (quick query)
             List<CartItem> cartItems;
             using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
             {
@@ -84,155 +85,174 @@ namespace Elicom.Orders
             if (!cartItems.Any())
                 throw new UserFriendlyException("Cart is empty");
 
-            var subTotal = cartItems.Sum(i => i.Price * i.Quantity);
-
-            var order = new Order
-            {
-                UserId = input.UserId,
-                OrderNumber = $"ORD-{DateTime.Now:yyyyMMddHHmmss}",
-                PaymentMethod = input.PaymentMethod,
-
-                ShippingAddress = input.ShippingAddress,
-                Country = input.Country,
-                State = input.State,
-                City = input.City,
-                PostalCode = input.PostalCode,
-                
-                RecipientName = input.RecipientName,
-                RecipientPhone = input.RecipientPhone,
-                RecipientEmail = input.RecipientEmail,
-
-                SubTotal = subTotal,
-                ShippingCost = input.ShippingCost,
-                Discount = input.Discount,
-                TotalAmount = subTotal + input.ShippingCost - input.Discount,
-
-                Status = "Pending",
-                PaymentStatus = "Pending",
-                SourcePlatform = input.SourcePlatform ?? "SmartStore",
-                OrderItems = new List<OrderItem>()
-            };
-
-            // Generate ID manually so we can link SupplierOrders before final save if needed,
-            // or just insert early.
-            order.Id = Guid.NewGuid();
-            await _orderRepository.InsertAsync(order);
-            // We don't SaveChanges yet, we want the whole thing in one transaction if possible,
-            // but ABP's InsertAsync will already mark it for insertion.
-
             var user = await UserManager.FindByIdAsync(input.UserId.ToString());
             if (user == null)
                 throw new UserFriendlyException("User not found.");
 
-            // ESCROW TRANSACTION: Move money from Buyer to Platform Admin (Escrow Hold)
-            // Skip wallet check if using external payment methods like "finora" or cards
+            var subTotal = cartItems.Sum(i => i.Price * i.Quantity);
+            var totalAmount = subTotal + input.ShippingCost - input.Discount;
+
+            // STEP 2: Process Payment OUTSIDE transaction (this can take 16+ seconds)
             var isExternalPayment = new[] { "finora", "mastercard", "discover", "amex", "visa", "bank_transfer", "crypto", "google_pay" }
                 .Any(p => input.PaymentMethod?.ToLower().Contains(p) == true);
 
-            if (input.PaymentMethod == "Wallet" || (order.SourcePlatform == "SmartStore" && !isExternalPayment))
+            string paymentStatus = "Pending";
+
+            if (input.PaymentMethod == "Wallet" || (input.SourcePlatform == "SmartStore" && !isExternalPayment))
             {
+                // Wallet payment - validate balance
                 var balance = await _walletManager.GetBalanceAsync(user.Id);
-                if (balance < order.TotalAmount)
+                if (balance < totalAmount)
                 {
                     throw new UserFriendlyException("Insufficient funds in Wallet to place this order.");
                 }
+                paymentStatus = "Held in Escrow"; // Will transfer in transaction
+            }
+            else if (input.PaymentMethod?.ToLower().Contains("finora") == true)
+            {
+                // External Payment - Process BEFORE creating order
+                Logger.Info($"[OrderAppService] Processing Finora payment for amount: {totalAmount}");
+                
+                var validationResult = await _cardAppService.ValidateCard(new ValidateCardInput
+                {
+                    CardNumber = input.CardNumber,
+                    Cvv = input.Cvv,
+                    ExpiryDate = input.ExpiryDate,
+                    Amount = totalAmount
+                });
 
-                await _walletManager.TransferAsync(
-                    user.Id, 
-                    PlatformAdminId, 
-                    order.TotalAmount, 
-                    $"Escrow Hold for Order {order.OrderNumber}"
-                );
+                if (!validationResult.IsValid)
+                {
+                    throw new UserFriendlyException($"Finora Payment Failed: {validationResult.Message}");
+                }
 
-                order.PaymentStatus = "Held in Escrow";
+                // Process Payment (this is the slow part - 16+ seconds)
+                await _cardAppService.ProcessPayment(new ProcessCardPaymentInput
+                {
+                    CardNumber = input.CardNumber,
+                    Cvv = input.Cvv,
+                    ExpiryDate = input.ExpiryDate,
+                    Amount = totalAmount,
+                    ReferenceId = $"ORD-{DateTime.Now:yyyyMMddHHmmss}", // Temp reference
+                    Description = $"Payment for order"
+                });
+
+                paymentStatus = "Paid (Easy Finora)";
+                Logger.Info($"[OrderAppService] Finora payment successful");
             }
             else
             {
-                // External Payment (Card, Crypto, etc.)
-                if (input.PaymentMethod?.ToLower().Contains("finora") == true)
-                {
-                    // Real verification using CardAppService
-                    var validationResult = await _cardAppService.ValidateCard(new ValidateCardInput
-                    {
-                        CardNumber = input.CardNumber,
-                        Cvv = input.Cvv,
-                        ExpiryDate = input.ExpiryDate,
-                        Amount = order.TotalAmount
-                    });
-
-                    if (!validationResult.IsValid)
-                    {
-                        throw new UserFriendlyException($"Finora Payment Failed: {validationResult.Message}");
-                    }
-
-                    // Process Payment
-                    await _cardAppService.ProcessPayment(new ProcessCardPaymentInput
-                    {
-                        CardNumber = input.CardNumber,
-                        Cvv = input.Cvv,
-                        ExpiryDate = input.ExpiryDate,
-                        Amount = order.TotalAmount,
-                        ReferenceId = order.OrderNumber,
-                        Description = $"Payment for Order {order.OrderNumber}"
-                    });
-
-                    order.PaymentStatus = "Paid (Easy Finora)";
-                }
-                else
-                {
-                    // Other External Payment (Card, Crypto, etc.)
-                    // In a real app, verify with gateway here
-                    order.PaymentStatus = "Paid (External)";
-                }
+                // Other External Payment
+                paymentStatus = "Paid (External)";
             }
 
-            foreach (var group in cartItems.GroupBy(ci => ci.StoreProduct.Product.SupplierId))
+            // STEP 3: Create Order in Database Transaction (fast)
+            Order order;
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
             {
-                var supplierId = group.Key.GetValueOrDefault();
-                var supplierOrder = new SupplierOrder
+                order = new Order
                 {
-                    SupplierId = supplierId,
-                    OrderId = order.Id,
-                    ReferenceCode = $"SUP-{DateTime.Now:yyyyMMddHHmmss}-{supplierId}",
-                    Status = "Purchased",
-                    TotalPurchaseAmount = group.Sum(ci => ci.StoreProduct.Product.SupplierPrice * ci.Quantity),
-                    CustomerName = user.Name,
+                    UserId = input.UserId,
+                    OrderNumber = $"ORD-{DateTime.Now:yyyyMMddHHmmss}",
+                    PaymentMethod = input.PaymentMethod,
+
                     ShippingAddress = input.ShippingAddress,
-                    SourcePlatform = order.SourcePlatform,
-                    Items = new List<SupplierOrderItem>()
+                    Country = input.Country,
+                    State = input.State,
+                    City = input.City,
+                    PostalCode = input.PostalCode,
+                    
+                    RecipientName = input.RecipientName,
+                    RecipientPhone = input.RecipientPhone,
+                    RecipientEmail = input.RecipientEmail,
+
+                    SubTotal = subTotal,
+                    ShippingCost = input.ShippingCost,
+                    Discount = input.Discount,
+                    TotalAmount = totalAmount,
+
+                    Status = "Pending",
+                    PaymentStatus = paymentStatus,
+                    SourcePlatform = input.SourcePlatform ?? "SmartStore",
+                    OrderItems = new List<OrderItem>()
                 };
 
-                foreach (var ci in group)
+                order.Id = Guid.NewGuid();
+                await _orderRepository.InsertAsync(order);
+
+                // Process wallet transfer if needed (inside transaction for consistency)
+                if (input.PaymentMethod == "Wallet" || (order.SourcePlatform == "SmartStore" && !isExternalPayment))
                 {
-                    supplierOrder.Items.Add(new SupplierOrderItem
-                    {
-                        ProductId = ci.StoreProduct.ProductId,
-                        Quantity = ci.Quantity,
-                        PurchasePrice = ci.StoreProduct.Product.SupplierPrice
-                    });
-
-                    order.OrderItems.Add(new OrderItem
-                    {
-                        StoreProductId = ci.StoreProductId,
-                        ProductId = ci.StoreProduct.ProductId,
-                        Quantity = ci.Quantity,
-                        PriceAtPurchase = ci.Price,
-                        ProductName = ci.StoreProduct.Product.Name,
-                        StoreName = ci.StoreProduct.Store.Name
-                    });
+                    await _walletManager.TransferAsync(
+                        user.Id, 
+                        PlatformAdminId, 
+                        order.TotalAmount, 
+                        $"Escrow Hold for Order {order.OrderNumber}"
+                    );
                 }
-                await _supplierOrderRepository.InsertAsync(supplierOrder);
+
+                // Create supplier orders and order items
+                foreach (var group in cartItems.GroupBy(ci => ci.StoreProduct.Product.SupplierId))
+                {
+                    var supplierId = group.Key.GetValueOrDefault();
+                    var supplierOrder = new SupplierOrder
+                    {
+                        SupplierId = supplierId,
+                        OrderId = order.Id,
+                        ReferenceCode = $"SUP-{DateTime.Now:yyyyMMddHHmmss}-{supplierId}",
+                        Status = "Purchased",
+                        TotalPurchaseAmount = group.Sum(ci => ci.StoreProduct.Product.SupplierPrice * ci.Quantity),
+                        CustomerName = user.Name,
+                        ShippingAddress = input.ShippingAddress,
+                        SourcePlatform = order.SourcePlatform,
+                        Items = new List<SupplierOrderItem>()
+                    };
+
+                    foreach (var ci in group)
+                    {
+                        supplierOrder.Items.Add(new SupplierOrderItem
+                        {
+                            ProductId = ci.StoreProduct.ProductId,
+                            Quantity = ci.Quantity,
+                            PurchasePrice = ci.StoreProduct.Product.SupplierPrice
+                        });
+
+                        order.OrderItems.Add(new OrderItem
+                        {
+                            StoreProductId = ci.StoreProductId,
+                            ProductId = ci.StoreProduct.ProductId,
+                            Quantity = ci.Quantity,
+                            PriceAtPurchase = ci.Price,
+                            ProductName = ci.StoreProduct.Product.Name,
+                            StoreName = ci.StoreProduct.Store.Name
+                        });
+                    }
+                    await _supplierOrderRepository.InsertAsync(supplierOrder);
+                }
+
+                await CurrentUnitOfWork.SaveChangesAsync();
+
+                // Clear cart
+                foreach (var ci in cartItems)
+                {
+                    await _cartItemRepository.DeleteAsync(ci.Id);
+                }
+
+                await CurrentUnitOfWork.SaveChangesAsync();
             }
 
-            await CurrentUnitOfWork.SaveChangesAsync();
-
-            foreach (var ci in cartItems)
+            // STEP 4: Send emails AFTER transaction completes (non-blocking)
+            _ = Task.Run(async () =>
             {
-                await _cartItemRepository.DeleteAsync(ci.Id);
-            }
-
-            // --- NOTIFICATIONS ---
-            await SendOrderPlacementEmails(order, cartItems);
+                try
+                {
+                    await SendOrderPlacementEmails(order, cartItems);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error("Failed to send order placement emails", ex);
+                }
+            });
 
             return ObjectMapper.Map<OrderDto>(order);
         }

@@ -109,7 +109,7 @@ export class CartItem implements AfterViewChecked {
   /** 🔹 Coupon Value (hardcoded for now, can be from API) */
   get couponValue(): number {
     // This can be fetched from an API or calculated based on promotions
-    return 12.00;
+    return 0.00;
   }
 
   /** 🔹 Promotion (sirf display ke liye) */

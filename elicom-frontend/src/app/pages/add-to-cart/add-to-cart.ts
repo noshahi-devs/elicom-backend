@@ -27,6 +27,7 @@ export class AddToCart implements OnInit {
   brand = 'World Cart';
   address = 'Ship to Twnhs, 2841 E Waltann Ln Unit 1';
   products: any[] = [];
+  suggestionText = 'You might like to fill it with';
 
   ngOnInit(): void {
     this.productService.getGlobalMarketplaceProducts().subscribe({
@@ -65,9 +66,25 @@ export class AddToCart implements OnInit {
       return `https://picsum.photos/seed/${product.id}/300/400`;
     }
 
-    const img = imageStr.split(',')[0].trim();
-    if (img === 'string' || img === '') return `https://picsum.photos/seed/${product.id}/300/400`;
+    // Parse JSON array if it's a string
+    let images: string[] = [];
+    try {
+      if (typeof imageStr === 'string' && imageStr.startsWith('[')) {
+        images = JSON.parse(imageStr);
+      } else if (typeof imageStr === 'string') {
+        images = imageStr.split(',').map(s => s.trim());
+      } else if (Array.isArray(imageStr)) {
+        images = imageStr;
+      }
+    } catch (e) {
+      images = imageStr.split(',').map((s: string) => s.trim());
+    }
 
+    if (images.length === 0 || images[0] === 'string' || images[0] === '') {
+      return `https://picsum.photos/seed/${product.id}/300/400`;
+    }
+
+    const img = images[0];
     if (img.includes('cdn.elicom.com')) {
       const seed = img.split('/').pop() || 'p1';
       return `https://picsum.photos/seed/${seed}/300/400`;
@@ -95,7 +112,21 @@ export class AddToCart implements OnInit {
       return `https://picsum.photos/seed/${product.id}_hover/300/400`;
     }
 
-    const parts = imageStr.split(',').map((p: any) => p.trim()).filter((p: any) => p !== '' && p !== 'string');
+    // Parse JSON array if it's a string
+    let images: string[] = [];
+    try {
+      if (typeof imageStr === 'string' && imageStr.startsWith('[')) {
+        images = JSON.parse(imageStr);
+      } else if (typeof imageStr === 'string') {
+        images = imageStr.split(',').map(s => s.trim());
+      } else if (Array.isArray(imageStr)) {
+        images = imageStr;
+      }
+    } catch (e) {
+      images = imageStr.split(',').map((s: string) => s.trim());
+    }
+
+    const parts = images.filter((p: string) => p !== '' && p !== 'string');
 
     if (parts.length > 1) {
       const img = parts[1];

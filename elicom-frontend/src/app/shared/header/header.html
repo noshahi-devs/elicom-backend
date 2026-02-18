@@ -26,12 +26,62 @@
 
       <!-- CART -->
       <div class="cart-wrapper" (mouseenter)="onMouseEnterCart()" (mouseleave)="onMouseLeaveCart()">
-        <a href="javascript:void(0)" class="cart-icon-link" (click)="cartDropdown.set(!cartDropdown())">
+        <a class="cart-icon-link" (click)="cartDropdown.set(!cartDropdown())" style="cursor: pointer;">
           <i class="fas fa-shopping-cart"></i>
           <span class="cart-badge" id="iconCartQty" *ngIf="cartService.totalItems > 0">{{ cartService.totalItems
             }}</span>
         </a>
-        <!-- ... (cart modal remains) -->
+
+        <!-- Cart Dropdown Modal -->
+        <div class="hover-cart-modal" *ngIf="cartDropdown()">
+          <div class="hover-cart-content">
+            <div class="hover-close" (click)="closeModal()">&times;</div>
+
+            <div class="top-line">
+              <span class="black-text">Total Items:</span>
+              <span class="red-text">{{ cartService.totalItems }}</span>
+            </div>
+
+            <div class="product-card-scroll">
+              <div class="product-card" *ngFor="let item of cartService.items()">
+                <img [src]="item.image" alt="Product">
+                <div class="prod-details">
+                  <div class="prod-title" [title]="item.name">{{ item.name }}</div>
+                  <div class="sold-by">Sold By: {{ item.storeName }}</div>
+                  <div class="color-qty">
+                    <span>{{ item.size }} | {{ item.color }}</span>
+                    <div style="display:flex; gap:5px; align-items:center;">
+                      <button (click)="decrementQty(item)" style="padding:0 5px; cursor:pointer;">-</button>
+                      <span>{{ item.quantity }}</span>
+                      <button (click)="incrementQty(item)" style="padding:0 5px; cursor:pointer;">+</button>
+                    </div>
+                  </div>
+                  <div class="price-del">
+                    <span class="price">${{ item.price * item.quantity | number:'1.2-2' }}</span>
+                    <span class="del-icon" (click)="removeItem(item)"><i class="fas fa-trash-alt"></i></span>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="cartService.items().length === 0" style="text-align:center; padding:20px;">
+                Your cart is empty
+              </div>
+            </div>
+
+            <div class="total-area" *ngIf="cartService.items().length > 0">
+              <div class="hover-all-checkbox-total-price">
+                <div class="top-line-all">
+                  <span>Subtotal:</span>
+                </div>
+                <div class="del">${{ cartService.totalPrice | number:'1.2-2' }}</div>
+              </div>
+            </div>
+
+            <div class="view-cart" *ngIf="cartService.items().length > 0">
+              <a [routerLink]="['/add-to-cart']" (click)="closeModal()">View Cart & Checkout</a>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- WISHLIST / MESSAGE / GLOBE -->
