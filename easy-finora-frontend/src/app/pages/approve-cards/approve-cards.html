@@ -74,66 +74,42 @@
             </div>
         </div>
 
-        <!-- Pagination Section -->
-        <div class="pagination-container" *ngIf="totalCount > 0 && !isLoading">
-            <div class="pagination-info">
-                Showing {{ getStartIndex() }} to {{ getEndIndex() }} of {{ totalCount }} applications
-            </div>
+    </div>
+</div>
 
-            <div class="pagination-controls">
-                <button class="btn-pagination" [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)">
-                    <i class="fas fa-chevron-left"></i> Previous
-                </button>
-
-                <div class="page-numbers">
-                    <button *ngFor="let page of getPageNumbers()" class="page-btn" [class.active]="page === currentPage"
-                        (click)="changePage(page)">
-                        {{ page }}
-                    </button>
-                </div>
-
-                <button class="btn-pagination" [disabled]="currentPage === totalPages"
-                    (click)="changePage(currentPage + 1)">
-                    Next <i class="fas fa-chevron-right"></i>
-                </button>
-            </div>
+<!-- Confirmation & Rejection Modals -->
+<div class="modal-overlay" *ngIf="selectedApp && confirmationType">
+    <!-- Rejection Content -->
+    <div class="modal-3d" *ngIf="confirmationType === 'reject'">
+        <div class="modal-header">
+            <h2>Reject Application</h2>
+            <span class="close" (click)="cancelModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p>Reason for rejecting <strong>{{ selectedApp.fullName }}</strong>'s application:</p>
+            <textarea [(ngModel)]="adminRemarks" placeholder="Enter reason..." class="input-3d" rows="4"></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-3d cancel" (click)="cancelModal()">Cancel</button>
+            <button class="btn-3d reject" (click)="reject()" [disabled]="!adminRemarks">Confirm Reject</button>
         </div>
     </div>
 
-    <!-- Confirmation & Rejection Modals -->
-    <div class="modal-overlay" *ngIf="selectedApp && confirmationType">
-        <!-- Rejection Content -->
-        <div class="modal-3d" *ngIf="confirmationType === 'reject'">
-            <div class="modal-header">
-                <h2>Reject Application</h2>
-                <span class="close" (click)="cancelModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <p>Reason for rejecting <strong>{{ selectedApp.fullName }}</strong>'s application:</p>
-                <textarea [(ngModel)]="adminRemarks" placeholder="Enter reason..." class="input-3d" rows="4"></textarea>
-            </div>
-            <div class="modal-actions">
-                <button class="btn-3d cancel" (click)="cancelModal()">Cancel</button>
-                <button class="btn-3d reject" (click)="reject()" [disabled]="!adminRemarks">Confirm Reject</button>
-            </div>
+    <!-- Approval Confirmation Content -->
+    <div class="modal-3d" *ngIf="confirmationType === 'approve'">
+        <div class="modal-header">
+            <h2>Approve Card</h2>
+            <span class="close" (click)="cancelModal()">&times;</span>
         </div>
+        <div class="modal-body">
+            <div class="confirm-icon">💳</div>
+            <p class="confirm-text">Are you sure you want to approve card for <br><strong>{{ selectedApp.fullName
+                    }}</strong>?</p>
 
-        <!-- Approval Confirmation Content -->
-        <div class="modal-3d" *ngIf="confirmationType === 'approve'">
-            <div class="modal-header">
-                <h2>Approve Card</h2>
-                <span class="close" (click)="cancelModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <div class="confirm-icon">💳</div>
-                <p class="confirm-text">Are you sure you want to approve card for <br><strong>{{ selectedApp.fullName
-                        }}</strong>?</p>
-
-            </div>
-            <div class="modal-actions">
-                <button class="btn-3d cancel" (click)="cancelModal()">Cancel</button>
-                <button class="btn-3d approve" (click)="confirmApproval()">Yes, Approve Now</button>
-            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-3d cancel" (click)="cancelModal()">Cancel</button>
+            <button class="btn-3d approve" (click)="confirmApproval()">Yes, Approve Now</button>
         </div>
     </div>
 </div>

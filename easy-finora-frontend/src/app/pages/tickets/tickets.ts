@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { NgFor, NgIf, DatePipe, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SupportService } from '../../services/support.service';
@@ -26,7 +26,8 @@ export class Tickets implements OnInit {
 
     constructor(
         private supportService: SupportService,
-        private toastService: ToastService
+        private toastService: ToastService,
+        private cdr: ChangeDetectorRef
     ) { }
 
     ngOnInit() {
@@ -39,10 +40,12 @@ export class Tickets implements OnInit {
             next: (res: any) => {
                 this.tickets = res?.result?.items ?? [];
                 this.isLoading = false;
+                this.cdr.detectChanges();
             },
             error: (err) => {
                 console.error('Failed to fetch tickets', err);
                 this.isLoading = false;
+                this.cdr.detectChanges();
             }
         });
     }
@@ -70,11 +73,13 @@ export class Tickets implements OnInit {
                 this.isCreating = false;
                 this.newTicket = { title: '', priority: 'Medium', message: '' };
                 this.fetchTickets();
+                this.cdr.detectChanges();
             },
             error: (err) => {
                 console.error('Failed to create ticket', err);
                 this.toastService.showError('Error creating ticket');
                 this.isLoading = false;
+                this.cdr.detectChanges();
             }
         });
     }

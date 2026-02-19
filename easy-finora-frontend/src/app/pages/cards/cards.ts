@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { NgFor, NgIf, CurrencyPipe, DatePipe, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ToastService } from '../../shared/toast/toast.service';
 import { CardService } from '../../services/card.service';
 import { Loader } from '../../shared/loader/loader';
@@ -9,7 +9,7 @@ import { Loader } from '../../shared/loader/loader';
 @Component({
     selector: 'app-cards',
     standalone: true,
-    imports: [NgFor, NgIf, CurrencyPipe, DatePipe, FormsModule, SlicePipe, Loader],
+    imports: [NgFor, NgIf, CurrencyPipe, DatePipe, FormsModule, SlicePipe, Loader, RouterLink],
     templateUrl: './cards.html',
     styleUrl: './cards.scss',
 })
@@ -47,8 +47,10 @@ export class Cards implements OnInit {
         // Fetch Balance
         this.cardService.getBalance().subscribe({
             next: (res) => {
-
-                this.totalBalance = res.result.totalBalance;
+                // Robust mapping for balance
+                if (res?.result) {
+                    this.totalBalance = res.result.totalBalance ?? 0;
+                }
                 this.cdr.detectChanges();
             },
             error: (err) => console.error('Cards: Balance Error:', err)
@@ -57,8 +59,12 @@ export class Cards implements OnInit {
         // Fetch Applications
         this.cardService.getMyApplications().subscribe({
             next: (res) => {
-
-                this.cardApplications = res.result;
+                // Robust mapping for applications
+                if (Array.isArray(res?.result)) {
+                    this.cardApplications = res.result;
+                } else {
+                    this.cardApplications = res?.result?.items ?? [];
+                }
                 this.cdr.detectChanges();
             },
             error: (err) => console.error('Cards: Applications Error:', err)
@@ -67,8 +73,14 @@ export class Cards implements OnInit {
         // Fetch Cards
         this.cardService.getUserCards().subscribe({
             next: (res) => {
+                let cardsRaw = [];
+                if (Array.isArray(res?.result)) {
+                    cardsRaw = res.result;
+                } else {
+                    cardsRaw = res?.result?.items ?? [];
+                }
 
-                this.activeCards = res.result.map((c: any) => ({
+                this.activeCards = cardsRaw.map((c: any) => ({
                     id: c.cardId,
                     cardNumber: c.cardNumber,
                     type: c.cardType,

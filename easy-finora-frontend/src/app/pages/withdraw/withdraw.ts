@@ -52,15 +52,30 @@ export class Withdraw implements OnInit {
     }
 
     loadCards() {
+        this.isLoading = true;
+        this.cdr.detectChanges();
+
         this.cardService.getUserCards().subscribe({
             next: (res) => {
-                this.userCards = res.result;
+                // Handle both direct array and paged response structures
+                if (Array.isArray(res?.result)) {
+                    this.userCards = res.result;
+                } else {
+                    this.userCards = res?.result?.items ?? [];
+                }
+
                 if (this.userCards.length > 0) {
                     this.selectedSourceCardId = this.userCards[0].cardId;
                 }
+
+                this.isLoading = false;
                 this.cdr.detectChanges();
             },
-            error: (err) => console.error('Withdraw: Cards Error:', err)
+            error: (err) => {
+                console.error('Withdraw: Cards Error:', err);
+                this.isLoading = false;
+                this.cdr.detectChanges();
+            }
         });
     }
 

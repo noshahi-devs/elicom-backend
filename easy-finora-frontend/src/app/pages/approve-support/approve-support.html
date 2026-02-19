@@ -46,8 +46,7 @@
                 <span *ngIf="ticket.status === 'Closed'" class="processed-text">
                     Closed
                 </span>
-                <small *ngIf="ticket.adminRemarks" class="details"
-                    style="width: 100%; display: block; margin-top: 5px; color: #aaa;">
+                <small *ngIf="ticket.adminRemarks" class="details admin-reply">
                     Admin: {{ ticket.adminRemarks }}
                 </small>
             </div>
