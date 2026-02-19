@@ -3,6 +3,7 @@ using Abp.Application.Services.Dto;
 using Abp.Authorization;
 using Abp.Domain.Repositories;
 using Abp.Domain.Uow;
+using Abp.EntityFrameworkCore;
 using AutoMapper;
 using Elicom.Authorization;
 using Elicom.Categories.Dto;
@@ -12,6 +13,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Transactions;
+using Elicom.EntityFrameworkCore;
+using Abp.EntityFrameworkCore.Uow;
 using Elicom.Storage;
 using Abp.UI;
 using Microsoft.EntityFrameworkCore;
@@ -44,19 +48,24 @@ namespace Elicom.Categories
             return _mapper.Map<CategoryDto>(entity);
         }
 
+        [UnitOfWork(TransactionScopeOption.Suppress)]
         public virtual async Task<ListResultDto<CategoryDto>> GetAll(int maxResultCount = 100)
         {
-            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
+            var strategy = CurrentUnitOfWork.GetDbContext<ElicomDbContext>().Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
             {
-                var query = _categoryRepository.GetAll();
-                if (maxResultCount > 0)
+                using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
                 {
-                    query = query.Take(maxResultCount);
+                    var query = _categoryRepository.GetAll();
+                    if (maxResultCount > 0)
+                    {
+                        query = query.Take(maxResultCount);
+                    }
+
+                    var categories = await query.ToListAsync();
+                    return new ListResultDto<CategoryDto>(_mapper.Map<List<CategoryDto>>(categories));
                 }
-                
-                var categories = await query.ToListAsync();
-                return new ListResultDto<CategoryDto>(_mapper.Map<List<CategoryDto>>(categories));
-            }
+            });
         }
         [AbpAuthorize(PermissionNames.Pages_Categories_Create)]
         public async Task<CategoryDto> Create(CreateCategoryDto input)

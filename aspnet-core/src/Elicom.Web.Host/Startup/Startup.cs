@@ -214,8 +214,9 @@ namespace Elicom.Web.Host.Startup
                 options.DisplayRequestDuration(); // Controls the display of the request duration (in milliseconds) for "Try it out" requests.
             }); // URL: /swagger
 
-            // 🚀 Enable retries for Azure SQL resilience (Disabled globally to avoid transaction conflicts with ABP/EF Core)
-            // Elicom.EntityFrameworkCore.ElicomDbContextConfigurer.EnableRetries = true; 
+            // 🚀 Enable retries for Azure SQL resilience AFETR app is fully initialized
+            // This prevents conflicts during startup/seeding but protected normal API traffic.
+            Elicom.EntityFrameworkCore.ElicomDbContextConfigurer.EnableRetries = true; 
         }
 
         private void ConfigureSwagger(IServiceCollection services)

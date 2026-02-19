@@ -5,11 +5,16 @@ using Abp.UI;
 using Elicom.Entities;
 using Elicom.Homepage.Dto;
 using Microsoft.EntityFrameworkCore;
+using System.Transactions;
+using Abp.EntityFrameworkCore;
 using Abp.Domain.Uow;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Transactions;
+using Elicom.EntityFrameworkCore;
+using Abp.EntityFrameworkCore.Uow;
 
 namespace Elicom.Homepage
 {
@@ -33,71 +38,76 @@ namespace Elicom.Homepage
         }
 
 
+        [UnitOfWork(TransactionScopeOption.Suppress)]
         public async Task<PagedResultDto<ProductCardDto>> GetAllProductsForCards(
             PagedAndSortedResultRequestDto input)
         {
-            // 1️⃣ Base query (ONLY product-level filtering)
-            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
+            var strategy = CurrentUnitOfWork.GetDbContext<ElicomDbContext>().Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
             {
-                var baseQuery = _productRepository
-                    .GetAll()
-                    .Where(p => p.Status)
-                    .Where(p => p.StoreProducts.Any()); // important
-
-                // 2️⃣ Correct total count (DISTINCT PRODUCTS)
-                var totalCount = await baseQuery.CountAsync();
-
-                // 3️⃣ Fetch paged products with required joins
-                var products = await baseQuery
-                    .Include(p => p.Category)
-                    .Include(p => p.StoreProducts)
-                        .ThenInclude(sp => sp.Store)
-                    .OrderByDescending(p => p.CreatedAt)
-                    .Skip(input.SkipCount)
-                    .Take(input.MaxResultCount)
-                    .ToListAsync();
-
-                // 4️⃣ Map to ProductCardDto
-                var items = products.Select(p =>
+                // 1️⃣ Base query (ONLY product-level filtering)
+                using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
                 {
-                    // For now: pick first store listing
-                    var storeProduct = p.StoreProducts.FirstOrDefault();
-                    if (storeProduct == null) return null; // Skip products with no listings
+                    var baseQuery = _productRepository
+                        .GetAll()
+                        .Where(p => p.Status)
+                        .Where(p => p.StoreProducts.Any()); // important
 
-                    var images = p.Images?
-                        .Split(',', StringSplitOptions.RemoveEmptyEntries);
+                    // 2️⃣ Correct total count (DISTINCT PRODUCTS)
+                    var totalCount = await baseQuery.CountAsync();
 
-                    var finalPrice =
-                        storeProduct.ResellerPrice *
-                        (1 - storeProduct.ResellerDiscountPercentage / 100m);
+                    // 3️⃣ Fetch paged products with required joins
+                    var products = await baseQuery
+                        .Include(p => p.Category)
+                        .Include(p => p.StoreProducts)
+                            .ThenInclude(sp => sp.Store)
+                        .OrderByDescending(p => p.CreatedAt)
+                        .Skip(input.SkipCount)
+                        .Take(input.MaxResultCount)
+                        .ToListAsync();
 
-                    return new ProductCardDto
+                    // 4️⃣ Map to ProductCardDto
+                    var items = products.Select(p =>
                     {
-                        ProductId = p.Id,
-                        StoreProductId = storeProduct.Id,
+                        // For now: pick first store listing
+                        var storeProduct = p.StoreProducts.FirstOrDefault();
+                        if (storeProduct == null) return null; // Skip products with no listings
 
-                        CategoryId = p.CategoryId,
-                        CategoryName = p.Category?.Name ?? "Uncategorized",
+                        var images = p.Images?
+                            .Split(',', StringSplitOptions.RemoveEmptyEntries);
 
-                        Title = p.Name,
+                        var finalPrice =
+                            storeProduct.ResellerPrice *
+                            (1 - storeProduct.ResellerDiscountPercentage / 100m);
 
-                        Image1 = images?.FirstOrDefault(),
-                        Image2 = images?.Skip(1).FirstOrDefault(),
+                        return new ProductCardDto
+                        {
+                            ProductId = p.Id,
+                            StoreProductId = storeProduct.Id,
 
-                        OriginalPrice = storeProduct.ResellerPrice,
-                        ResellerDiscountPercentage = storeProduct.ResellerDiscountPercentage,
-                        Price = finalPrice,
+                            CategoryId = p.CategoryId,
+                            CategoryName = p.Category?.Name ?? "Uncategorized",
 
-                        StoreName = storeProduct.Store?.Name ?? "Unknown Store",
-                        Slug = p.Slug
-                    };
-                })
-                .Where(x => x != null)
-                .ToList();
+                            Title = p.Name,
 
-                // 5️⃣ Return paged result
-                return new PagedResultDto<ProductCardDto>(totalCount, items);
-            }
+                            Image1 = images?.FirstOrDefault(),
+                            Image2 = images?.Skip(1).FirstOrDefault(),
+
+                            OriginalPrice = storeProduct.ResellerPrice,
+                            ResellerDiscountPercentage = storeProduct.ResellerDiscountPercentage,
+                            Price = finalPrice,
+
+                            StoreName = storeProduct.Store?.Name ?? "Unknown Store",
+                            Slug = p.Slug
+                        };
+                    })
+                    .Where(x => x != null)
+                    .ToList();
+
+                    // 5️⃣ Return paged result
+                    return new PagedResultDto<ProductCardDto>(totalCount, items);
+                }
+            });
         }
 
         public async Task<ProductDetailDto> GetProductDetail(Guid productId, Guid? storeProductId = null)
@@ -176,26 +186,31 @@ namespace Elicom.Homepage
             }
         }
 
+        [UnitOfWork(TransactionScopeOption.Suppress)]
         public async Task<List<HomepageCategoryDto>> GetCategoriesWithListedProducts()
         {
-            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
+            var strategy = CurrentUnitOfWork.GetDbContext<ElicomDbContext>().Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
             {
-                var categories = await _categoryRepository.GetAll()
-                    .Where(c => c.Products.Any(p => p.Status && p.StoreProducts.Any()))
-                    .Select(c => new HomepageCategoryDto
-                    {
-                        CategoryId = c.Id,
-                        Name = c.Name,
-                        Slug = c.Slug,
-                        ImageUrl = c.ImageUrl,
-                        // Use SelectMany to flatten products and filter before counting
-                        TotalProducts = c.Products
-                            .Count(p => p.Status && p.StoreProducts.Any())
-                    })
-                    .ToListAsync();
+                using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
+                {
+                    var categories = await _categoryRepository.GetAll()
+                        .Where(c => c.Products.Any(p => p.Status && p.StoreProducts.Any()))
+                        .Select(c => new HomepageCategoryDto
+                        {
+                            CategoryId = c.Id,
+                            Name = c.Name,
+                            Slug = c.Slug,
+                            ImageUrl = c.ImageUrl,
+                            // Use SelectMany to flatten products and filter before counting
+                            TotalProducts = c.Products
+                                .Count(p => p.Status && p.StoreProducts.Any())
+                        })
+                        .ToListAsync();
 
-                return categories;
-            }
+                    return categories;
+                }
+            });
         }
 
         public async Task<List<ProductCardDto>> GetProductListingsAcrossStores(Guid productId)
