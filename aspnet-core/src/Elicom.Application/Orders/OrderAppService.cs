@@ -18,6 +18,9 @@ using Elicom.Cards;
 using Abp.BackgroundJobs;
 using Elicom.BackgroundJobs;
 using Elicom.Orders.BackgroundJobs;
+using System.Transactions;
+using Elicom.EntityFrameworkCore;
+using Abp.EntityFrameworkCore.Uow;
 
 namespace Elicom.Orders
 {
@@ -97,6 +100,7 @@ namespace Elicom.Orders
 
             var subTotal = cartItems.Sum(i => i.Price * i.Quantity);
             var totalAmount = subTotal + input.ShippingCost - input.Discount;
+            Logger.Info($"[OrderAppService] Calculated totals - Subtotal: {subTotal}, Total: {totalAmount}, Shipping: {input.ShippingCost}");
 
             // STEP 2: Process Payment OUTSIDE transaction (this can take 16+ seconds)
             var isExternalPayment = new[] { "finora", "mastercard", "discover", "amex", "visa", "bank_transfer", "crypto", "google_pay" }
@@ -153,102 +157,126 @@ namespace Elicom.Orders
             }
 
             // STEP 3: Create Order in Database Transaction (fast)
-            Order order;
-            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
+            Order order = null;
+            try 
             {
-                order = new Order
+                var strategy = CurrentUnitOfWork.GetDbContext<ElicomDbContext>().Database.CreateExecutionStrategy();
+                await strategy.ExecuteAsync(async () => 
                 {
-                    UserId = input.UserId,
-                    OrderNumber = $"ORD-{DateTime.Now:yyyyMMddHHmmss}",
-                    PaymentMethod = input.PaymentMethod,
-
-                    ShippingAddress = input.ShippingAddress,
-                    Country = input.Country,
-                    State = input.State,
-                    City = input.City,
-                    PostalCode = input.PostalCode,
-                    
-                    RecipientName = input.RecipientName,
-                    RecipientPhone = input.RecipientPhone,
-                    RecipientEmail = input.RecipientEmail,
-
-                    SubTotal = subTotal,
-                    ShippingCost = input.ShippingCost,
-                    Discount = input.Discount,
-                    TotalAmount = totalAmount,
-
-                    Status = "Pending",
-                    PaymentStatus = paymentStatus,
-                    SourcePlatform = input.SourcePlatform ?? "SmartStore",
-                    OrderItems = new List<OrderItem>()
-                };
-
-                order.Id = Guid.NewGuid();
-                await _orderRepository.InsertAsync(order);
-
-                // Process wallet transfer if needed (inside transaction for consistency)
-                if (input.PaymentMethod == "Wallet" || (order.SourcePlatform == "SmartStore" && !isExternalPayment))
-                {
-                    await _walletManager.TransferAsync(
-                        user.Id, 
-                        PlatformAdminId, 
-                        order.TotalAmount, 
-                        $"Escrow Hold for Order {order.OrderNumber}"
-                    );
-                }
-
-                // Create supplier orders and order items
-                foreach (var group in cartItems.GroupBy(ci => ci.StoreProduct.Product.SupplierId))
-                {
-                    var supplierId = group.Key.GetValueOrDefault();
-                    var supplierOrder = new SupplierOrder
+                    Logger.Info($"[OrderAppService] Starting transaction for Order creation...");
+                    // Use a new Unit of Work for the actual DB operations to ensure they are committed together
+                    using (var uow = UnitOfWorkManager.Begin(System.Transactions.TransactionScopeOption.RequiresNew))
                     {
-                        SupplierId = supplierId,
-                        OrderId = order.Id,
-                        ReferenceCode = $"SUP-{DateTime.Now:yyyyMMddHHmmss}-{supplierId}",
-                        Status = "Purchased",
-                        TotalPurchaseAmount = group.Sum(ci => ci.StoreProduct.Product.SupplierPrice * ci.Quantity),
-                        CustomerName = user.Name,
-                        ShippingAddress = input.ShippingAddress,
-                        SourcePlatform = order.SourcePlatform,
-                        Items = new List<SupplierOrderItem>()
-                    };
-
-                    foreach (var ci in group)
-                    {
-                        supplierOrder.Items.Add(new SupplierOrderItem
+                        using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
                         {
-                            ProductId = ci.StoreProduct.ProductId,
-                            Quantity = ci.Quantity,
-                            PurchasePrice = ci.StoreProduct.Product.SupplierPrice
-                        });
+                            order = new Order
+                            {
+                                UserId = input.UserId,
+                                OrderNumber = $"ORD-{DateTime.Now:yyyyMMddHHmmss}-{Guid.NewGuid().ToString().Substring(0,4)}", // Added entropy to prevent collisions
+                                PaymentMethod = input.PaymentMethod,
 
-                        order.OrderItems.Add(new OrderItem
-                        {
-                            StoreProductId = ci.StoreProductId,
-                            ProductId = ci.StoreProduct.ProductId,
-                            Quantity = ci.Quantity,
-                            PriceAtPurchase = ci.Price,
-                            ProductName = ci.StoreProduct.Product.Name,
-                            StoreName = ci.StoreProduct.Store.Name
-                        });
+                                ShippingAddress = input.ShippingAddress,
+                                Country = input.Country,
+                                State = input.State,
+                                City = input.City,
+                                PostalCode = input.PostalCode,
+                                
+                                RecipientName = input.RecipientName,
+                                RecipientPhone = input.RecipientPhone,
+                                RecipientEmail = input.RecipientEmail,
+
+                                SubTotal = subTotal,
+                                ShippingCost = input.ShippingCost,
+                                Discount = input.Discount,
+                                TotalAmount = totalAmount,
+
+                                Status = "Pending",
+                                PaymentStatus = paymentStatus,
+                                SourcePlatform = input.SourcePlatform ?? "SmartStore",
+                                OrderItems = new List<OrderItem>()
+                            };
+
+                            order.Id = Guid.NewGuid();
+                            await _orderRepository.InsertAsync(order);
+                            Logger.Info($"[OrderAppService] Order entity inserted. Id: {order.Id}, Number: {order.OrderNumber}");
+
+                            // Process wallet transfer if needed (inside transaction for consistency)
+                            if (input.PaymentMethod == "Wallet" || (order.SourcePlatform == "SmartStore" && !isExternalPayment))
+                            {
+                                await _walletManager.TransferAsync(
+                                    user.Id, 
+                                    PlatformAdminId, 
+                                    order.TotalAmount, 
+                                    $"Escrow Hold for Order {order.OrderNumber}"
+                                );
+                            }
+
+                            // Create supplier orders and order items
+                            foreach (var group in cartItems.GroupBy(ci => ci.StoreProduct.Product.SupplierId))
+                            {
+                                var supplierId = group.Key.GetValueOrDefault();
+                                var supplierOrder = new SupplierOrder
+                                {
+                                    SupplierId = supplierId,
+                                    OrderId = order.Id,
+                                    ReferenceCode = $"SUP-{DateTime.Now:yyyyMMddHHmmss}-{supplierId}",
+                                    Status = "Purchased",
+                                    TotalPurchaseAmount = group.Sum(ci => ci.StoreProduct.Product.SupplierPrice * ci.Quantity),
+                                    CustomerName = user.Name,
+                                    ShippingAddress = input.ShippingAddress,
+                                    SourcePlatform = order.SourcePlatform,
+                                    Items = new List<SupplierOrderItem>()
+                                };
+
+                                foreach (var ci in group)
+                                {
+                                    supplierOrder.Items.Add(new SupplierOrderItem
+                                    {
+                                        ProductId = ci.StoreProduct.ProductId,
+                                        Quantity = ci.Quantity,
+                                        PurchasePrice = ci.StoreProduct.Product.SupplierPrice
+                                    });
+
+                                    order.OrderItems.Add(new OrderItem
+                                    {
+                                        StoreProductId = ci.StoreProductId,
+                                        ProductId = ci.StoreProduct.ProductId,
+                                        Quantity = ci.Quantity,
+                                        PriceAtPurchase = ci.Price,
+                                        ProductName = ci.StoreProduct.Product.Name,
+                                        StoreName = ci.StoreProduct.Store.Name
+                                    });
+                                }
+                                await _supplierOrderRepository.InsertAsync(supplierOrder);
+                            }
+
+                            await CurrentUnitOfWork.SaveChangesAsync();
+                            Logger.Info($"[OrderAppService] Supplier orders and items saved.");
+
+                            // Clear cart
+                            foreach (var ci in cartItems)
+                            {
+                                await _cartItemRepository.DeleteAsync(ci.Id);
+                            }
+
+                            await CurrentUnitOfWork.SaveChangesAsync();
+                        }
+                        await uow.CompleteAsync();
+                        Logger.Info($"[OrderAppService] Transaction committed successfully.");
                     }
-                    await _supplierOrderRepository.InsertAsync(supplierOrder);
-                }
-
-                await CurrentUnitOfWork.SaveChangesAsync();
-
-                // Clear cart
-                foreach (var ci in cartItems)
-                {
-                    await _cartItemRepository.DeleteAsync(ci.Id);
-                }
-
-                await CurrentUnitOfWork.SaveChangesAsync();
+                });
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"[OrderAppService] CRITICAL ERROR during order creation: {ex.Message}", ex);
+                throw new UserFriendlyException("Order creation failed due to a database error. Please try again in a few moments.");
             }
 
             // STEP 4: Send emails AFTER transaction completes (now via Background Job)
-            await _backgroundJobManager.EnqueueAsync<OrderEmailJob, OrderEmailJobArgs>(new OrderEmailJobArgs { OrderId = order.Id });
+            if (order != null)
+            {
+                await _backgroundJobManager.EnqueueAsync<OrderEmailJob, OrderEmailJobArgs>(new OrderEmailJobArgs { OrderId = order.Id });
+            }
 
             return ObjectMapper.Map<OrderDto>(order);
         }
@@ -304,7 +332,7 @@ namespace Elicom.Orders
         }
 
 
-        [AbpAuthorize(PermissionNames.Pages_PrimeShip_Admin)]
+        [AbpAuthorize(PermissionNames.Pages_PrimeShip_Admin, PermissionNames.Pages_SmartStore_Admin)]
         public async Task<OrderDto> Fulfill(FulfillOrderDto input)
         {
             // This now represents the final fulfillment by ADMIN from the Hub to the Customer
@@ -331,7 +359,7 @@ namespace Elicom.Orders
             return ObjectMapper.Map<OrderDto>(order);
         }
 
-        [AbpAuthorize(PermissionNames.Pages_PrimeShip_Admin)]
+        [AbpAuthorize(PermissionNames.Pages_PrimeShip_Admin, PermissionNames.Pages_SmartStore_Admin)]
         public async Task<OrderDto> Verify(VerifyOrderDto input)
         {
             // This now represents the Admin marking the CONSOLIDATED order as verified/ready
@@ -347,7 +375,7 @@ namespace Elicom.Orders
             return ObjectMapper.Map<OrderDto>(order);
         }
 
-        [AbpAuthorize(PermissionNames.Pages_PrimeShip_Admin)]
+        [AbpAuthorize(PermissionNames.Pages_PrimeShip_Admin, PermissionNames.Pages_SmartStore_Admin)]
         public async Task<OrderDto> Deliver(Guid id)
         {
             var order = await _orderRepository.GetAsync(id);

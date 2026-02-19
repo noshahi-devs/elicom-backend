@@ -13,10 +13,12 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Elicom.Core\Elicom.Core.csproj" />
+    <ProjectReference Include="..\Elicom.EntityFrameworkCore\Elicom.EntityFrameworkCore.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Abp" Version="9.1.0" />
     <PackageReference Include="Abp.AutoMapper" Version="9.1.0" />
+    <PackageReference Include="Abp.EntityFrameworkCore" Version="9.1.0" />
     <PackageReference Include="Azure.Communication.Email" Version="1.1.0" />
   </ItemGroup>
 </Project>

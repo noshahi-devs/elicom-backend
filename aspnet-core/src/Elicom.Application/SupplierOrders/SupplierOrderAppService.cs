@@ -210,7 +210,7 @@ namespace Elicom.SupplierOrders
                 // once its linked wholesale order is delivered.
             }
         }
-        [AbpAuthorize(PermissionNames.Pages_PrimeShip_Admin)]
+        [AbpAuthorize(PermissionNames.Pages_PrimeShip_Admin, PermissionNames.Pages_SmartStore_Admin)]
         public async Task<SupplierOrderDto> MarkAsVerified(Guid id)
         {
             var order = await _supplierOrderRepository.GetAll()
@@ -294,7 +294,7 @@ namespace Elicom.SupplierOrders
         }
 
         // ✅ GET ALL ORDERS (For Admin)
-        [AbpAuthorize(PermissionNames.Pages_PrimeShip_Admin)]
+        [AbpAuthorize(PermissionNames.Pages_PrimeShip_Admin, PermissionNames.Pages_SmartStore_Admin)]
         public async Task<ListResultDto<SupplierOrderDto>> GetAll()
         {
             var orders = await _supplierOrderRepository.GetAll()
@@ -307,7 +307,7 @@ namespace Elicom.SupplierOrders
         }
 
         // ✅ UPDATE ORDER STATUS (For Admin)
-        [AbpAuthorize(PermissionNames.Pages_PrimeShip_Admin)]
+        [AbpAuthorize(PermissionNames.Pages_PrimeShip_Admin, PermissionNames.Pages_SmartStore_Admin)]
         [HttpPost]
         [HttpPatch]
         [HttpPut]

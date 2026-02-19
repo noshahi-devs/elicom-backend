@@ -105,6 +105,10 @@ namespace Elicom.Web.Host.Startup
                 {
                     if (context.Response.HasStarted) throw;
 
+                    // 🚀 Log to Console for Azure Log Stream
+                    Console.WriteLine($"[SAFETY-NET] CRITICAL CRASH: {ex.GetType().Name} - {ex.Message}");
+                    Console.WriteLine(ex.ToString());
+
                     context.Response.StatusCode = 500;
                     context.Response.ContentType = "application/json";
                     
@@ -117,12 +121,10 @@ namespace Elicom.Web.Host.Startup
                         context.Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS";
                     }
 
-                    // Deep-clean the error message for JSON safety
-                    var msg = ex.Message ?? "Unknown Error";
+                    var msg = (ex.Message ?? "Unknown Error").Replace("\"", "'").Replace("\r", " ").Replace("\n", " ");
                     var details = (ex.InnerException?.Message ?? ex.ToString()).Replace("\"", "'").Replace("\r", " ").Replace("\n", " ");
-                    var safeMsg = msg.Replace("\"", "'").Replace("\r", " ").Replace("\n", " ");
                     
-                    var errorJson = $"{{\"success\":false,\"error\":{{\"message\":\"Critical Server Error (SafetyNet)\",\"details\":\"{safeMsg} | {details}\"}}}}";
+                    var errorJson = $"{{\"success\":false,\"error\":{{\"message\":\"Critical Server Error (SafetyNet)\",\"details\":\"{msg} | {details}\"}}}}";
                     await context.Response.WriteAsync(errorJson);
                 }
             });
@@ -212,8 +214,8 @@ namespace Elicom.Web.Host.Startup
                 options.DisplayRequestDuration(); // Controls the display of the request duration (in milliseconds) for "Try it out" requests.
             }); // URL: /swagger
 
-            // 🚀 Disable retries for now as they conflict with ABP transactions by default
-            Elicom.EntityFrameworkCore.ElicomDbContextConfigurer.EnableRetries = false; 
+            // 🚀 Enable retries for Azure SQL resilience (Disabled globally to avoid transaction conflicts with ABP/EF Core)
+            // Elicom.EntityFrameworkCore.ElicomDbContextConfigurer.EnableRetries = true; 
         }
 
         private void ConfigureSwagger(IServiceCollection services)
