@@ -51,21 +51,17 @@ namespace Elicom.Categories
         [UnitOfWork(TransactionScopeOption.Suppress)]
         public virtual async Task<ListResultDto<CategoryDto>> GetAll(int maxResultCount = 100)
         {
-            var strategy = CurrentUnitOfWork.GetDbContext<ElicomDbContext>().Database.CreateExecutionStrategy();
-            return await strategy.ExecuteAsync(async () =>
+            using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
             {
-                using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
+                var query = _categoryRepository.GetAll();
+                if (maxResultCount > 0)
                 {
-                    var query = _categoryRepository.GetAll();
-                    if (maxResultCount > 0)
-                    {
-                        query = query.Take(maxResultCount);
-                    }
-
-                    var categories = await query.ToListAsync();
-                    return new ListResultDto<CategoryDto>(_mapper.Map<List<CategoryDto>>(categories));
+                    query = query.Take(maxResultCount);
                 }
-            });
+
+                var categories = await query.ToListAsync();
+                return new ListResultDto<CategoryDto>(_mapper.Map<List<CategoryDto>>(categories));
+            }
         }
         [AbpAuthorize(PermissionNames.Pages_Categories_Create)]
         public async Task<CategoryDto> Create(CreateCategoryDto input)

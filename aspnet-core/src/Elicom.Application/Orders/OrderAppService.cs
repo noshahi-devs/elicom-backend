@@ -67,6 +67,7 @@ namespace Elicom.Orders
         }
 
         // Create order from cart
+        [UnitOfWork(TransactionScopeOption.Suppress)]
         public async Task<OrderDto> Create(CreateOrderDto input)
         {
             // STEP 1: Fetch cart items (quick query)

@@ -139,32 +139,16 @@ namespace Elicom.Web.Host.Startup
                     {
                         if (string.IsNullOrEmpty(cookie)) return cookie;
                         
-                        // Check for definitely invalid culture identifiers in ANY localization-related cookie
-                        if (cookie.Contains(".AspNetCore.Culture=") || cookie.Contains("Abp.Localization.CultureName="))
+                        // If cookie contains markers of known corruption or invalid chars, just drop the culture part
+                        if ((cookie.Contains(".AspNetCore.Culture=") || cookie.Contains("Abp.Localization.CultureName=")) &&
+                            (cookie.Contains("<") || cookie.Contains(">") || cookie.Contains("d__") || cookie.Contains("\0")))
                         {
-                            // If it contains things like "<", ">", async machine markers "d__",
-                            // or replacement characters "" (classic corruption), it's corrupt.
-                            // Also checking for very short garbage like "9".
-                            if (cookie.Contains("<") || cookie.Contains(">") || cookie.Contains("d__") || 
-                                cookie.Contains("Abp.Localization.CultureName=d") || cookie.Contains(""))
-                            {
-                                changed = true;
-                                // Remove BOTH potential culture cookies if corruption is detected to force fallback to default
-                                var sanitized = System.Text.RegularExpressions.Regex.Replace(cookie, @"\.AspNetCore\.Culture=[^;]+(;\s*)?", string.Empty);
-                                sanitized = System.Text.RegularExpressions.Regex.Replace(sanitized, @"Abp\.Localization\.CultureName=[^;]+(;\s*)?", string.Empty);
-                                return sanitized;
-                            }
-                            
-                            // 2nd level check: Regex for strictly invalid characters in the culture sections
-                            // This finds .AspNetCore.Culture=... and checks if the value part contains weird chars
-                            var unsafePattern = @"(\.AspNetCore\.Culture|Abp\.Localization\.CultureName)=[^;]*[^\w\-\|\=\s][^;]*";
-                            if (System.Text.RegularExpressions.Regex.IsMatch(cookie, unsafePattern))
-                            {
-                                changed = true;
-                                var sanitized = System.Text.RegularExpressions.Regex.Replace(cookie, @"\.AspNetCore\.Culture=[^;]+(;\s*)?", string.Empty);
-                                sanitized = System.Text.RegularExpressions.Regex.Replace(sanitized, @"Abp\.Localization\.CultureName=[^;]+(;\s*)?", string.Empty);
-                                return sanitized;
-                            }
+                            changed = true;
+                            // Regex-less removal for safety
+                            var parts = cookie.Split(';').Where(p => 
+                                !p.Contains(".AspNetCore.Culture=") && 
+                                !p.Contains("Abp.Localization.CultureName="));
+                            return string.Join(";", parts);
                         }
                         return cookie;
                     }).ToArray();
@@ -172,6 +156,7 @@ namespace Elicom.Web.Host.Startup
                     if (changed)
                     {
                         context.Request.Headers["Cookie"] = newCookies;
+                        // Clear the cookies in the response to stop them from being sent back
                         context.Response.Cookies.Delete(".AspNetCore.Culture");
                         context.Response.Cookies.Delete("Abp.Localization.CultureName");
                     }

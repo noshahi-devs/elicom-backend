@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using System.Transactions;
 
 namespace Elicom.Carts
 {
@@ -26,6 +27,7 @@ namespace Elicom.Carts
             _storeProductRepository = storeProductRepository;
         }
 
+        [UnitOfWork(TransactionScopeOption.Suppress)]
         public async Task<CartItemDto> AddToCart(CreateCartItemDto input)
         {
             // Check if item already exists in cart for this user
@@ -71,6 +73,7 @@ namespace Elicom.Carts
             return ObjectMapper.Map<CartItemDto>(cartItem);
         }
 
+        [UnitOfWork(TransactionScopeOption.Suppress)]
         public async Task<List<CartItemDto>> GetCartItems(long userId)
         {
             using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))
@@ -87,6 +90,7 @@ namespace Elicom.Carts
             }
         }
 
+        [UnitOfWork(TransactionScopeOption.Suppress)]
         public async Task RemoveFromCart(Guid cartItemId)
         {
             await _cartRepository.DeleteAsync(cartItemId);
