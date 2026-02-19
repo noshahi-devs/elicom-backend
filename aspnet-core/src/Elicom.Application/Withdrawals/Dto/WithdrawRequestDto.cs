@@ -37,4 +37,14 @@ namespace Elicom.Withdrawals.Dto
         public string AdminRemarks { get; set; }
         public string PaymentProof { get; set; }
     }
+
+    public class WithdrawalEligibilityDto
+    {
+        public bool IsEligible { get; set; }
+        public string Message { get; set; }
+        public int DaysRemaining { get; set; }
+        public int HoursRemaining { get; set; }
+        public int MinutesRemaining { get; set; }
+        public string NextEligibleDate { get; set; }
+    }
 }

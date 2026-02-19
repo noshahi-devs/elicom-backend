@@ -9,6 +9,7 @@ using Elicom.Entities;
 using Elicom.Withdrawals.Dto;
 using Elicom.Wallets;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,43 +23,119 @@ namespace Elicom.Withdrawals
         private readonly IRepository<VirtualCard, long> _cardRepository;
         private readonly IRepository<AppTransaction, long> _transactionRepository;
         private readonly IWalletManager _walletManager;
+        private readonly ISmartStoreWalletManager _smartStoreWalletManager;
+        private readonly IRepository<Elicom.Entities.SupplierOrder, Guid> _supplierOrderRepository;
 
         public WithdrawAppService(
             IRepository<WithdrawRequest, long> withdrawRepository,
             IRepository<VirtualCard, long> cardRepository,
             IWalletManager walletManager,
-            IRepository<AppTransaction, long> transactionRepository)
+            IRepository<AppTransaction, long> transactionRepository,
+            ISmartStoreWalletManager smartStoreWalletManager,
+            IRepository<Elicom.Entities.SupplierOrder, Guid> supplierOrderRepository)
         {
             _withdrawRepository = withdrawRepository;
             _cardRepository = cardRepository;
             _walletManager = walletManager;
             _transactionRepository = transactionRepository;
+            _smartStoreWalletManager = smartStoreWalletManager;
+            _supplierOrderRepository = supplierOrderRepository;
+        }
+
+        public async Task<WithdrawalEligibilityDto> GetWithdrawalEligibility()
+        {
+            var userId = AbpSession.GetUserId();
+            var result = new WithdrawalEligibilityDto { IsEligible = true };
+
+            // 1. Get first successful order (Verified at Hub)
+            var firstOrder = await _supplierOrderRepository.GetAll()
+                .Where(o => o.SupplierId == userId && o.Status == "Verified")
+                .OrderBy(o => o.CreationTime)
+                .FirstOrDefaultAsync();
+
+            if (firstOrder == null)
+            {
+                result.IsEligible = false;
+                result.Message = "You haven't had any verified orders yet.";
+                return result;
+            }
+
+            // 2. Get withdrawal count and last withdrawal date
+            var withdrawals = await _withdrawRepository.GetAll()
+                .Where(w => w.UserId == userId && w.Status == "Approved")
+                .OrderByDescending(w => w.CreationTime)
+                .ToListAsync();
+
+            DateTime nextEligibleDate;
+            int totalWithdrawals = withdrawals.Count;
+
+            if (totalWithdrawals == 0)
+            {
+                // Rule 1: 10 days after first order
+                nextEligibleDate = firstOrder.CreationTime.AddDays(10);
+            }
+            else if (totalWithdrawals == 1)
+            {
+                // Rule 2: 7 days after first withdrawal
+                nextEligibleDate = withdrawals[0].CreationTime.AddDays(7);
+            }
+            else
+            {
+                // Rule 3: 5 days after last withdrawal
+                nextEligibleDate = withdrawals[0].CreationTime.AddDays(5);
+            }
+
+            if (DateTime.Now < nextEligibleDate)
+            {
+                var diff = nextEligibleDate - DateTime.Now;
+                result.IsEligible = false;
+                result.DaysRemaining = diff.Days;
+                result.HoursRemaining = diff.Hours;
+                result.MinutesRemaining = diff.Minutes;
+                result.NextEligibleDate = nextEligibleDate.ToString("yyyy-MM-dd HH:mm");
+                result.Message = $"Your next withdrawal will be available in {result.DaysRemaining}d {result.HoursRemaining}h.";
+            }
+            else
+            {
+                result.Message = "You are eligible for a withdrawal.";
+            }
+
+            return result;
         }
 
         public async Task<WithdrawRequestDto> SubmitWithdrawRequest(CreateWithdrawRequestInput input)
         {
             var userId = AbpSession.GetUserId();
 
-            // 1. Verify card ownership and balance
+            // 1. Check Eligibility
+            var eligibility = await GetWithdrawalEligibility();
+            if (!eligibility.IsEligible)
+            {
+                throw new UserFriendlyException(eligibility.Message);
+            }
+
+            // 2. Check SmartStore Wallet Balance (USD)
+            var balance = await _smartStoreWalletManager.GetBalanceAsync(userId);
+            if (balance < input.Amount)
+            {
+                throw new UserFriendlyException("Insufficient balance in your Smart Store wallet.");
+            }
+
+            // 3. Verify card destination
             var card = await _cardRepository.GetAsync(input.CardId);
             if (card.UserId != userId)
             {
-                throw new UserFriendlyException("You do not own this card.");
+                throw new UserFriendlyException("Target card must belong to you.");
             }
 
-            if (card.Balance < input.Amount)
-            {
-                throw new UserFriendlyException("Insufficient balance on the virtual card.");
-            }
-
-            // 2. Create withdrawal request
+            // 4. Create withdrawal request
             var request = new WithdrawRequest
             {
                 UserId = userId,
                 CardId = input.CardId,
                 Amount = input.Amount,
-                Method = input.Method,
-                PaymentDetails = input.PaymentDetails,
+                Method = "Card Transfer", // Generic term as requested
+                PaymentDetails = $"Card Ending {card.CardNumber.Substring(card.CardNumber.Length - 4)}",
                 LocalAmount = input.LocalAmount,
                 LocalCurrency = input.LocalCurrency,
                 Status = "Pending"
@@ -66,17 +143,14 @@ namespace Elicom.Withdrawals
 
             var id = await _withdrawRepository.InsertAndGetIdAsync(request);
             
-            // Map manually for now or use AutoMapper if profile exists
             return new WithdrawRequestDto
             {
                 Id = id,
                 UserId = userId,
                 CardId = input.CardId,
                 Amount = input.Amount,
-                Method = input.Method,
-                PaymentDetails = input.PaymentDetails,
-                LocalAmount = input.LocalAmount,
-                LocalCurrency = input.LocalCurrency,
+                Method = request.Method,
+                PaymentDetails = request.PaymentDetails,
                 Status = "Pending",
                 CreationTime = request.CreationTime
             };
@@ -123,36 +197,36 @@ namespace Elicom.Withdrawals
                 throw new UserFriendlyException("Only pending requests can be approved.");
             }
 
-            // 1. Deduct from card balance
-            var card = await _cardRepository.GetAsync(request.CardId);
-            if (card.Balance < request.Amount)
-            {
-                throw new UserFriendlyException("Insufficient balance on the card to fulfill this withdrawal.");
-            }
-
-            card.Balance -= request.Amount;
-
-            // 1.5 Sync Master Wallet
-            await _walletManager.TryDebitAsync(
+            // 1. Deduct from SmartStore Wallet (USD)
+            bool debitSuccess = await _smartStoreWalletManager.TryDebitAsync(
                 request.UserId,
                 request.Amount,
                 request.Id.ToString(),
-                $"Withdrawal Approved - Reference: {request.Id}"
+                $"Withdrawal to Card: {request.Id}"
             );
 
-            // 2. Record Transaction
+            if (!debitSuccess)
+            {
+                throw new UserFriendlyException("Insufficient balance in seller's wallet to complete this refill.");
+            }
+
+            // 2. Refill the Virtual Card
+            var card = await _cardRepository.GetAsync(request.CardId);
+            card.Balance += request.Amount; // Direct USD refill
+
+            // 3. Record Payout Transaction
             await _transactionRepository.InsertAsync(new AppTransaction
             {
                 UserId = request.UserId,
                 CardId = request.CardId,
-                Amount = request.Amount,
+                Amount = -request.Amount,
                 MovementType = "Debit",
-                Category = "Withdrawal",
+                Category = "Payout",
                 ReferenceId = request.Id.ToString(),
-                Description = $"Withdrawal Approved for Card {request.CardId}"
+                Description = $"Withdrawal payment to Card {request.CardId}"
             });
 
-            // 3. Update status
+            // 4. Update status
             request.Status = "Approved";
             request.AdminRemarks = input.AdminRemarks;
             request.PaymentProof = input.PaymentProof;

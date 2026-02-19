@@ -18,6 +18,10 @@ namespace Elicom.SupplierOrders.Dto
         public string SellerName { get; set; }
         public long SellerId { get; set; }
 
+        public DateTime? ShipmentDate { get; set; }
+        public string CarrierId { get; set; }
+        public string TrackingCode { get; set; }
+
         public Guid? OrderId { get; set; }
 
         public List<SupplierOrderItemDto> Items { get; set; }

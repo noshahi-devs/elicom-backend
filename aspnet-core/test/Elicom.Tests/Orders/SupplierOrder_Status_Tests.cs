@@ -45,8 +45,8 @@ namespace Elicom.Tests.Orders
                 return so.Id;
             });
 
-            // 2. Update to "Verified"
-            await _supplierOrderAppService.UpdateStatus(new UpdateOrderStatusDto { Id = orderId, Status = "Verified" });
+            // 2. Update to "Verified" (Using new flow method)
+            await _supplierOrderAppService.MarkAsVerified(orderId);
             
             var order = await UsingDbContextAsync(async context => await context.SupplierOrders.FirstOrDefaultAsync(o => o.Id == orderId));
             order.Status.ShouldBe("Verified");
@@ -56,13 +56,15 @@ namespace Elicom.Tests.Orders
             order = await UsingDbContextAsync(async context => await context.SupplierOrders.FirstOrDefaultAsync(o => o.Id == orderId));
             order.Status.ShouldBe("Processing");
 
-            // 4. Update to "Shipped"
-            await _supplierOrderAppService.UpdateStatus(new UpdateOrderStatusDto { Id = orderId, Status = "Shipped" });
+            // 4. Update to "Shipped" (Using special method)
+            await _supplierOrderAppService.MarkAsShipped(new FulfillOrderDto { 
+                Id = orderId, CarrierId = "DHL", TrackingCode = "T123", ShipmentDate = DateTime.Now 
+            });
             order = await UsingDbContextAsync(async context => await context.SupplierOrders.FirstOrDefaultAsync(o => o.Id == orderId));
             order.Status.ShouldBe("Shipped");
 
             // 5. Update to "Delivered"
-            await _supplierOrderAppService.UpdateStatus(new UpdateOrderStatusDto { Id = orderId, Status = "Delivered" });
+            await _supplierOrderAppService.MarkAsDelivered(orderId);
             order = await UsingDbContextAsync(async context => await context.SupplierOrders.FirstOrDefaultAsync(o => o.Id == orderId));
             order.Status.ShouldBe("Delivered");
         }

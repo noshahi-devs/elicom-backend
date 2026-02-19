@@ -30,6 +30,11 @@ namespace Elicom.Entities
         // Purchased, LinkedToOrder, Received, Settled
         public string Status { get; set; }
 
+        // Seller sets when shipping to Admin Hub
+        public DateTime? ShipmentDate { get; set; }
+        public string CarrierId { get; set; }
+        public string TrackingCode { get; set; }
+
         // Optional link (filled later)
         public Guid? OrderId { get; set; }
         public virtual Order Order { get; set; }

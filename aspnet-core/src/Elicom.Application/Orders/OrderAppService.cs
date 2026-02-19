@@ -304,35 +304,26 @@ namespace Elicom.Orders
         }
 
 
-        [AbpAuthorize(PermissionNames.Pages_SmartStore_Seller)]
+        [AbpAuthorize(PermissionNames.Pages_PrimeShip_Admin)]
         public async Task<OrderDto> Fulfill(FulfillOrderDto input)
         {
+            // This now represents the final fulfillment by ADMIN from the Hub to the Customer
             var order = await _orderRepository.GetAsync(input.Id);
             if (order == null)
                 throw new UserFriendlyException("Order not found");
 
-            if (order.Status != "Pending")
-                throw new UserFriendlyException("Only pending orders can be fulfilled");
-
-            // Role Guard: Ensure only the order's seller can fulfill it
-            // (Simplification: Checking if ANY item in the order belongs to the seller)
-            var user = await GetCurrentUserAsync();
-            var sellerItems = await _orderRepository.GetAll()
-                .Where(o => o.Id == order.Id)
-                .SelectMany(o => o.OrderItems)
-                .Select(oi => oi.StoreProductId)
+            // Ensure all sub-orders are verified at the Hub before final delivery
+            var subOrders = await _supplierOrderRepository.GetAll()
+                .Where(so => so.OrderId == order.Id)
                 .ToListAsync();
 
-            var anySellerItem = await _storeProductRepository.GetAll()
-                .AnyAsync(sp => sellerItems.Contains(sp.Id) && sp.Store.OwnerId == user.Id);
-
-            if (!anySellerItem && !IsGranted(PermissionNames.Pages_PrimeShip_Admin))
-                 throw new UserFriendlyException("You are not authorized to fulfill this order.");
+            if (subOrders.Any(so => so.Status != "Verified"))
+                throw new UserFriendlyException("All items must be verified at the Hub before final delivery.");
 
             order.ShipmentDate = input.ShipmentDate;
             order.CarrierId = input.CarrierId;
             order.TrackingCode = input.TrackingCode;
-            order.Status = "PendingVerification";
+            order.Status = "ShippedFromHub";
 
             await _orderRepository.UpdateAsync(order);
             await CurrentUnitOfWork.SaveChangesAsync();
@@ -343,74 +334,15 @@ namespace Elicom.Orders
         [AbpAuthorize(PermissionNames.Pages_PrimeShip_Admin)]
         public async Task<OrderDto> Verify(VerifyOrderDto input)
         {
+            // This now represents the Admin marking the CONSOLIDATED order as verified/ready
             var order = await _orderRepository.GetAsync(input.Id);
             if (order == null)
                 throw new UserFriendlyException("Order not found");
 
-            if (order.Status != "PendingVerification")
-                throw new UserFriendlyException("Order is not in PendingVerification state");
-
-            order.Status = "Verified";
-
-            // Transaction Generation
-            var storeItems = await _orderRepository.GetAll()
-                .Where(o => o.Id == order.Id)
-                .SelectMany(o => o.OrderItems)
-                .Select(oi => new { oi.PriceAtPurchase, oi.Quantity, oi.StoreProductId })
-                .ToListAsync();
-
-            foreach (var item in storeItems)
-            {
-                var storeProduct = await _storeProductRepository.GetAll()
-                    .Include(sp => sp.Store)
-                    .FirstOrDefaultAsync(sp => sp.Id == item.StoreProductId);
-
-                if (storeProduct != null)
-                {
-                    var sellerAmount = item.PriceAtPurchase * item.Quantity;
-                    var feeAmount = sellerAmount * 0.1m; // 10% Platform Fee example
-
-                    // Seller Sale Transaction (Pending)
-                    await _appTransactionRepository.InsertAsync(new AppTransaction
-                    {
-                        UserId = storeProduct.Store.OwnerId,
-                        Amount = sellerAmount - feeAmount,
-                        MovementType = "Credit",
-                        Category = "Sale",
-                        ReferenceId = order.OrderNumber,
-                        OrderId = order.Id,
-                        Status = "Pending",
-                        Description = $"Proceeds from Order {order.OrderNumber} (Less Fee)"
-                    });
-
-                    // Platform Fee Transaction (Approved/Internal)
-                    await _appTransactionRepository.InsertAsync(new AppTransaction
-                    {
-                        UserId = PlatformAdminId,
-                        Amount = feeAmount,
-                        MovementType = "Credit",
-                        Category = "Fee",
-                        ReferenceId = order.OrderNumber,
-                        OrderId = order.Id,
-                        Status = "Approved",
-                        Description = $"Platform Fee from Order {order.OrderNumber}"
-                    });
-
-                    // NEW: Dedicated SmartStore Wallet Persistence
-                    await _smartStoreWalletManager.CreditAsync(
-                        storeProduct.Store.OwnerId,
-                        sellerAmount - feeAmount,
-                        order.OrderNumber,
-                        $"Proceeds from Verified Order {order.OrderNumber}"
-                    );
-                }
-            }
+            order.Status = "VerifiedAtHub";
 
             await _orderRepository.UpdateAsync(order);
             await CurrentUnitOfWork.SaveChangesAsync();
-
-            // Notify Seller
-            // (Implementation omitted for brevity, similar to SendOrderPlacementEmails)
 
             return ObjectMapper.Map<OrderDto>(order);
         }
