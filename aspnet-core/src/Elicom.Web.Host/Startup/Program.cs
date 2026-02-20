@@ -13,8 +13,6 @@ namespace Elicom.Web.Host.Startup
     {
         public static void Main(string[] args)
         {
-            // Disable retries during startup to prevent transaction issues (seeding etc)
-            Elicom.EntityFrameworkCore.ElicomDbContextConfigurer.EnableRetries = false;
             CreateHostBuilder(args).Build().Run();
         }
 
