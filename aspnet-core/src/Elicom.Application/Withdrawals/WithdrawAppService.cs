@@ -107,13 +107,7 @@ namespace Elicom.Withdrawals
         {
             var userId = AbpSession.GetUserId();
 
-            // 1. Check Eligibility
-            var eligibility = await GetWithdrawalEligibility();
-            if (!eligibility.IsEligible)
-            {
-                throw new UserFriendlyException(eligibility.Message);
-            }
-
+            // 1. Check Eligibility (Bypassed for simple request-approval flow)
             // 2. Check SmartStore Wallet Balance (USD)
             var balance = await _smartStoreWalletManager.GetBalanceAsync(userId);
             if (balance < input.Amount)

@@ -58,6 +58,7 @@
                     <span class="currency-code">USD</span>
                 </div>
                 <p class="help-text">Minimum withdrawal: $10.00</p>
+                <p class="help-text" *ngIf="amount">Approx Receipt: Rs {{ calculateLocalAmount() | number }} PKR</p>
             </div>
 
             <!-- Submit Button -->
