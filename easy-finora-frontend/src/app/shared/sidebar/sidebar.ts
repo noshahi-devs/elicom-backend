@@ -1,7 +1,9 @@
 import { Component } from '@angular/core';
 import { NgFor } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { GlobalStateService } from '../../services/global-state.service';
+import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../shared/toast/toast.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -12,7 +14,12 @@ import { GlobalStateService } from '../../services/global-state.service';
 })
 export class Sidebar {
 
-  constructor(private globalState: GlobalStateService) { }
+  constructor(
+    private globalState: GlobalStateService,
+    private authService: AuthService,
+    private router: Router,
+    private toastService: ToastService
+  ) { }
 
   menuSections = [
     {
@@ -133,6 +140,12 @@ export class Sidebar {
         section.expanded = false;
       }
     });
+  }
+
+  logout() {
+    this.authService.logout();
+    this.toastService.showSuccess('Logged out successfully');
+    this.router.navigate(['/auth'], { replaceUrl: true });
   }
 
 }

@@ -69,24 +69,32 @@
                             <h4>{{ card.type }} Debit Card Details</h4>
                         </div>
                         <div class="details-body">
-                            <div class="detail-item">
-                                <span class="label">Card Type</span>
-                                <span class="value">{{ card.type }} Debit Card</span>
+                            <div class="detail-item balance-item">
+                                <span class="label">Available Balance</span>
+                                <span class="value balance">{{ card.balance | currency:'USD':'symbol':'1.2-2' }}</span>
                             </div>
+
+                            <div class="details-row">
+                                <div class="detail-item">
+                                    <span class="label">Card Type</span>
+                                    <span class="value">{{ card.type }} Debit Card</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Expiry Date</span>
+                                    <span class="value date">{{ card.expiryFullDate }}</span>
+                                </div>
+                            </div>
+
                             <div class="detail-item">
                                 <span class="label">Active Subscription</span>
                                 <span class="value subscription">{{ card.subscriptionType }}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="label">Expiry Date</span>
-                                <span class="value date">{{ card.expiryFullDate }}</span>
                             </div>
                         </div>
                         <div class="details-footer">
                             <button class="action-btn" (click)="revealDetails(card)">
                                 {{ card.showDetails ? 'Hide Card Details' : 'Show Card Details' }}
                             </button>
-                            <button class="action-btn upgrade">Upgrade Card</button>
+                            <button class="action-btn upgrade" routerLink="/upgrade-plan">Upgrade Card</button>
                         </div>
                     </div>
                 </div>

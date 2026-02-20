@@ -6,9 +6,23 @@
 
     <div class="transfer-form-3d">
         <div class="form-section">
-            <label>Recipient (Email or Wallet ID)</label>
+            <label>Sender (Email or Wallet ID/Card Number)</label>
             <div class="input-with-validation">
-                <input type="text" [(ngModel)]="recipient" (blur)="validateRecipient()"
+                <input type="text" [(ngModel)]="sender" (input)="validateSender()"
+                    placeholder="Your approved Card Number or Wallet ID" class="input-3d" [disabled]="isLoadingCards" />
+                <span *ngIf="senderValid && !isLoadingCards" class="validation-icon">✓</span>
+                <span *ngIf="isLoadingCards" class="mini-loader-inline"></span>
+            </div>
+            <p class="field-hint loading" *ngIf="isLoadingCards">Synchronizing your cards...</p>
+            <p class="field-hint" *ngIf="!senderValid && sender.length > 0 && !isLoadingCards">Must be an approved card
+                belonging to you
+            </p>
+        </div>
+
+        <div class="form-section">
+            <label>Recipient (Email or Wallet ID/Card Number)</label>
+            <div class="input-with-validation">
+                <input type="text" [(ngModel)]="recipient" (input)="validateRecipient()"
                     placeholder="user@example.com or WLT-XXXX-XXXX" class="input-3d" />
                 <span *ngIf="recipientValid" class="validation-icon">✓</span>
             </div>
@@ -27,7 +41,7 @@
         </div>
 
         <button class="btn-3d btn-submit" (click)="submitTransfer()"
-            [disabled]="!recipientValid || !amount || amount <= 0">
+            [disabled]="!senderValid || !recipientValid || !amount || amount <= 0">
             Transfer {{ amount || 0 | number:'1.2-2' }} USD
         </button>
     </div>

@@ -134,6 +134,25 @@ public class TenantRoleAndUserBuilder
         {
             GrantPermissionsIfNotExists(buyerRole, new[] { PermissionNames.Pages_PrimeShip });
         }
+
+        var adminRole = roles.FirstOrDefault(r => r.Name == StaticRoleNames.Tenants.Admin);
+        if (adminRole != null)
+        {
+            GrantPermissionsIfNotExists(adminRole, new[] {
+                PermissionNames.Pages_Users,
+                PermissionNames.Pages_Roles,
+                PermissionNames.Pages_Categories,
+                PermissionNames.Pages_Products,
+                PermissionNames.Pages_Stores,
+                PermissionNames.Pages_StoreProducts,
+                PermissionNames.Pages_SmartStore,
+                PermissionNames.Pages_SmartStore_Admin, // ✅ Added
+                PermissionNames.Pages_PrimeShip,
+                PermissionNames.Pages_PrimeShip_Admin,
+                PermissionNames.Pages_GlobalPay,
+                PermissionNames.Pages_GlobalPay_Admin
+            });
+        }
     }
 
     private void GrantPermissionsIfNotExists(Role role, string[] permissionNames)
@@ -170,6 +189,7 @@ public class TenantRoleAndUserBuilder
     {
         if (_tenantId == 1) // Smart Store
         {
+            CreateUser("admin@worldcartus.com", "SS_admin@worldcartus.com", StaticRoleNames.Tenants.Admin, passwordHasher); // ✅ Added
             CreateUser("noshahis@smartstoreus.com", "SS_noshahis@smartstoreus.com", StaticRoleNames.Tenants.Supplier, passwordHasher);
             CreateUser("noshahir@smartstoreus.com", "SS_noshahir@smartstoreus.com", StaticRoleNames.Tenants.Reseller, passwordHasher);
             CreateUser("noshahic@smartstoreus.com", "SS_noshahic@smartstoreus.com", StaticRoleNames.Tenants.Buyer, passwordHasher);

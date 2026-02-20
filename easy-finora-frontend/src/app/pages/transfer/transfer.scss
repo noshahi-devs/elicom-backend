@@ -66,6 +66,35 @@
             }
         }
 
+        .mini-loader-inline {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(29, 224, 22, 0.2);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .field-hint {
+            margin-top: 4px;
+            font-size: 12px;
+            color: #ef4444;
+
+            &.loading {
+                color: var(--primary);
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: translateY(-50%) rotate(360deg);
+            }
+        }
+
         .fee-info {
             margin-top: 8px;
             font-size: 14px;

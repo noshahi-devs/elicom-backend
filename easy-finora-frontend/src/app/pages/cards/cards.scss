@@ -439,6 +439,17 @@
         gap: 10px;
         margin-bottom: 12px;
 
+        .details-row {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+
+            .detail-item {
+                flex: 1;
+                margin-bottom: 0;
+            }
+        }
+
         .detail-item {
             background: #fdfdfd;
             padding: 8px 15px;
@@ -455,6 +466,21 @@
                 border-color: var(--primary);
                 box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
                 transform: scale(1.01);
+            }
+
+            &.balance-item {
+                background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+                border-left: 4px solid #10b981;
+
+                .label {
+                    color: #10b981;
+                }
+
+                .value.balance {
+                    font-size: 20px;
+                    color: #065f46;
+                    font-weight: 800;
+                }
             }
 
             .label {

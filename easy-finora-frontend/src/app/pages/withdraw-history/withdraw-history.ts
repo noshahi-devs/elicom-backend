@@ -71,8 +71,15 @@ export class WithdrawHistory implements OnInit {
 
         this.withdrawService.getMyWithdrawRequests(skipCount, this.maxResultCount).subscribe({
             next: (res: any) => {
-                this.withdrawals = res?.result?.items ?? [];
-                this.totalCount = res?.result?.totalCount ?? 0;
+                // Handle both direct array and paged response structures
+                if (Array.isArray(res?.result)) {
+                    this.withdrawals = res.result;
+                    this.totalCount = res.result.length;
+                } else {
+                    this.withdrawals = res?.result?.items ?? [];
+                    this.totalCount = res?.result?.totalCount ?? 0;
+                }
+
                 this.isLoading = false;
                 this.cdr.detectChanges();
             },

@@ -3,6 +3,7 @@ using Abp.Application.Services.Dto;
 using Abp.Authorization;
 using Abp.Domain.Repositories;
 using Abp.Domain.Uow;
+using Abp.EntityFrameworkCore;
 using AutoMapper;
 using Elicom.Authorization;
 using Elicom.Categories.Dto;
@@ -12,6 +13,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Transactions;
+using Elicom.EntityFrameworkCore;
+using Abp.EntityFrameworkCore.Uow;
 using Elicom.Storage;
 using Abp.UI;
 using Microsoft.EntityFrameworkCore;
@@ -44,6 +48,7 @@ namespace Elicom.Categories
             return _mapper.Map<CategoryDto>(entity);
         }
 
+        [UnitOfWork(TransactionScopeOption.Suppress)]
         public virtual async Task<ListResultDto<CategoryDto>> GetAll(int maxResultCount = 100)
         {
             using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
@@ -53,7 +58,7 @@ namespace Elicom.Categories
                 {
                     query = query.Take(maxResultCount);
                 }
-                
+
                 var categories = await query.ToListAsync();
                 return new ListResultDto<CategoryDto>(_mapper.Map<List<CategoryDto>>(categories));
             }

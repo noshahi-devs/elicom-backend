@@ -5,11 +5,16 @@ using Abp.UI;
 using Elicom.Entities;
 using Elicom.Homepage.Dto;
 using Microsoft.EntityFrameworkCore;
+using System.Transactions;
+using Abp.EntityFrameworkCore;
 using Abp.Domain.Uow;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Transactions;
+using Elicom.EntityFrameworkCore;
+using Abp.EntityFrameworkCore.Uow;
 
 namespace Elicom.Homepage
 {
@@ -33,7 +38,8 @@ namespace Elicom.Homepage
         }
 
 
-        public async Task<PagedResultDto<ProductCardDto>> GetAllProductsForCards(
+        [UnitOfWork(TransactionScopeOption.Suppress)]
+        public virtual async Task<PagedResultDto<ProductCardDto>> GetAllProductsForCards(
             PagedAndSortedResultRequestDto input)
         {
             // 1️⃣ Base query (ONLY product-level filtering)
@@ -100,7 +106,7 @@ namespace Elicom.Homepage
             }
         }
 
-        public async Task<ProductDetailDto> GetProductDetail(Guid productId, Guid? storeProductId = null)
+        public virtual async Task<ProductDetailDto> GetProductDetail(Guid productId, Guid? storeProductId = null)
         {
             using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
             {
@@ -176,7 +182,8 @@ namespace Elicom.Homepage
             }
         }
 
-        public async Task<List<HomepageCategoryDto>> GetCategoriesWithListedProducts()
+        [UnitOfWork(TransactionScopeOption.Suppress)]
+        public virtual async Task<List<HomepageCategoryDto>> GetCategoriesWithListedProducts()
         {
             using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
             {
@@ -188,7 +195,6 @@ namespace Elicom.Homepage
                         Name = c.Name,
                         Slug = c.Slug,
                         ImageUrl = c.ImageUrl,
-                        // Use SelectMany to flatten products and filter before counting
                         TotalProducts = c.Products
                             .Count(p => p.Status && p.StoreProducts.Any())
                     })
@@ -198,7 +204,7 @@ namespace Elicom.Homepage
             }
         }
 
-        public async Task<List<ProductCardDto>> GetProductListingsAcrossStores(Guid productId)
+        public virtual async Task<List<ProductCardDto>> GetProductListingsAcrossStores(Guid productId)
         {
             using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
             {
@@ -250,7 +256,7 @@ namespace Elicom.Homepage
         }
 
 
-        public async Task<List<ProductCardDto>> GetProductsByStore(Guid storeId)
+        public virtual async Task<List<ProductCardDto>> GetProductsByStore(Guid storeId)
         {
             using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant))
             {

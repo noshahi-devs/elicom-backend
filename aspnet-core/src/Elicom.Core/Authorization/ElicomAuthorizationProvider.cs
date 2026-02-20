@@ -64,6 +64,7 @@ public class ElicomAuthorizationProvider : AuthorizationProvider
         context.CreatePermission(PermissionNames.Pages_PrimeShip_Admin, L("PrimeShipAdmin"));
         context.CreatePermission(PermissionNames.Pages_SmartStore, L("SmartStore"));
         context.CreatePermission(PermissionNames.Pages_SmartStore_Seller, L("SmartStoreSeller"));
+        context.CreatePermission(PermissionNames.Pages_SmartStore_Admin, L("SmartStoreAdmin"));
     }
 
 

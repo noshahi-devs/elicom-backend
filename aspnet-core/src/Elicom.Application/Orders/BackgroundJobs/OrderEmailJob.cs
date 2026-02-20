@@ -33,7 +33,7 @@ namespace Elicom.Orders.BackgroundJobs
             _userManager = userManager;
         }
 
-        [UnitOfWork]
+        [UnitOfWork(System.Transactions.TransactionScopeOption.Suppress)]
         public override async Task ExecuteAsync(OrderEmailJobArgs args)
         {
             using (UnitOfWorkManager.Current.DisableFilter(AbpDataFilters.MayHaveTenant, AbpDataFilters.MustHaveTenant))

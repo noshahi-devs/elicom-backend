@@ -44,4 +44,5 @@ public static class PermissionNames
     // SmartStore Permissions
     public const string Pages_SmartStore = "Pages.SmartStore";
     public const string Pages_SmartStore_Seller = "Pages.SmartStore.Seller";
+    public const string Pages_SmartStore_Admin = "Pages.SmartStore.Admin";
 }
