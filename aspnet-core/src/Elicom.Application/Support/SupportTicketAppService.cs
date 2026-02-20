@@ -23,6 +23,7 @@ namespace Elicom.Support
             _supportTicketRepository = supportTicketRepository;
         }
 
+        [Abp.Domain.Uow.UnitOfWork(System.Transactions.TransactionScopeOption.Suppress)]
         public async Task<SupportTicketDto> Create(CreateSupportTicketInput input)
         {
             try 
@@ -53,7 +54,7 @@ namespace Elicom.Support
                 }
 
                 await _supportTicketRepository.InsertAsync(ticket);
-                await CurrentUnitOfWork.SaveChangesAsync(); // Ensure DB constraint errors are caught here
+                // await CurrentUnitOfWork.SaveChangesAsync(); // Removed for atomicity
 
                 return ObjectMapper.Map<SupportTicketDto>(ticket);
             }

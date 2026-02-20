@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 namespace Elicom.SupplierOrders
 {
     [AbpAuthorize]
+    [Abp.Domain.Uow.UnitOfWork(System.Transactions.TransactionScopeOption.Suppress)]
     public class SupplierOrderAppService : ElicomAppServiceBase, ISupplierOrderAppService
     {
         private readonly IRepository<Elicom.Entities.SupplierOrder, Guid> _supplierOrderRepository;
@@ -99,7 +100,7 @@ namespace Elicom.SupplierOrders
             }
 
             await _supplierOrderRepository.InsertAsync(supplierOrder);
-            await CurrentUnitOfWork.SaveChangesAsync();
+            // await CurrentUnitOfWork.SaveChangesAsync(); // Removed for atomicity
 
             foreach (var item in input.Items)
             {
@@ -113,8 +114,7 @@ namespace Elicom.SupplierOrders
 
                 await _supplierOrderItemRepository.InsertAsync(supplierOrderItem);
             }
-
-            await CurrentUnitOfWork.SaveChangesAsync();
+            // await CurrentUnitOfWork.SaveChangesAsync(); // Removed for atomicity
 
             return ObjectMapper.Map<SupplierOrderDto>(supplierOrder);
         }
@@ -288,7 +288,7 @@ namespace Elicom.SupplierOrders
             }
 
             await _supplierOrderRepository.UpdateAsync(order);
-            await CurrentUnitOfWork.SaveChangesAsync();
+            // await CurrentUnitOfWork.SaveChangesAsync(); // Removed for atomicity
 
             return ObjectMapper.Map<SupplierOrderDto>(order);
         }
@@ -322,7 +322,7 @@ namespace Elicom.SupplierOrders
             order.Status = input.Status;
             
             await _supplierOrderRepository.UpdateAsync(order);
-            await CurrentUnitOfWork.SaveChangesAsync();
+            // await CurrentUnitOfWork.SaveChangesAsync(); // Removed for atomicity
             
             return ObjectMapper.Map<SupplierOrderDto>(order);
         }

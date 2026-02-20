@@ -22,6 +22,8 @@ public class AppSettingProvider : SettingProvider
             new SettingDefinition("Abp.Net.Mail.Smtp.EnableSsl", "true"),
             new SettingDefinition("Abp.Net.Mail.Smtp.UseDefaultCredentials", "false"),
 
+            new SettingDefinition(AppSettingNames.AdminEmail, "noshahidevelopersinc@gmail.com"),
+
             // App Settings
             new SettingDefinition("App.ServerRootAddress", "https://app-elicom-backend.azurewebsites.net/"),
             new SettingDefinition("App.SmartStore.ClientRootAddress", "https://stapp-elicom-main.azurestaticapps.net/"),

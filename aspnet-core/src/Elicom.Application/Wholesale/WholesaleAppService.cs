@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 namespace Elicom.Wholesale
 {
     [AbpAuthorize(PermissionNames.Pages_PrimeShip)]
+    [Abp.Domain.Uow.UnitOfWork(System.Transactions.TransactionScopeOption.Suppress)]
     public class WholesaleAppService : ElicomAppServiceBase, IWholesaleAppService
     {
         private readonly IRepository<Product, Guid> _productRepository;
@@ -104,7 +105,8 @@ namespace Elicom.Wholesale
             };
 
             await _supplierOrderRepository.InsertAsync(supplierOrder);
-            await CurrentUnitOfWork.SaveChangesAsync();
+            await _supplierOrderRepository.InsertAsync(supplierOrder);
+            // await CurrentUnitOfWork.SaveChangesAsync(); // Removed for atomicity
 
             // Automate Email
             try

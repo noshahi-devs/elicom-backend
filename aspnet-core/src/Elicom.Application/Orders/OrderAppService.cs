@@ -21,6 +21,7 @@ using Elicom.Orders.BackgroundJobs;
 
 namespace Elicom.Orders
 {
+    [Abp.Domain.Uow.UnitOfWork(System.Transactions.TransactionScopeOption.Suppress)]
     public class OrderAppService : ElicomAppServiceBase, IOrderAppService
     {
         private readonly IRepository<Order, Guid> _orderRepository;
@@ -236,7 +237,7 @@ namespace Elicom.Orders
                     await _supplierOrderRepository.InsertAsync(supplierOrder);
                 }
 
-                await CurrentUnitOfWork.SaveChangesAsync();
+                // await CurrentUnitOfWork.SaveChangesAsync(); // Removed for atomicity
 
                 // Clear cart
                 foreach (var ci in cartItems)
@@ -244,7 +245,7 @@ namespace Elicom.Orders
                     await _cartItemRepository.DeleteAsync(ci.Id);
                 }
 
-                await CurrentUnitOfWork.SaveChangesAsync();
+                // await CurrentUnitOfWork.SaveChangesAsync(); // Removed for atomicity
             }
 
             // STEP 4: Send emails AFTER transaction completes (now via Background Job)
@@ -326,7 +327,7 @@ namespace Elicom.Orders
             order.Status = "ShippedFromHub";
 
             await _orderRepository.UpdateAsync(order);
-            await CurrentUnitOfWork.SaveChangesAsync();
+            // await CurrentUnitOfWork.SaveChangesAsync(); // Removed for atomicity
 
             return ObjectMapper.Map<OrderDto>(order);
         }
@@ -342,7 +343,7 @@ namespace Elicom.Orders
             order.Status = "VerifiedAtHub";
 
             await _orderRepository.UpdateAsync(order);
-            await CurrentUnitOfWork.SaveChangesAsync();
+            // await CurrentUnitOfWork.SaveChangesAsync(); // Removed for atomicity
 
             return ObjectMapper.Map<OrderDto>(order);
         }
@@ -379,7 +380,7 @@ namespace Elicom.Orders
             }
 
             await _orderRepository.UpdateAsync(order);
-            await CurrentUnitOfWork.SaveChangesAsync();
+            // await CurrentUnitOfWork.SaveChangesAsync(); // Removed for atomicity
 
             return ObjectMapper.Map<OrderDto>(order);
         }
@@ -407,7 +408,7 @@ namespace Elicom.Orders
 
             order.Status = "Cancelled";
             await _orderRepository.UpdateAsync(order);
-            await CurrentUnitOfWork.SaveChangesAsync();
+            // await CurrentUnitOfWork.SaveChangesAsync(); // Removed for atomicity
 
             return ObjectMapper.Map<OrderDto>(order);
         }

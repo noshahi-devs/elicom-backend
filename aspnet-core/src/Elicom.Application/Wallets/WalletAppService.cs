@@ -30,6 +30,7 @@ namespace Elicom.Wallets
             _transactionRepository = transactionRepository;
         }
 
+        [Abp.Domain.Uow.UnitOfWork(System.Transactions.TransactionScopeOption.Suppress)]
         public async Task<WalletDto> GetMyWallet()
         {
             var user = await GetCurrentUserAsync();
@@ -40,7 +41,7 @@ namespace Elicom.Wallets
             {
                 wallet = new Wallet { UserId = user.Id, Balance = 0, Currency = "PKR" };
                 await _walletRepository.InsertAsync(wallet);
-                await CurrentUnitOfWork.SaveChangesAsync();
+                // await CurrentUnitOfWork.SaveChangesAsync(); // Removed for atomicity
             }
 
             return ObjectMapper.Map<WalletDto>(wallet);

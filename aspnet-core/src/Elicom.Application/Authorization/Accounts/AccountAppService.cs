@@ -23,6 +23,7 @@ using Azure;
 
 namespace Elicom.Authorization.Accounts;
 
+[Abp.Domain.Uow.UnitOfWork(System.Transactions.TransactionScopeOption.Suppress)]
 public class AccountAppService : ElicomAppServiceBase, IAccountAppService
 {
     // from: http://regexlib.com/REDetails.aspx?regexp_id=1923

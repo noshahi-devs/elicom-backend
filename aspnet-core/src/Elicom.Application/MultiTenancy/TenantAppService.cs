@@ -44,6 +44,7 @@ public class TenantAppService : AsyncCrudAppService<Tenant, TenantDto, int, Page
         _abpZeroDbMigrator = abpZeroDbMigrator;
     }
 
+    [Abp.Domain.Uow.UnitOfWork(System.Transactions.TransactionScopeOption.Suppress)]
     public override async Task<TenantDto> CreateAsync(CreateTenantDto input)
     {
         CheckCreatePermission();

@@ -52,6 +52,7 @@ public class UserAppService : AsyncCrudAppService<User, UserDto, long, PagedUser
         _logInManager = logInManager;
     }
 
+    [Abp.Domain.Uow.UnitOfWork(System.Transactions.TransactionScopeOption.Suppress)]
     public override async Task<UserDto> CreateAsync(CreateUserDto input)
     {
         CheckCreatePermission();
@@ -70,7 +71,7 @@ public class UserAppService : AsyncCrudAppService<User, UserDto, long, PagedUser
             CheckErrors(await _userManager.SetRolesAsync(user, input.RoleNames));
         }
 
-        CurrentUnitOfWork.SaveChanges();
+        // CurrentUnitOfWork.SaveChanges(); // Removed for atomicity
 
         return MapToEntityDto(user);
     }
